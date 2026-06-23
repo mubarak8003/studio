@@ -1,4 +1,3 @@
-
 "use client"
 
 import React, { useState, useMemo, useEffect } from 'react';
@@ -34,6 +33,7 @@ import { Slider } from '@/components/ui/slider';
 import { Switch } from '@/components/ui/switch';
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { AICoachPanel } from '@/components/recoup/ai-coach-panel';
+import { ModeToggle } from '@/components/mode-toggle';
 import { cn } from '@/lib/utils';
 
 // Move component outside of Dashboard to prevent focus loss during typing
@@ -79,7 +79,7 @@ const StrategySettings = ({ store, stats }: { store: any, stats: any }) => {
           value={localBaseStake} 
           onChange={(e) => handleBaseStakeChange(e.target.value)}
           onFocus={(e) => e.target.select()}
-          className="bg-obsidian border-border"
+          className="bg-background border-border"
         />
       </div>
 
@@ -120,7 +120,7 @@ const StrategySettings = ({ store, stats }: { store: any, stats: any }) => {
               value={localManualDrawdown} 
               onChange={(e) => handleManualDrawdownChange(e.target.value)}
               onFocus={(e) => e.target.select()}
-              className="bg-obsidian border-border h-8 text-xs"
+              className="bg-background border-border h-8 text-xs"
             />
           </div>
         )}
@@ -137,7 +137,7 @@ const StrategySettings = ({ store, stats }: { store: any, stats: any }) => {
             value={localRecoveryTarget}
             onChange={(e) => handleRecoveryTargetChange(e.target.value)}
             onFocus={(e) => e.target.select()}
-            className="w-16 h-7 text-xs bg-obsidian text-right"
+            className="w-16 h-7 text-xs bg-background text-right"
             min={1}
           />
         </div>
@@ -254,55 +254,61 @@ export default function Dashboard() {
           <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center glow-primary">
             <BrainCircuit className="text-primary-foreground h-5 w-5" />
           </div>
-          <h1 className="text-xl font-headline font-bold text-electric-blue">RecoupPro</h1>
+          <h1 className="text-xl font-headline font-bold text-sky-blue">RecoupPro</h1>
         </div>
-        <Sheet>
-          <SheetTrigger asChild>
-            <Button variant="ghost" size="icon">
-              <Menu className="h-6 w-6" />
-            </Button>
-          </SheetTrigger>
-          <SheetContent side="left" className="w-[85vw] max-w-sm bg-card border-r border-border p-0 flex flex-col">
-            <div className="p-6 border-b border-border">
-              <SheetHeader>
-                <SheetTitle className="text-left flex items-center gap-3">
-                  <BrainCircuit className="h-6 w-6 text-primary" />
-                  <span>Strategy Coach</span>
-                </SheetTitle>
-              </SheetHeader>
-            </div>
-            <div className="flex-1 overflow-y-auto p-6 scroll-smooth">
-              <div className="space-y-8">
-                <nav className="space-y-2">
-                  <Button variant={!showHistory ? "secondary" : "ghost"} className="w-full justify-start gap-3" onClick={() => setShowHistory(false)}>
-                    <Activity className="h-4 w-4" /> Dashboard
-                  </Button>
-                  <Button variant={showHistory ? "secondary" : "ghost"} className="w-full justify-start gap-3" onClick={() => setShowHistory(true)}>
-                    <History className="h-4 w-4" /> History
-                  </Button>
-                </nav>
-                <Separator />
-                <div className="space-y-6">
-                  <div className="flex items-center gap-2">
-                    <Settings2 className="h-4 w-4 text-muted-foreground" />
-                    <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Strategy Engine</h3>
+        <div className="flex items-center gap-2">
+          <ModeToggle />
+          <Sheet>
+            <SheetTrigger asChild>
+              <Button variant="ghost" size="icon">
+                <Menu className="h-6 w-6" />
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="left" className="w-[85vw] max-w-sm bg-card border-r border-border p-0 flex flex-col">
+              <div className="p-6 border-b border-border">
+                <SheetHeader>
+                  <SheetTitle className="text-left flex items-center gap-3">
+                    <BrainCircuit className="h-6 w-6 text-primary" />
+                    <span>Strategy Coach</span>
+                  </SheetTitle>
+                </SheetHeader>
+              </div>
+              <div className="flex-1 overflow-y-auto p-6 scroll-smooth">
+                <div className="space-y-8">
+                  <nav className="space-y-2">
+                    <Button variant={!showHistory ? "secondary" : "ghost"} className="w-full justify-start gap-3" onClick={() => setShowHistory(false)}>
+                      <Activity className="h-4 w-4" /> Dashboard
+                    </Button>
+                    <Button variant={showHistory ? "secondary" : "ghost"} className="w-full justify-start gap-3" onClick={() => setShowHistory(true)}>
+                      <History className="h-4 w-4" /> History
+                    </Button>
+                  </nav>
+                  <Separator />
+                  <div className="space-y-6">
+                    <div className="flex items-center gap-2">
+                      <Settings2 className="h-4 w-4 text-muted-foreground" />
+                      <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Strategy Engine</h3>
+                    </div>
+                    <StrategySettings store={store} stats={stats} />
                   </div>
-                  <StrategySettings store={store} stats={stats} />
                 </div>
               </div>
-            </div>
-          </SheetContent>
-        </Sheet>
+            </SheetContent>
+          </Sheet>
+        </div>
       </header>
 
       <div className="flex flex-1 relative">
         {/* Desktop Sidebar */}
         <aside className="w-80 border-r border-border bg-card/50 hidden md:flex flex-col p-6 sticky top-0 h-svh overflow-y-auto">
-          <div className="flex items-center gap-3 mb-8">
-            <div className="h-10 w-10 rounded-xl bg-primary flex items-center justify-center glow-primary">
-              <BrainCircuit className="text-primary-foreground h-6 w-6" />
+          <div className="flex items-center justify-between mb-8">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-xl bg-primary flex items-center justify-center glow-primary">
+                <BrainCircuit className="text-primary-foreground h-6 w-6" />
+              </div>
+              <h1 className="text-2xl font-headline font-bold text-sky-blue">RecoupPro</h1>
             </div>
-            <h1 className="text-2xl font-headline font-bold text-electric-blue">RecoupPro</h1>
+            <ModeToggle />
           </div>
 
           <nav className="space-y-2 mb-8">
@@ -326,7 +332,7 @@ export default function Dashboard() {
         </aside>
 
         {/* Main Content */}
-        <main className="flex-1 min-h-svh p-4 md:p-10 bg-obsidian/40 overflow-x-hidden">
+        <main className="flex-1 min-h-svh p-4 md:p-10 bg-background/40 overflow-x-hidden">
           <div className="max-w-5xl mx-auto space-y-8">
             <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
               <div>
@@ -349,7 +355,7 @@ export default function Dashboard() {
             </header>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              <Card className="lg:col-span-2 bg-card/80 border-primary/20 backdrop-blur-md relative overflow-hidden">
+              <Card className="lg:col-span-2 bg-card border-primary/20 backdrop-blur-md relative overflow-hidden">
                 <div className="absolute top-0 right-0 p-4 opacity-5 hidden md:block">
                   <Calculator className="h-24 w-24" />
                 </div>
@@ -390,20 +396,20 @@ export default function Dashboard() {
                             value={tradeAmount} 
                             onChange={(e) => setTradeAmount(e.target.value)}
                             onFocus={(e) => e.target.select()}
-                            className="text-lg py-6 bg-obsidian"
+                            className="text-lg py-6 bg-background"
                           />
                         </div>
                         <div className="flex gap-3">
                           <Button 
                             size="lg" 
-                            className="flex-1 bg-green-600 hover:bg-green-700 h-auto px-6 py-4 md:py-2"
+                            className="flex-1 bg-green-600 hover:bg-green-700 h-auto px-6 py-4 md:py-2 text-white"
                             onClick={() => handleAddTrade('win')}
                           >
                             <TrendingUp className="h-6 w-6" />
                           </Button>
                           <Button 
                             size="lg" 
-                            className="flex-1 bg-red-600 hover:bg-red-700 h-auto px-6 py-4 md:py-2"
+                            className="flex-1 bg-red-600 hover:bg-red-700 h-auto px-6 py-4 md:py-2 text-white"
                             onClick={() => handleAddTrade('loss')}
                           >
                             <TrendingDown className="h-6 w-6" />
@@ -415,7 +421,7 @@ export default function Dashboard() {
                 </CardContent>
               </Card>
 
-              <Card className="bg-card/50 border-border">
+              <Card className="bg-card border-border">
                 <CardHeader>
                   <CardTitle className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Session Performance</CardTitle>
                 </CardHeader>
@@ -425,7 +431,7 @@ export default function Dashboard() {
                       <span className="text-muted-foreground">Win Rate</span>
                       <span className="font-bold">{stats.winRate.toFixed(1)}%</span>
                     </div>
-                    <div className="w-full bg-obsidian rounded-full h-2">
+                    <div className="w-full bg-secondary rounded-full h-2">
                       <div 
                         className="bg-sky-blue h-2 rounded-full glow-accent transition-all duration-1000" 
                         style={{ width: `${stats.winRate}%` }} 
@@ -463,7 +469,7 @@ export default function Dashboard() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pb-12">
-              <Card className="bg-card/30 border-border">
+              <Card className="bg-card/50 border-border">
                 <CardHeader className="flex flex-row items-center justify-between">
                   <div>
                     <CardTitle className="text-lg">Trade Log</CardTitle>
@@ -483,7 +489,7 @@ export default function Dashboard() {
                         </div>
                       )}
                       {stats.allTrades.slice(0, 10).map((trade) => (
-                        <div key={trade.id} className="flex items-center justify-between p-3 rounded-lg bg-obsidian/50 border border-border/30">
+                        <div key={trade.id} className="flex items-center justify-between p-3 rounded-lg bg-background border border-border/30">
                           <div className="flex items-center gap-3">
                             <div className={cn(
                               "p-2 rounded-md",
