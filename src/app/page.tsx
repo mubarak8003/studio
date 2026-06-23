@@ -22,7 +22,9 @@ import {
   Info,
   Target,
   PenLine,
-  Menu
+  Menu,
+  ArrowLeft,
+  Trash2
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -37,7 +39,6 @@ import { AICoachPanel } from '@/components/recoup/ai-coach-panel';
 import { ModeToggle } from '@/components/mode-toggle';
 import { cn } from '@/lib/utils';
 
-// Move component outside of Dashboard to prevent focus loss during typing
 const StrategySettings = ({ store, stats }: { store: any, stats: any }) => {
   const [localBaseStake, setLocalBaseStake] = useState(store.baseStake.toString());
   const [localManualDrawdown, setLocalManualDrawdown] = useState(store.manualDrawdown.toString());
@@ -355,198 +356,281 @@ export default function Dashboard() {
           </div>
         </aside>
 
-        {/* Main Content */}
+        {/* Main Content Area */}
         <main className="flex-1 min-h-svh p-4 md:p-10 bg-background/40 overflow-x-hidden">
-          <div className="max-w-5xl mx-auto space-y-8">
-            <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-              <div>
-                <h2 className="text-2xl md:text-3xl font-headline font-bold mb-1">Trading Control</h2>
-                <p className="text-muted-foreground text-xs md:text-sm">
-                  {store.activeSession ? 'Session in progress...' : 'Start a session to begin tracking.'}
-                </p>
-              </div>
-              <div className="flex items-center gap-3 w-full md:w-auto">
-                {store.activeSession ? (
-                  <Button variant="destructive" className="flex-1 md:flex-none gap-2" onClick={store.stopSession}>
-                    <StopCircle className="h-4 w-4" /> Stop Session
-                  </Button>
-                ) : (
-                  <Button variant="default" className="flex-1 md:flex-none gap-2 bg-primary hover:bg-primary/90 glow-primary" onClick={store.startSession}>
-                    <PlayCircle className="h-4 w-4" /> Start Session
-                  </Button>
-                )}
-              </div>
-            </header>
-
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              <Card className="lg:col-span-2 bg-card border-primary/20 backdrop-blur-md relative overflow-hidden">
-                <div className="absolute top-0 right-0 p-4 opacity-5 hidden md:block">
-                  <Calculator className="h-24 w-24" />
-                </div>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-sky-blue text-lg md:text-xl">
-                    <Calculator className="h-5 w-5" /> Recommended Entry
-                  </CardTitle>
-                  <CardDescription className="text-xs md:text-sm">
-                    Stake size to recover <b>${stats.currentDrawdown.toFixed(2)}</b> in <b>{store.recoveryTargetWins}</b> winning trades
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex flex-col items-center justify-center py-6 md:py-8">
-                    <div className="text-6xl md:text-8xl font-headline font-bold text-foreground">
-                      ${stats.nextStake.toFixed(2)}
-                    </div>
-                    <div className="mt-4 flex flex-col items-center gap-2">
-                      <Badge variant={stats.currentDrawdown > 0 ? "destructive" : "secondary"}>
-                        {store.useManualDrawdown ? 'Manual Target: ' : 'Session Loss: '}${stats.currentDrawdown.toFixed(2)}
-                      </Badge>
-                      {stats.currentDrawdown > 0 && (
-                        <p className="text-[10px] md:text-xs text-muted-foreground text-center max-w-xs px-4 leading-relaxed">
-                          Targeting <b>${stats.requiredProfitPerTrade.toFixed(2)}</b> profit per win. 
-                          Plan: {store.recoveryTargetWins} trades at {store.riskRewardRatio}x RR.
-                        </p>
-                      )}
-                    </div>
-                  </div>
-
-                  {store.activeSession && (
-                    <div className="mt-4 md:mt-8 pt-4 md:pt-8 border-t border-border/50">
-                      <div className="flex flex-col md:flex-row gap-3">
-                        <div className="flex-1">
-                          <Input 
-                            placeholder="Trade P/L Amount" 
-                            type="number" 
-                            inputMode="decimal"
-                            value={tradeAmount} 
-                            onChange={(e) => setTradeAmount(e.target.value)}
-                            onFocus={(e) => e.target.select()}
-                            className="text-lg py-6 bg-background"
-                          />
-                        </div>
-                        <div className="flex gap-3">
-                          <Button 
-                            size="lg" 
-                            className="flex-1 bg-green-600 hover:bg-green-700 h-auto px-6 py-4 md:py-2 text-white"
-                            onClick={() => handleAddTrade('win')}
-                          >
-                            <TrendingUp className="h-6 w-6" />
-                          </Button>
-                          <Button 
-                            size="lg" 
-                            className="flex-1 bg-red-600 hover:bg-red-700 h-auto px-6 py-4 md:py-2 text-white"
-                            onClick={() => handleAddTrade('loss')}
-                          >
-                            <TrendingDown className="h-6 w-6" />
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-
-              <Card className="bg-card border-border">
-                <CardHeader>
-                  <CardTitle className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Session Performance</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-6">
+          <div className="max-w-5xl mx-auto space-y-8 animate-in fade-in duration-500">
+            {!showHistory ? (
+              <>
+                {/* Dashboard View */}
+                <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                   <div>
-                    <div className="flex justify-between text-sm mb-2">
-                      <span className="text-muted-foreground">Win Rate</span>
-                      <span className="font-bold">{stats.winRate.toFixed(1)}%</span>
-                    </div>
-                    <div className="w-full bg-secondary rounded-full h-2">
-                      <div 
-                        className="bg-sky-blue h-2 rounded-full glow-accent transition-all duration-1000" 
-                        style={{ width: `${stats.winRate}%` }} 
-                      />
-                    </div>
+                    <h2 className="text-2xl md:text-3xl font-headline font-bold mb-1">Trading Control</h2>
+                    <p className="text-muted-foreground text-xs md:text-sm">
+                      {store.activeSession ? 'Session in progress...' : 'Start a session to begin tracking.'}
+                    </p>
                   </div>
+                  <div className="flex items-center gap-3 w-full md:w-auto">
+                    {store.activeSession ? (
+                      <Button variant="destructive" className="flex-1 md:flex-none gap-2" onClick={store.stopSession}>
+                        <StopCircle className="h-4 w-4" /> Stop Session
+                      </Button>
+                    ) : (
+                      <Button variant="default" className="flex-1 md:flex-none gap-2 bg-primary hover:bg-primary/90 glow-primary" onClick={store.startSession}>
+                        <PlayCircle className="h-4 w-4" /> Start Session
+                      </Button>
+                    )}
+                  </div>
+                </header>
 
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-1">
-                      <span className="text-[10px] text-muted-foreground uppercase tracking-tight">Net Balance</span>
-                      <div className={cn("text-lg md:text-xl font-headline font-bold", stats.netPnL >= 0 ? "text-green-500" : "text-red-500")}>
-                        {stats.netPnL >= 0 ? '+' : ''}{stats.netPnL.toFixed(2)}
-                      </div>
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                  <Card className="lg:col-span-2 bg-card border-primary/20 backdrop-blur-md relative overflow-hidden">
+                    <div className="absolute top-0 right-0 p-4 opacity-5 hidden md:block">
+                      <Calculator className="h-24 w-24" />
                     </div>
-                    <div className="space-y-1">
-                      <span className="text-[10px] text-muted-foreground uppercase tracking-tight">Current Drawdown</span>
-                      <div className="text-lg md:text-xl font-headline font-bold text-red-400">
-                        ${Math.max(0, -stats.netPnL).toFixed(2)}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="space-y-3 pt-4 border-t border-border/50">
-                     <div className="flex justify-between items-center text-sm">
-                        <span className="text-muted-foreground flex items-center gap-2"><Plus className="h-3 w-3 text-green-500" /> Avg Win</span>
-                        <span>${stats.avgWin.toFixed(2)}</span>
-                     </div>
-                     <div className="flex justify-between items-center text-sm">
-                        <span className="text-muted-foreground flex items-center gap-2"><div className="h-[2px] w-3 bg-red-500" /> Avg Loss</span>
-                        <span>${stats.avgLoss.toFixed(2)}</span>
-                     </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pb-12">
-              <Card className="bg-card/50 border-border">
-                <CardHeader className="flex flex-row items-center justify-between">
-                  <div>
-                    <CardTitle className="text-lg">Trade Log</CardTitle>
-                    <CardDescription className="text-xs">Recent entries</CardDescription>
-                  </div>
-                  <Button variant="ghost" size="sm" onClick={() => setShowHistory(true)} className="text-xs">
-                    View All <ChevronRight className="h-4 w-4 ml-1" />
-                  </Button>
-                </CardHeader>
-                <CardContent>
-                  <ScrollArea className="h-64">
-                    <div className="space-y-3">
-                      {stats.allTrades.length === 0 && (
-                        <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
-                          <Activity className="h-8 w-8 mb-2 opacity-20" />
-                          <p className="text-sm">Waiting for first trade...</p>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2 text-sky-blue text-lg md:text-xl">
+                        <Calculator className="h-5 w-5" /> Recommended Entry
+                      </CardTitle>
+                      <CardDescription className="text-xs md:text-sm">
+                        Stake size to recover <b>${stats.currentDrawdown.toFixed(2)}</b> in <b>{store.recoveryTargetWins}</b> winning trades
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="flex flex-col items-center justify-center py-6 md:py-8">
+                        <div className="text-6xl md:text-8xl font-headline font-bold text-foreground">
+                          ${stats.nextStake.toFixed(2)}
                         </div>
-                      )}
-                      {stats.allTrades.slice(0, 10).map((trade) => (
-                        <div key={trade.id} className="flex items-center justify-between p-3 rounded-lg bg-background border border-border/30">
-                          <div className="flex items-center gap-3">
-                            <div className={cn(
-                              "p-2 rounded-md",
-                              trade.type === 'win' ? "bg-green-500/10 text-green-500" : "bg-red-500/10 text-red-500"
-                            )}>
-                              {trade.type === 'win' ? <TrendingUp className="h-4 w-4" /> : <TrendingDown className="h-4 w-4" />}
+                        <div className="mt-4 flex flex-col items-center gap-2">
+                          <Badge variant={stats.currentDrawdown > 0 ? "destructive" : "secondary"}>
+                            {store.useManualDrawdown ? 'Manual Target: ' : 'Session Loss: '}${stats.currentDrawdown.toFixed(2)}
+                          </Badge>
+                          {stats.currentDrawdown > 0 && (
+                            <p className="text-[10px] md:text-xs text-muted-foreground text-center max-w-xs px-4 leading-relaxed">
+                              Targeting <b>${stats.requiredProfitPerTrade.toFixed(2)}</b> profit per win. 
+                              Plan: {store.recoveryTargetWins} trades at {store.riskRewardRatio}x RR.
+                            </p>
+                          )}
+                        </div>
+                      </div>
+
+                      {store.activeSession && (
+                        <div className="mt-4 md:mt-8 pt-4 md:pt-8 border-t border-border/50">
+                          <div className="flex flex-col md:flex-row gap-3">
+                            <div className="flex-1">
+                              <Input 
+                                placeholder="Trade P/L Amount" 
+                                type="number" 
+                                inputMode="decimal"
+                                value={tradeAmount} 
+                                onChange={(e) => setTradeAmount(e.target.value)}
+                                onFocus={(e) => e.target.select()}
+                                className="text-lg py-6 bg-background"
+                              />
                             </div>
-                            <div>
-                              <p className="text-sm font-semibold">${trade.amount.toFixed(2)}</p>
-                              <p className="text-[10px] text-muted-foreground">{trade.timestamp.toLocaleTimeString()}</p>
+                            <div className="flex gap-3">
+                              <Button 
+                                size="lg" 
+                                className="flex-1 bg-green-600 hover:bg-green-700 h-auto px-6 py-4 md:py-2 text-white"
+                                onClick={() => handleAddTrade('win')}
+                              >
+                                <TrendingUp className="h-6 w-6" />
+                              </Button>
+                              <Button 
+                                size="lg" 
+                                className="flex-1 bg-red-600 hover:bg-red-700 h-auto px-6 py-4 md:py-2 text-white"
+                                onClick={() => handleAddTrade('loss')}
+                              >
+                                <TrendingDown className="h-6 w-6" />
+                              </Button>
                             </div>
                           </div>
-                          <Badge variant="outline" className={cn(
-                            "text-[10px]",
-                            trade.type === 'win' ? "text-green-500 border-green-500/30" : "text-red-500 border-red-500/30"
-                          )}>
-                            {trade.type.toUpperCase()}
-                          </Badge>
                         </div>
-                      ))}
-                    </div>
-                  </ScrollArea>
-                </CardContent>
-              </Card>
+                      )}
+                    </CardContent>
+                  </Card>
 
-              <AICoachPanel 
-                totalCurrentLoss={stats.currentDrawdown}
-                recoveryTargetWins={store.recoveryTargetWins}
-                recentWinRatePercentage={stats.winRate}
-                averageWinAmount={stats.avgWin}
-                averageLossAmount={stats.avgLoss}
-              />
-            </div>
+                  <Card className="bg-card border-border">
+                    <CardHeader>
+                      <CardTitle className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Session Performance</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-6">
+                      <div>
+                        <div className="flex justify-between text-sm mb-2">
+                          <span className="text-muted-foreground">Win Rate</span>
+                          <span className="font-bold">{stats.winRate.toFixed(1)}%</span>
+                        </div>
+                        <div className="w-full bg-secondary rounded-full h-2">
+                          <div 
+                            className="bg-sky-blue h-2 rounded-full glow-accent transition-all duration-1000" 
+                            style={{ width: `${stats.winRate}%` }} 
+                          />
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-1">
+                          <span className="text-[10px] text-muted-foreground uppercase tracking-tight">Net Balance</span>
+                          <div className={cn("text-lg md:text-xl font-headline font-bold", stats.netPnL >= 0 ? "text-green-500" : "text-red-500")}>
+                            {stats.netPnL >= 0 ? '+' : ''}{stats.netPnL.toFixed(2)}
+                          </div>
+                        </div>
+                        <div className="space-y-1">
+                          <span className="text-[10px] text-muted-foreground uppercase tracking-tight">Current Drawdown</span>
+                          <div className="text-lg md:text-xl font-headline font-bold text-red-400">
+                            ${Math.max(0, -stats.netPnL).toFixed(2)}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="space-y-3 pt-4 border-t border-border/50">
+                         <div className="flex justify-between items-center text-sm">
+                            <span className="text-muted-foreground flex items-center gap-2"><Plus className="h-3 w-3 text-green-500" /> Avg Win</span>
+                            <span>${stats.avgWin.toFixed(2)}</span>
+                         </div>
+                         <div className="flex justify-between items-center text-sm">
+                            <span className="text-muted-foreground flex items-center gap-2"><div className="h-[2px] w-3 bg-red-500" /> Avg Loss</span>
+                            <span>${stats.avgLoss.toFixed(2)}</span>
+                         </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pb-12">
+                  <Card className="bg-card/50 border-border">
+                    <CardHeader className="flex flex-row items-center justify-between">
+                      <div>
+                        <CardTitle className="text-lg">Trade Log</CardTitle>
+                        <CardDescription className="text-xs">Recent entries</CardDescription>
+                      </div>
+                      <Button variant="outline" size="sm" onClick={() => setShowHistory(true)} className="text-xs bg-sky-blue/10 text-sky-blue border-sky-blue/30 hover:bg-sky-blue/20">
+                        View All <ChevronRight className="h-4 w-4 ml-1" />
+                      </Button>
+                    </CardHeader>
+                    <CardContent>
+                      <ScrollArea className="h-64">
+                        <div className="space-y-3">
+                          {stats.allTrades.length === 0 && (
+                            <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+                              <Activity className="h-8 w-8 mb-2 opacity-20" />
+                              <p className="text-sm">Waiting for first trade...</p>
+                            </div>
+                          )}
+                          {stats.allTrades.slice(0, 10).map((trade) => (
+                            <div key={trade.id} className="flex items-center justify-between p-3 rounded-lg bg-background border border-border/30">
+                              <div className="flex items-center gap-3">
+                                <div className={cn(
+                                  "p-2 rounded-md",
+                                  trade.type === 'win' ? "bg-green-500/10 text-green-500" : "bg-red-500/10 text-red-500"
+                                )}>
+                                  {trade.type === 'win' ? <TrendingUp className="h-4 w-4" /> : <TrendingDown className="h-4 w-4" />}
+                                </div>
+                                <div>
+                                  <p className="text-sm font-semibold">${trade.amount.toFixed(2)}</p>
+                                  <p className="text-[10px] text-muted-foreground">{trade.timestamp.toLocaleTimeString()}</p>
+                                </div>
+                              </div>
+                              <Badge variant="outline" className={cn(
+                                "text-[10px]",
+                                trade.type === 'win' ? "text-green-500 border-green-500/30" : "text-red-500 border-red-500/30"
+                              )}>
+                                {trade.type.toUpperCase()}
+                              </Badge>
+                            </div>
+                          ))}
+                        </div>
+                      </ScrollArea>
+                    </CardContent>
+                  </Card>
+
+                  <AICoachPanel 
+                    totalCurrentLoss={stats.currentDrawdown}
+                    recoveryTargetWins={store.recoveryTargetWins}
+                    recentWinRatePercentage={stats.winRate}
+                    averageWinAmount={stats.avgWin}
+                    averageLossAmount={stats.avgLoss}
+                  />
+                </div>
+              </>
+            ) : (
+              /* History View */
+              <div className="space-y-6">
+                <header className="flex items-center justify-between mb-8">
+                  <div className="flex items-center gap-4">
+                    <Button variant="ghost" size="icon" onClick={() => setShowHistory(false)}>
+                      <ArrowLeft className="h-5 w-5" />
+                    </Button>
+                    <div>
+                      <h2 className="text-3xl font-headline font-bold">Trade History</h2>
+                      <p className="text-muted-foreground text-sm">Review all session activity and recorded trades.</p>
+                    </div>
+                  </div>
+                  <Badge variant="outline" className="px-4 py-1 text-sky-blue border-sky-blue/30">
+                    Total Trades: {stats.allTrades.length}
+                  </Badge>
+                </header>
+
+                <div className="grid grid-cols-1 gap-6">
+                  {stats.allTrades.length === 0 ? (
+                    <Card className="border-dashed border-2 flex flex-col items-center justify-center py-20 bg-background/50">
+                      <History className="h-12 w-12 text-muted-foreground mb-4 opacity-20" />
+                      <h3 className="text-lg font-semibold">No history yet</h3>
+                      <p className="text-muted-foreground text-sm mb-6">Your recorded trades will appear here.</p>
+                      <Button onClick={() => setShowHistory(false)}>Return to Dashboard</Button>
+                    </Card>
+                  ) : (
+                    <Card className="bg-card">
+                      <CardHeader className="flex flex-row items-center justify-between">
+                        <CardTitle className="text-lg">Full Audit Log</CardTitle>
+                        <div className="flex items-center gap-4">
+                           <div className="flex items-center gap-4 text-sm mr-4 hidden md:flex">
+                              <span className="flex items-center gap-1 text-green-500"><TrendingUp className="h-3 w-3" /> {stats.wins.length} Wins</span>
+                              <span className="flex items-center gap-1 text-red-500"><TrendingDown className="h-3 w-3" /> {stats.losses.length} Losses</span>
+                           </div>
+                        </div>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-4">
+                          {stats.allTrades.map((trade, idx) => (
+                            <div key={trade.id} className="flex items-center justify-between p-4 rounded-xl bg-background border border-border/30 hover:border-primary/20 transition-colors">
+                              <div className="flex items-center gap-4">
+                                <div className="text-xs text-muted-foreground font-mono w-6">#{stats.allTrades.length - idx}</div>
+                                <div className={cn(
+                                  "p-3 rounded-xl",
+                                  trade.type === 'win' ? "bg-green-500/10 text-green-500" : "bg-red-500/10 text-red-500"
+                                )}>
+                                  {trade.type === 'win' ? <TrendingUp className="h-5 w-5" /> : <TrendingDown className="h-5 w-5" />}
+                                </div>
+                                <div>
+                                  <div className="flex items-center gap-2">
+                                    <p className="text-lg font-bold">${trade.amount.toFixed(2)}</p>
+                                    <Badge variant="outline" className={cn(
+                                      "text-[10px] h-5",
+                                      trade.type === 'win' ? "text-green-500 border-green-500/30" : "text-red-500 border-red-500/30"
+                                    )}>
+                                      {trade.type.toUpperCase()}
+                                    </Badge>
+                                  </div>
+                                  <p className="text-xs text-muted-foreground">
+                                    {trade.timestamp.toLocaleDateString()} at {trade.timestamp.toLocaleTimeString()}
+                                  </p>
+                                </div>
+                              </div>
+                              <div className="text-right hidden sm:block">
+                                <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-semibold">Status</p>
+                                <p className={cn("text-xs font-bold", trade.type === 'win' ? "text-green-500" : "text-red-500")}>
+                                  {trade.type === 'win' ? 'PROFIT' : 'LOSS'}
+                                </p>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         </main>
       </div>
