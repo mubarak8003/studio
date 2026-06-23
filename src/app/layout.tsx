@@ -1,5 +1,5 @@
 
-import type {Metadata, Viewport} from 'next';
+import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 
@@ -8,14 +8,13 @@ const logoImage = PlaceHolderImages.find(img => img.id === 'app-logo');
 export const metadata: Metadata = {
   title: 'RecoupPro | Trading Recovery Strategy Coach',
   description: 'Master your recovery with algorithmic precision and AI coaching.',
-  manifest: '/manifest.json',
   icons: {
     icon: logoImage?.imageUrl || '/favicon.ico',
     apple: logoImage?.imageUrl || '/apple-icon.png',
   },
   appleWebApp: {
     capable: true,
-    statusBarStyle: 'default',
+    statusBarStyle: 'black-translucent',
     title: 'RecoupPro',
     startupImage: logoImage?.imageUrl ? [logoImage.imageUrl] : undefined,
   },

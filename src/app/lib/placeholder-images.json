@@ -3,9 +3,9 @@
   "placeholderImages": [
     {
       "id": "app-logo",
-      "description": "Premium mountain landscape logo",
-      "imageUrl": "https://picsum.photos/seed/recouppro/600/600",
-      "imageHint": "mountains landscape"
+      "description": "Premium mountain landscape logo reflecting in water",
+      "imageUrl": "https://picsum.photos/seed/recouppro-mountain/600/600",
+      "imageHint": "mountain lake reflection"
     }
   ]
 }
