@@ -251,7 +251,7 @@ export default function Dashboard() {
     const allTrades = [
       ...(store.activeSession?.trades || []),
       ...store.sessions.flatMap(s => s.trades)
-    ];
+    ].sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
     
     const wins = allTrades.filter(t => t.type === 'win');
     const losses = allTrades.filter(t => t.type === 'loss');
