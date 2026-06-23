@@ -3,6 +3,8 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
 import { useRecoupStore } from './lib/store';
+import Image from 'next/image';
+import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { 
   TrendingUp, 
   TrendingDown, 
@@ -18,7 +20,6 @@ import {
   ShieldAlert,
   ShieldCheck,
   Shield,
-  Info,
   Target,
   PenLine,
   Menu,
@@ -51,44 +52,27 @@ import { ModeToggle } from '@/components/mode-toggle';
 import { cn } from '@/lib/utils';
 
 /**
- * Enhanced Logo inspired by professional trading charts
+ * Premium Logo using the selected landscape image
  */
-const AppLogo = ({ className }: { className?: string }) => (
-  <svg 
-    viewBox="0 0 100 100" 
-    fill="none" 
-    xmlns="http://www.w3.org/2000/svg" 
-    className={className}
-  >
-    {/* Stylized Bars representing growth */}
-    <rect x="30" y="45" width="10" height="35" rx="2" fill="currentColor" opacity="0.3" />
-    <rect x="50" y="30" width="10" height="50" rx="2" fill="currentColor" opacity="0.6" />
-    <rect x="70" y="15" width="10" height="65" rx="2" fill="currentColor" />
-    
-    {/* The Dynamic Zigzag Arrow line */}
-    <path 
-      d="M10 70L35 45L55 60L85 20" 
-      stroke="currentColor" 
-      strokeWidth="8" 
-      strokeLinecap="round" 
-      strokeLinejoin="round" 
-    />
-    
-    {/* Arrow Head */}
-    <path 
-      d="M70 20H85V35" 
-      stroke="currentColor" 
-      strokeWidth="8" 
-      strokeLinecap="round" 
-      strokeLinejoin="round" 
-    />
-    
-    {/* Dynamic Speed Elements at the start of the trend */}
-    <circle cx="12" cy="78" r="3" fill="currentColor" opacity="0.5" />
-    <circle cx="5" cy="85" r="2" fill="currentColor" opacity="0.3" />
-    <path d="M5 70H12" stroke="currentColor" strokeWidth="3" strokeLinecap="round" opacity="0.4" />
-  </svg>
-);
+const AppLogo = ({ className }: { className?: string }) => {
+  const logoImage = PlaceHolderImages.find(img => img.id === 'app-logo');
+  
+  return (
+    <div className={cn("relative overflow-hidden rounded-xl shadow-lg ring-1 ring-white/20", className)}>
+      {logoImage ? (
+        <Image 
+          src={logoImage.imageUrl} 
+          alt="RecoupPro Logo" 
+          fill
+          className="object-cover"
+          data-ai-hint={logoImage.imageHint}
+        />
+      ) : (
+        <div className="w-full h-full bg-primary flex items-center justify-center text-white font-bold">RP</div>
+      )}
+    </div>
+  );
+};
 
 const StrategySettings = ({ store, stats }: { store: any, stats: any }) => {
   const [localBaseStake, setLocalBaseStake] = useState(store.baseStake.toString());
@@ -352,9 +336,7 @@ export default function Dashboard() {
       {/* Mobile Top Navigation */}
       <header className="md:hidden sticky top-0 flex items-center justify-between p-4 border-b border-border bg-card/80 backdrop-blur-md z-40">
         <div className="flex items-center gap-3">
-          <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center glow-primary shadow-lg ring-1 ring-white/20">
-            <AppLogo className="text-white h-7 w-7" />
-          </div>
+          <AppLogo className="h-10 w-10" />
           <h1 className="text-xl font-headline font-bold text-primary tracking-tight">RecoupPro</h1>
         </div>
         <div className="flex items-center gap-2">
@@ -369,9 +351,7 @@ export default function Dashboard() {
               <div className="p-6 border-b border-border">
                 <SheetHeader>
                   <SheetTitle className="text-left flex items-center gap-3">
-                    <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-primary to-accent flex items-center justify-center glow-primary">
-                      <AppLogo className="h-6 w-6 text-white" />
-                    </div>
+                    <AppLogo className="h-8 w-8" />
                     <span>Strategy Coach</span>
                   </SheetTitle>
                 </SheetHeader>
@@ -406,9 +386,7 @@ export default function Dashboard() {
         <aside className="w-80 border-r border-border bg-card/50 hidden md:flex flex-col p-6 sticky top-0 h-svh overflow-y-auto">
           <div className="flex items-center justify-between mb-8">
             <div className="flex items-center gap-3">
-              <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-primary to-accent flex items-center justify-center glow-primary shadow-xl ring-2 ring-white/10">
-                <AppLogo className="text-white h-9 w-9" />
-              </div>
+              <AppLogo className="h-12 w-12" />
               <div className="flex flex-col">
                 <h1 className="text-2xl font-headline font-bold text-primary leading-none tracking-tight">RecoupPro</h1>
                 <span className="text-[10px] text-muted-foreground font-semibold uppercase tracking-widest mt-1">Smart Recovery</span>
