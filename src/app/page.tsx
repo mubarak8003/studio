@@ -60,7 +60,6 @@ export default function Dashboard() {
     
     const netPnL = totalProfit - totalLoss;
     
-    // Determine which loss amount to use
     const currentDrawdown = store.useManualDrawdown 
       ? store.manualDrawdown 
       : (netPnL < 0 ? Math.abs(netPnL) : 0);
@@ -106,11 +105,12 @@ export default function Dashboard() {
   };
 
   const StrategySettings = () => (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-20 md:pb-0">
       <div className="space-y-3">
         <label className="text-xs font-medium text-muted-foreground">Base Stake ($)</label>
         <Input 
           type="number" 
+          inputMode="decimal"
           value={store.baseStake} 
           onChange={(e) => store.setBaseStake(Number(e.target.value))}
           className="bg-obsidian border-border"
@@ -149,6 +149,7 @@ export default function Dashboard() {
             <label className="text-[10px] text-muted-foreground uppercase">Loss to Recover ($)</label>
             <Input 
               type="number" 
+              inputMode="decimal"
               placeholder="Enter amount..."
               value={store.manualDrawdown} 
               onChange={(e) => store.setManualDrawdown(Number(e.target.value))}
@@ -165,6 +166,7 @@ export default function Dashboard() {
           </label>
           <Input 
             type="number"
+            inputMode="numeric"
             value={store.recoveryTargetWins}
             onChange={(e) => store.setRecoveryTargetWins(Math.max(1, Number(e.target.value)))}
             className="w-16 h-7 text-xs bg-obsidian text-right"
@@ -208,9 +210,9 @@ export default function Dashboard() {
   if (!mounted) return null;
 
   return (
-    <div className="flex flex-col h-screen overflow-hidden">
+    <div className="flex flex-col min-h-svh overflow-x-hidden">
       {/* Mobile Top Navigation */}
-      <header className="md:hidden flex items-center justify-between p-4 border-b border-border bg-card/80 backdrop-blur-md z-50">
+      <header className="md:hidden sticky top-0 flex items-center justify-between p-4 border-b border-border bg-card/80 backdrop-blur-md z-40">
         <div className="flex items-center gap-2">
           <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center glow-primary">
             <BrainCircuit className="text-primary-foreground h-5 w-5" />
@@ -223,38 +225,42 @@ export default function Dashboard() {
               <Menu className="h-6 w-6" />
             </Button>
           </SheetTrigger>
-          <SheetContent side="left" className="w-80 bg-card border-r border-border p-6 overflow-y-auto">
-            <SheetHeader className="mb-8">
-              <SheetTitle className="text-left flex items-center gap-3">
-                <BrainCircuit className="h-6 w-6 text-primary" />
-                <span>Strategy Coach</span>
-              </SheetTitle>
-            </SheetHeader>
-            <div className="space-y-8">
-              <nav className="space-y-2">
-                <Button variant={!showHistory ? "secondary" : "ghost"} className="w-full justify-start gap-3" onClick={() => setShowHistory(false)}>
-                  <Activity className="h-4 w-4" /> Dashboard
-                </Button>
-                <Button variant={showHistory ? "secondary" : "ghost"} className="w-full justify-start gap-3" onClick={() => setShowHistory(true)}>
-                  <History className="h-4 w-4" /> History
-                </Button>
-              </nav>
-              <Separator />
-              <div className="space-y-6">
-                <div className="flex items-center gap-2">
-                  <Settings2 className="h-4 w-4 text-muted-foreground" />
-                  <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Strategy Engine</h3>
+          <SheetContent side="left" className="w-[85vw] max-w-sm bg-card border-r border-border p-0 flex flex-col">
+            <div className="p-6 border-b border-border">
+              <SheetHeader>
+                <SheetTitle className="text-left flex items-center gap-3">
+                  <BrainCircuit className="h-6 w-6 text-primary" />
+                  <span>Strategy Coach</span>
+                </SheetTitle>
+              </SheetHeader>
+            </div>
+            <div className="flex-1 overflow-y-auto p-6 scroll-smooth">
+              <div className="space-y-8">
+                <nav className="space-y-2">
+                  <Button variant={!showHistory ? "secondary" : "ghost"} className="w-full justify-start gap-3" onClick={() => setShowHistory(false)}>
+                    <Activity className="h-4 w-4" /> Dashboard
+                  </Button>
+                  <Button variant={showHistory ? "secondary" : "ghost"} className="w-full justify-start gap-3" onClick={() => setShowHistory(true)}>
+                    <History className="h-4 w-4" /> History
+                  </Button>
+                </nav>
+                <Separator />
+                <div className="space-y-6">
+                  <div className="flex items-center gap-2">
+                    <Settings2 className="h-4 w-4 text-muted-foreground" />
+                    <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Strategy Engine</h3>
+                  </div>
+                  <StrategySettings />
                 </div>
-                <StrategySettings />
               </div>
             </div>
           </SheetContent>
         </Sheet>
       </header>
 
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex flex-1 relative">
         {/* Desktop Sidebar */}
-        <aside className="w-80 border-r border-border bg-card/50 hidden md:flex flex-col p-6 overflow-y-auto">
+        <aside className="w-80 border-r border-border bg-card/50 hidden md:flex flex-col p-6 sticky top-0 h-svh overflow-y-auto">
           <div className="flex items-center gap-3 mb-8">
             <div className="h-10 w-10 rounded-xl bg-primary flex items-center justify-center glow-primary">
               <BrainCircuit className="text-primary-foreground h-6 w-6" />
@@ -283,7 +289,7 @@ export default function Dashboard() {
         </aside>
 
         {/* Main Content */}
-        <main className="flex-1 overflow-y-auto p-4 md:p-10 bg-obsidian/40 relative">
+        <main className="flex-1 min-h-svh p-4 md:p-10 bg-obsidian/40 overflow-x-hidden">
           <div className="max-w-5xl mx-auto space-y-8">
             <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
               <div>
@@ -320,7 +326,7 @@ export default function Dashboard() {
                 </CardHeader>
                 <CardContent>
                   <div className="flex flex-col items-center justify-center py-6 md:py-8">
-                    <div key={stats.nextStake} className="text-6xl md:text-8xl font-headline font-bold text-foreground animate-counter-up">
+                    <div className="text-6xl md:text-8xl font-headline font-bold text-foreground">
                       ${stats.nextStake.toFixed(2)}
                     </div>
                     <div className="mt-4 flex flex-col items-center gap-2">
@@ -328,7 +334,7 @@ export default function Dashboard() {
                         {store.useManualDrawdown ? 'Manual Target: ' : 'Session Loss: '}${stats.currentDrawdown.toFixed(2)}
                       </Badge>
                       {stats.currentDrawdown > 0 && (
-                        <p className="text-[10px] md:text-xs text-muted-foreground text-center max-w-xs px-4">
+                        <p className="text-[10px] md:text-xs text-muted-foreground text-center max-w-xs px-4 leading-relaxed">
                           Targeting <b>${stats.requiredProfitPerTrade.toFixed(2)}</b> profit per win. 
                           Plan: {store.recoveryTargetWins} trades at {store.riskRewardRatio}x RR.
                         </p>
@@ -343,6 +349,7 @@ export default function Dashboard() {
                           <Input 
                             placeholder="Trade P/L Amount" 
                             type="number" 
+                            inputMode="decimal"
                             value={tradeAmount} 
                             onChange={(e) => setTradeAmount(e.target.value)}
                             className="text-lg py-6 bg-obsidian"
@@ -417,7 +424,7 @@ export default function Dashboard() {
               </Card>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pb-12">
               <Card className="bg-card/30 border-border">
                 <CardHeader className="flex flex-row items-center justify-between">
                   <div>
