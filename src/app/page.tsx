@@ -1,4 +1,3 @@
-
 "use client"
 
 import React, { useState, useMemo, useEffect } from 'react';
@@ -19,7 +18,9 @@ import {
   ShieldAlert,
   ShieldCheck,
   Shield,
-  Info
+  Info,
+  Target,
+  PenLine
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -28,6 +29,7 @@ import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Slider } from '@/components/ui/slider';
+import { Switch } from '@/components/ui/switch';
 import { AICoachPanel } from '@/components/recoup/ai-coach-panel';
 import { cn } from '@/lib/utils';
 
@@ -37,7 +39,6 @@ export default function Dashboard() {
   const [showHistory, setShowHistory] = useState(false);
   const [mounted, setMounted] = useState(false);
 
-  // Avoid hydration mismatch
   useEffect(() => {
     setMounted(true);
   }, []);
@@ -55,7 +56,11 @@ export default function Dashboard() {
     const totalLoss = losses.reduce((sum, t) => sum + t.amount, 0);
     
     const netPnL = totalProfit - totalLoss;
-    const currentDrawdown = netPnL < 0 ? Math.abs(netPnL) : 0;
+    
+    // Determine which loss amount to use
+    const currentDrawdown = store.useManualDrawdown 
+      ? store.manualDrawdown 
+      : (netPnL < 0 ? Math.abs(netPnL) : 0);
     
     const requiredProfitPerTrade = currentDrawdown > 0 
       ? currentDrawdown / store.recoveryTargetWins 
@@ -64,7 +69,6 @@ export default function Dashboard() {
     const recoveryStakeAdjustment = requiredProfitPerTrade / (store.riskRewardRatio || 1);
     const nextStake = store.baseStake + recoveryStakeAdjustment;
     
-    // Risk assessment based on how aggressive the recovery is
     let riskLevel: 'low' | 'medium' | 'high' = 'low';
     if (currentDrawdown > 0) {
       const recoveryRatio = recoveryStakeAdjustment / store.baseStake;
@@ -155,21 +159,48 @@ export default function Dashboard() {
               />
             </div>
 
+            <div className="space-y-4 pt-4 border-t border-border/30">
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-medium text-muted-foreground flex items-center gap-2">
+                  <PenLine className="h-3 w-3" /> Manual Loss Recovery
+                </label>
+                <Switch 
+                  checked={store.useManualDrawdown} 
+                  onCheckedChange={store.setUseManualDrawdown} 
+                />
+              </div>
+              
+              {store.useManualDrawdown && (
+                <div className="space-y-2 animate-in fade-in slide-in-from-top-1">
+                  <label className="text-[10px] text-muted-foreground uppercase">Loss to Recover ($)</label>
+                  <Input 
+                    type="number" 
+                    placeholder="Enter amount..."
+                    value={store.manualDrawdown} 
+                    onChange={(e) => store.setManualDrawdown(Number(e.target.value))}
+                    className="bg-obsidian border-border h-8 text-xs"
+                  />
+                </div>
+              )}
+            </div>
+
             <div className="space-y-3">
               <div className="flex justify-between items-center">
-                <label className="text-xs font-medium text-muted-foreground">Recovery Wins</label>
+                <label className="text-xs font-medium text-muted-foreground flex items-center gap-2">
+                  <Target className="h-3 w-3" /> Recovery Wins
+                </label>
                 <span className="text-xs font-bold text-primary">{store.recoveryTargetWins} trades</span>
               </div>
               <Slider 
                 value={[store.recoveryTargetWins]} 
                 min={1} 
-                max={20} 
+                max={30} 
                 step={1}
                 onValueChange={([val]) => store.setRecoveryTargetWins(val)}
               />
               <div className="flex items-center gap-1 text-[10px] text-muted-foreground italic">
                 <Info className="h-3 w-3" />
-                {store.recoveryTargetWins <= 5 ? 'Aggressive recovery' : store.recoveryTargetWins <= 12 ? 'Balanced recovery' : 'Conservative recovery'}.
+                {store.recoveryTargetWins <= 5 ? 'Aggressive recovery' : store.recoveryTargetWins <= 15 ? 'Balanced recovery' : 'Conservative recovery'}.
               </div>
             </div>
 
@@ -186,8 +217,8 @@ export default function Dashboard() {
                 Risk Profile: {stats.riskLevel}
               </div>
               <p className="text-[10px] text-muted-foreground leading-tight">
-                {stats.riskLevel === 'high' ? 'Warning: Recovery stake is very high compared to base stake. Consider increasing recovery trades.' : 
-                 stats.riskLevel === 'medium' ? 'Recovery is active. Manage your emotions carefully.' : 
+                {stats.riskLevel === 'high' ? 'Warning: Recovery stake is very high. Consider increasing recovery trades.' : 
+                 stats.riskLevel === 'medium' ? 'Recovery is active. Follow the plan strictly.' : 
                  'Strategy is within safe operational limits.'}
               </p>
             </div>
@@ -219,7 +250,6 @@ export default function Dashboard() {
           </header>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {/* Primary Calculator Card */}
             <Card className="md:col-span-2 bg-card/80 border-primary/20 backdrop-blur-md relative overflow-hidden">
               <div className="absolute top-0 right-0 p-4 opacity-5">
                 <Calculator className="h-24 w-24" />
@@ -228,7 +258,9 @@ export default function Dashboard() {
                 <CardTitle className="flex items-center gap-2 text-sky-blue">
                   <Calculator className="h-5 w-5" /> Recommended Entry
                 </CardTitle>
-                <CardDescription>Stake size based on {store.recoveryTargetWins} target recovery trades</CardDescription>
+                <CardDescription>
+                  Stake size to recover <b>${stats.currentDrawdown.toFixed(2)}</b> in <b>{store.recoveryTargetWins}</b> winning trades
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="flex flex-col items-center justify-center py-8">
@@ -237,12 +269,12 @@ export default function Dashboard() {
                   </div>
                   <div className="mt-4 flex flex-col items-center gap-2">
                     <Badge variant={stats.currentDrawdown > 0 ? "destructive" : "secondary"}>
-                      {stats.currentDrawdown > 0 ? `Total Loss: $${stats.currentDrawdown.toFixed(2)}` : 'No Active Loss'}
+                      {store.useManualDrawdown ? 'Manual Target: ' : 'Session Loss: '}${stats.currentDrawdown.toFixed(2)}
                     </Badge>
                     {stats.currentDrawdown > 0 && (
                       <p className="text-xs text-muted-foreground text-center max-w-xs">
-                        Attempting to recover in <b>{store.recoveryTargetWins}</b> wins. 
-                        Target profit per win: <b>${stats.requiredProfitPerTrade.toFixed(2)}</b>
+                        Targeting <b>${stats.requiredProfitPerTrade.toFixed(2)}</b> profit per win. 
+                        Plan: {store.recoveryTargetWins} trades at {store.riskRewardRatio}x RR.
                       </p>
                     )}
                   </div>
@@ -280,7 +312,6 @@ export default function Dashboard() {
               </CardContent>
             </Card>
 
-            {/* Quick Stats Card */}
             <Card className="bg-card/50 border-border">
               <CardHeader>
                 <CardTitle className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Session Performance</CardTitle>
@@ -307,9 +338,9 @@ export default function Dashboard() {
                     </div>
                   </div>
                   <div className="space-y-1">
-                    <span className="text-[10px] text-muted-foreground uppercase tracking-tight">Active Drawdown</span>
+                    <span className="text-[10px] text-muted-foreground uppercase tracking-tight">Current Drawdown</span>
                     <div className="text-xl font-headline font-bold text-red-400">
-                      ${stats.currentDrawdown.toFixed(2)}
+                      ${Math.max(0, -stats.netPnL).toFixed(2)}
                     </div>
                   </div>
                 </div>

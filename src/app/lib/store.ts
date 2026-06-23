@@ -23,6 +23,8 @@ export type AppState = {
   recoveryTargetWins: number;
   baseStake: number;
   riskRewardRatio: number;
+  manualDrawdown: number;
+  useManualDrawdown: boolean;
 };
 
 export function useRecoupStore() {
@@ -32,10 +34,11 @@ export function useRecoupStore() {
     activeSession: null,
     recoveryTargetWins: 3,
     baseStake: 10,
-    riskRewardRatio: 1
+    riskRewardRatio: 1,
+    manualDrawdown: 0,
+    useManualDrawdown: false
   });
 
-  // Handle initial hydration from localStorage
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('recouppro_state');
@@ -55,7 +58,9 @@ export function useRecoupStore() {
                startTime: new Date(parsed.activeSession.startTime),
                trades: (parsed.activeSession.trades || []).map((t: any) => ({ ...t, timestamp: new Date(t.timestamp) }))
             } : null,
-            riskRewardRatio: parsed.riskRewardRatio || 1
+            riskRewardRatio: parsed.riskRewardRatio || 1,
+            manualDrawdown: parsed.manualDrawdown || 0,
+            useManualDrawdown: !!parsed.useManualDrawdown
           });
         } catch (e) {
           console.error("Failed to parse recouppro_state", e);
@@ -65,7 +70,6 @@ export function useRecoupStore() {
     }
   }, []);
 
-  // Persist state to localStorage on changes, but only after hydration
   useEffect(() => {
     if (isHydrated) {
       localStorage.setItem('recouppro_state', JSON.stringify(state));
@@ -121,6 +125,14 @@ export function useRecoupStore() {
     setState(prev => ({ ...prev, riskRewardRatio: n }));
   };
 
+  const setManualDrawdown = (n: number) => {
+    setState(prev => ({ ...prev, manualDrawdown: n }));
+  };
+
+  const setUseManualDrawdown = (b: boolean) => {
+    setState(prev => ({ ...prev, useManualDrawdown: b }));
+  };
+
   return {
     ...state,
     isHydrated,
@@ -130,5 +142,7 @@ export function useRecoupStore() {
     setRecoveryTargetWins,
     setBaseStake,
     setRiskRewardRatio,
+    setManualDrawdown,
+    setUseManualDrawdown,
   };
 }
