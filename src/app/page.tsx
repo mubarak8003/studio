@@ -47,7 +47,6 @@ import {
   AlertDialogTitle, 
   AlertDialogTrigger 
 } from '@/components/ui/alert-dialog';
-import { AICoachPanel } from '@/components/recoup/ai-coach-panel';
 import { ModeToggle } from '@/components/mode-toggle';
 import { cn } from '@/lib/utils';
 
@@ -592,7 +591,7 @@ export default function Dashboard() {
                   </Card>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pb-12">
+                <div className="grid grid-cols-1 gap-6 pb-12">
                   <Card className="bg-card/50 border-border">
                     <CardHeader className="flex flex-row items-center justify-between">
                       <div>
@@ -638,14 +637,6 @@ export default function Dashboard() {
                       </ScrollArea>
                     </CardContent>
                   </Card>
-
-                  <AICoachPanel 
-                    totalCurrentLoss={stats.currentDrawdown}
-                    recoveryTargetWins={store.recoveryTargetWins}
-                    recentWinRatePercentage={stats.winRate}
-                    averageWinAmount={stats.avgWin}
-                    averageLossAmount={stats.avgLoss}
-                  />
                 </div>
               </>
             ) : (
