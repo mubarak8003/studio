@@ -1,3 +1,4 @@
+
 "use client"
 
 import React, { useState, useMemo, useEffect } from 'react';
@@ -63,7 +64,7 @@ export default function Dashboard() {
       : (netPnL < 0 ? Math.abs(netPnL) : 0);
     
     const requiredProfitPerTrade = currentDrawdown > 0 
-      ? currentDrawdown / store.recoveryTargetWins 
+      ? currentDrawdown / (store.recoveryTargetWins || 1) 
       : 0;
       
     const recoveryStakeAdjustment = requiredProfitPerTrade / (store.riskRewardRatio || 1);
@@ -162,7 +163,7 @@ export default function Dashboard() {
             <div className="space-y-4 pt-4 border-t border-border/30">
               <div className="flex items-center justify-between">
                 <label className="text-xs font-medium text-muted-foreground flex items-center gap-2">
-                  <PenLine className="h-3 w-3" /> Manual Loss Recovery
+                  <PenLine className="h-3 w-3" /> Manual Recovery
                 </label>
                 <Switch 
                   checked={store.useManualDrawdown} 
@@ -187,9 +188,15 @@ export default function Dashboard() {
             <div className="space-y-3">
               <div className="flex justify-between items-center">
                 <label className="text-xs font-medium text-muted-foreground flex items-center gap-2">
-                  <Target className="h-3 w-3" /> Recovery Wins
+                  <Target className="h-3 w-3" /> Recovery Trades
                 </label>
-                <span className="text-xs font-bold text-primary">{store.recoveryTargetWins} trades</span>
+                <Input 
+                  type="number"
+                  value={store.recoveryTargetWins}
+                  onChange={(e) => store.setRecoveryTargetWins(Math.max(1, Number(e.target.value)))}
+                  className="w-16 h-7 text-xs bg-obsidian text-right"
+                  min={1}
+                />
               </div>
               <Slider 
                 value={[store.recoveryTargetWins]} 
@@ -232,7 +239,7 @@ export default function Dashboard() {
           <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <div>
               <h2 className="text-3xl font-headline font-bold mb-1">Trading Control</h2>
-              <p className="text-muted-foreground">
+              <p className="text-muted-foreground text-sm">
                 {store.activeSession ? 'Session in progress...' : 'Start a session to begin tracking.'}
               </p>
             </div>
