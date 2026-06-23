@@ -50,6 +50,7 @@ import { AICoachPanel } from '@/components/recoup/ai-coach-panel';
 import { ModeToggle } from '@/components/mode-toggle';
 import { cn } from '@/lib/utils';
 
+// Defined outside to prevent re-renders losing focus
 const StrategySettings = ({ store, stats }: { store: any, stats: any }) => {
   const [localBaseStake, setLocalBaseStake] = useState(store.baseStake.toString());
   const [localManualDrawdown, setLocalManualDrawdown] = useState(store.manualDrawdown.toString());
