@@ -17,6 +17,8 @@ export type Session = {
   isActive: boolean;
 };
 
+export type CurrencyCode = 'USD' | 'INR' | 'EUR' | 'GBP';
+
 export type AppState = {
   sessions: Session[];
   activeSession: Session | null;
@@ -25,6 +27,7 @@ export type AppState = {
   riskRewardRatio: number;
   manualDrawdown: number;
   useManualDrawdown: boolean;
+  currency: CurrencyCode;
 };
 
 const DEFAULT_STATE: AppState = {
@@ -34,7 +37,15 @@ const DEFAULT_STATE: AppState = {
   baseStake: 10,
   riskRewardRatio: 1,
   manualDrawdown: 0,
-  useManualDrawdown: false
+  useManualDrawdown: false,
+  currency: 'USD'
+};
+
+export const CURRENCY_SYMBOLS: Record<CurrencyCode, string> = {
+  USD: '$',
+  INR: '₹',
+  EUR: '€',
+  GBP: '£'
 };
 
 export function useRecoupStore() {
@@ -48,6 +59,7 @@ export function useRecoupStore() {
         try {
           const parsed = JSON.parse(saved);
           setState({
+            ...DEFAULT_STATE,
             ...parsed,
             sessions: (parsed.sessions || []).map((s: any) => ({
               ...s,
@@ -60,9 +72,6 @@ export function useRecoupStore() {
                startTime: new Date(parsed.activeSession.startTime),
                trades: (parsed.activeSession.trades || []).map((t: any) => ({ ...t, timestamp: new Date(t.timestamp) }))
             } : null,
-            riskRewardRatio: parsed.riskRewardRatio || 1,
-            manualDrawdown: parsed.manualDrawdown || 0,
-            useManualDrawdown: !!parsed.useManualDrawdown
           });
         } catch (e) {
           console.error("Failed to parse recouppro_state", e);
@@ -165,6 +174,10 @@ export function useRecoupStore() {
     setState(prev => ({ ...prev, useManualDrawdown: b }));
   };
 
+  const setCurrency = (c: CurrencyCode) => {
+    setState(prev => ({ ...prev, currency: c }));
+  };
+
   const resetAllData = () => {
     setState(DEFAULT_STATE);
   };
@@ -180,6 +193,7 @@ export function useRecoupStore() {
     setRiskRewardRatio,
     setManualDrawdown,
     setUseManualDrawdown,
+    setCurrency,
     resetAllData
   };
 }

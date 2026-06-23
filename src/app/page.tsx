@@ -1,8 +1,7 @@
-
 "use client"
 
 import React, { useState, useMemo, useEffect } from 'react';
-import { useRecoupStore } from './lib/store';
+import { useRecoupStore, CURRENCY_SYMBOLS, CurrencyCode } from './lib/store';
 import Image from 'next/image';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { 
@@ -25,7 +24,8 @@ import {
   Menu,
   ArrowLeft,
   Trash2,
-  ArrowUpRight
+  ArrowUpRight,
+  Coins
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -47,6 +47,13 @@ import {
   AlertDialogTitle, 
   AlertDialogTrigger 
 } from '@/components/ui/alert-dialog';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { ModeToggle } from '@/components/mode-toggle';
 import { cn } from '@/lib/utils';
 
@@ -117,10 +124,29 @@ const StrategySettings = ({ store, stats }: { store: any, stats: any }) => {
     }
   };
 
+  const currencySymbol = CURRENCY_SYMBOLS[store.currency as CurrencyCode];
+
   return (
     <div className="space-y-6 pb-20 md:pb-0">
       <div className="space-y-3">
-        <label className="text-xs font-medium text-muted-foreground">Base Stake ($)</label>
+        <label className="text-xs font-medium text-muted-foreground flex items-center gap-2">
+          <Coins className="h-3 w-3" /> Currency
+        </label>
+        <Select value={store.currency} onValueChange={(val) => store.setCurrency(val as CurrencyCode)}>
+          <SelectTrigger className="bg-background border-border h-9">
+            <SelectValue placeholder="Select Currency" />
+          </SelectTrigger>
+          <SelectContent className="bg-card border-border">
+            <SelectItem value="INR">INR (₹)</SelectItem>
+            <SelectItem value="USD">USD ($)</SelectItem>
+            <SelectItem value="EUR">EUR (€)</SelectItem>
+            <SelectItem value="GBP">GBP (£)</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div className="space-y-3">
+        <label className="text-xs font-medium text-muted-foreground">Base Stake ({currencySymbol})</label>
         <Input 
           type="number" 
           inputMode="decimal"
@@ -171,7 +197,7 @@ const StrategySettings = ({ store, stats }: { store: any, stats: any }) => {
         
         {store.useManualDrawdown && (
           <div className="space-y-2 animate-in fade-in slide-in-from-top-1">
-            <label className="text-[10px] text-muted-foreground uppercase">Loss to Recover ($)</label>
+            <label className="text-[10px] text-muted-foreground uppercase">Loss to Recover ({currencySymbol})</label>
             <Input 
               type="number" 
               inputMode="decimal"
@@ -239,7 +265,7 @@ const StrategySettings = ({ store, stats }: { store: any, stats: any }) => {
               <Trash2 className="h-3 w-3" /> Reset All Data
             </Button>
           </AlertDialogTrigger>
-          <AlertDialogContent>
+          <AlertDialogContent className="bg-card border-border">
             <AlertDialogHeader>
               <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
               <AlertDialogDescription>
@@ -247,7 +273,7 @@ const StrategySettings = ({ store, stats }: { store: any, stats: any }) => {
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogCancel className="bg-secondary text-secondary-foreground border-border">Cancel</AlertDialogCancel>
               <AlertDialogAction onClick={store.resetAllData} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
                 Yes, Reset All
               </AlertDialogAction>
@@ -329,6 +355,8 @@ export default function Dashboard() {
   };
 
   if (!mounted) return null;
+
+  const currencySymbol = CURRENCY_SYMBOLS[store.currency as CurrencyCode];
 
   return (
     <div className="flex flex-col min-h-svh overflow-x-hidden">
@@ -450,18 +478,18 @@ export default function Dashboard() {
                         <Calculator className="h-5 w-5" /> Recommended Entry
                       </CardTitle>
                       <CardDescription className="text-xs md:text-sm">
-                        Based on target of <b>${stats.currentDrawdown.toFixed(2)}</b> in <b>{store.recoveryTargetWins}</b> trades
+                        Based on target of <b>{currencySymbol}{stats.currentDrawdown.toFixed(2)}</b> in <b>{store.recoveryTargetWins}</b> trades
                       </CardDescription>
                     </CardHeader>
                     <CardContent>
                       <div className="flex flex-col items-center justify-center py-6 md:py-8 border-b border-border/30 mb-6">
                         <div className="text-6xl md:text-8xl font-headline font-bold text-foreground transition-all duration-300">
-                          ${stats.nextStake.toFixed(2)}
+                          {currencySymbol}{stats.nextStake.toFixed(2)}
                         </div>
                         <p className="text-xs text-muted-foreground mt-2 uppercase tracking-widest font-semibold">Total Trade Amount</p>
                         <div className="mt-4 flex flex-col items-center gap-2">
                           <Badge variant={stats.currentDrawdown > 0 ? "destructive" : "secondary"}>
-                            {store.useManualDrawdown ? 'Manual Target: ' : 'Session Loss: '}${stats.currentDrawdown.toFixed(2)}
+                            {store.useManualDrawdown ? 'Manual Target: ' : 'Session Loss: '}{currencySymbol}{stats.currentDrawdown.toFixed(2)}
                           </Badge>
                         </div>
                       </div>
@@ -474,16 +502,16 @@ export default function Dashboard() {
                            <div className="space-y-2">
                              <div className="flex justify-between items-center">
                                <span>Base Profit Target:</span>
-                               <span className="font-mono font-bold">${(store.baseStake * store.riskRewardRatio).toFixed(2)}</span>
+                               <span className="font-mono font-bold">{currencySymbol}{(store.baseStake * store.riskRewardRatio).toFixed(2)}</span>
                              </div>
                              <div className="flex justify-between items-center text-red-500">
                                <span>Recovery Component:</span>
-                               <span className="font-mono font-bold">+ ${stats.requiredProfitPerTrade.toFixed(2)}</span>
+                               <span className="font-mono font-bold">+ {currencySymbol}{stats.requiredProfitPerTrade.toFixed(2)}</span>
                              </div>
                              <Separator className="bg-border/50" />
                              <div className="flex justify-between items-center text-primary font-bold">
                                <span>Total Win Goal:</span>
-                               <span className="font-mono">${( (store.baseStake * store.riskRewardRatio) + stats.requiredProfitPerTrade ).toFixed(2)}</span>
+                               <span className="font-mono">{currencySymbol}{( (store.baseStake * store.riskRewardRatio) + stats.requiredProfitPerTrade ).toFixed(2)}</span>
                              </div>
                            </div>
                         </div>
@@ -495,11 +523,11 @@ export default function Dashboard() {
                            <div className="space-y-2">
                              <div className="flex justify-between items-center">
                                <span>Base Investment:</span>
-                               <span className="font-mono">${store.baseStake.toFixed(2)}</span>
+                               <span className="font-mono">{currencySymbol}{store.baseStake.toFixed(2)}</span>
                              </div>
                              <div className="flex justify-between items-center text-accent font-bold">
                                <span>Recovery Adjustment:</span>
-                               <span className="font-mono">+ ${stats.recoveryStakeAdjustment.toFixed(2)}</span>
+                               <span className="font-mono">+ {currencySymbol}{stats.recoveryStakeAdjustment.toFixed(2)}</span>
                              </div>
                              <div className="text-[10px] text-muted-foreground italic mt-2 leading-tight">
                                Calculation: (Target / {store.riskRewardRatio} RR)
@@ -513,7 +541,7 @@ export default function Dashboard() {
                           <div className="flex flex-col md:flex-row gap-3">
                             <div className="flex-1">
                               <Input 
-                                placeholder="Trade P/L Amount" 
+                                placeholder={`Trade P/L Amount (${currencySymbol})`}
                                 type="number" 
                                 inputMode="decimal"
                                 value={tradeAmount} 
@@ -566,13 +594,13 @@ export default function Dashboard() {
                         <div className="space-y-1">
                           <span className="text-[10px] text-muted-foreground uppercase tracking-tight">Net Balance</span>
                           <div className={cn("text-lg md:text-xl font-headline font-bold", stats.netPnL >= 0 ? "text-green-500" : "text-red-500")}>
-                            {stats.netPnL >= 0 ? '+' : ''}{stats.netPnL.toFixed(2)}
+                            {stats.netPnL >= 0 ? '+' : ''}{currencySymbol}{stats.netPnL.toFixed(2)}
                           </div>
                         </div>
                         <div className="space-y-1">
                           <span className="text-[10px] text-muted-foreground uppercase tracking-tight">Current Drawdown</span>
                           <div className="text-lg md:text-xl font-headline font-bold text-red-400">
-                            ${Math.max(0, -stats.netPnL).toFixed(2)}
+                            {currencySymbol}{Math.max(0, -stats.netPnL).toFixed(2)}
                           </div>
                         </div>
                       </div>
@@ -580,11 +608,11 @@ export default function Dashboard() {
                       <div className="space-y-3 pt-4 border-t border-border/50">
                          <div className="flex justify-between items-center text-sm">
                             <span className="text-muted-foreground flex items-center gap-2"><Plus className="h-3 w-3 text-green-500" /> Avg Win</span>
-                            <span>${stats.avgWin.toFixed(2)}</span>
+                            <span>{currencySymbol}{stats.avgWin.toFixed(2)}</span>
                          </div>
                          <div className="flex justify-between items-center text-sm">
                             <span className="text-muted-foreground flex items-center gap-2"><div className="h-[2px] w-3 bg-red-500" /> Avg Loss</span>
-                            <span>${stats.avgLoss.toFixed(2)}</span>
+                            <span>{currencySymbol}{stats.avgLoss.toFixed(2)}</span>
                          </div>
                       </div>
                     </CardContent>
@@ -621,7 +649,7 @@ export default function Dashboard() {
                                   {trade.type === 'win' ? <TrendingUp className="h-4 w-4" /> : <TrendingDown className="h-4 w-4" />}
                                 </div>
                                 <div>
-                                  <p className="text-sm font-semibold">${trade.amount.toFixed(2)}</p>
+                                  <p className="text-sm font-semibold">{currencySymbol}{trade.amount.toFixed(2)}</p>
                                   <p className="text-[10px] text-muted-foreground">{trade.timestamp.toLocaleTimeString()}</p>
                                 </div>
                               </div>
@@ -690,7 +718,7 @@ export default function Dashboard() {
                                 </div>
                                 <div>
                                   <div className="flex items-center gap-2">
-                                    <p className="text-lg font-bold">${trade.amount.toFixed(2)}</p>
+                                    <p className="text-lg font-bold">{currencySymbol}{trade.amount.toFixed(2)}</p>
                                     <Badge variant="outline" className={cn(
                                       "text-[10px] h-5",
                                       trade.type === 'win' ? "text-green-500 border-green-500/30" : "text-red-500 border-red-500/30"
