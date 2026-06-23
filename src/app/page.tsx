@@ -1,4 +1,3 @@
-
 "use client"
 
 import React, { useState, useMemo, useEffect } from 'react';
@@ -35,6 +34,17 @@ import { Separator } from '@/components/ui/separator';
 import { Slider } from '@/components/ui/slider';
 import { Switch } from '@/components/ui/switch';
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import { 
+  AlertDialog, 
+  AlertDialogAction, 
+  AlertDialogCancel, 
+  AlertDialogContent, 
+  AlertDialogDescription, 
+  AlertDialogFooter, 
+  AlertDialogHeader, 
+  AlertDialogTitle, 
+  AlertDialogTrigger 
+} from '@/components/ui/alert-dialog';
 import { AICoachPanel } from '@/components/recoup/ai-coach-panel';
 import { ModeToggle } from '@/components/mode-toggle';
 import { cn } from '@/lib/utils';
@@ -104,9 +114,9 @@ const StrategySettings = ({ store, stats }: { store: any, stats: any }) => {
           </label>
           <div className="flex items-center gap-1">
             <Input 
-              type="number"
+              type="number" 
               inputMode="decimal"
-              value={localRRRatio}
+              value={localRRRatio} 
               onChange={(e) => handleRRRatioChange(e.target.value)}
               onFocus={(e) => e.target.select()}
               className="w-16 h-7 text-xs bg-background text-right"
@@ -196,6 +206,30 @@ const StrategySettings = ({ store, stats }: { store: any, stats: any }) => {
            stats.riskLevel === 'medium' ? 'Recovery is active. Follow the plan strictly.' : 
            'Strategy is within safe operational limits.'}
         </p>
+      </div>
+
+      <div className="pt-6 border-t border-border/30">
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button variant="outline" size="sm" className="w-full gap-2 text-destructive hover:text-destructive border-destructive/20">
+              <Trash2 className="h-3 w-3" /> Reset All Data
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This will permanently delete all your sessions, trade history, and reset your strategy settings. This action cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={store.resetAllData} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                Yes, Reset All
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </div>
   );

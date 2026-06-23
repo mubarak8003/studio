@@ -27,17 +27,19 @@ export type AppState = {
   useManualDrawdown: boolean;
 };
 
+const DEFAULT_STATE: AppState = {
+  sessions: [],
+  activeSession: null,
+  recoveryTargetWins: 3,
+  baseStake: 10,
+  riskRewardRatio: 1,
+  manualDrawdown: 0,
+  useManualDrawdown: false
+};
+
 export function useRecoupStore() {
   const [isHydrated, setIsHydrated] = useState(false);
-  const [state, setState] = useState<AppState>({
-    sessions: [],
-    activeSession: null,
-    recoveryTargetWins: 3,
-    baseStake: 10,
-    riskRewardRatio: 1,
-    manualDrawdown: 0,
-    useManualDrawdown: false
-  });
+  const [state, setState] = useState<AppState>(DEFAULT_STATE);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -163,6 +165,10 @@ export function useRecoupStore() {
     setState(prev => ({ ...prev, useManualDrawdown: b }));
   };
 
+  const resetAllData = () => {
+    setState(DEFAULT_STATE);
+  };
+
   return {
     ...state,
     isHydrated,
@@ -174,5 +180,6 @@ export function useRecoupStore() {
     setRiskRewardRatio,
     setManualDrawdown,
     setUseManualDrawdown,
+    resetAllData
   };
 }
