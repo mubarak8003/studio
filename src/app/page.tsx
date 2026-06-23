@@ -37,108 +37,144 @@ import { AICoachPanel } from '@/components/recoup/ai-coach-panel';
 import { cn } from '@/lib/utils';
 
 // Move component outside of Dashboard to prevent focus loss during typing
-const StrategySettings = ({ store, stats }: { store: any, stats: any }) => (
-  <div className="space-y-6 pb-20 md:pb-0">
-    <div className="space-y-3">
-      <label className="text-xs font-medium text-muted-foreground">Base Stake ($)</label>
-      <Input 
-        type="number" 
-        inputMode="decimal"
-        value={store.baseStake} 
-        onChange={(e) => store.setBaseStake(Number(e.target.value))}
-        className="bg-obsidian border-border"
-      />
-    </div>
+const StrategySettings = ({ store, stats }: { store: any, stats: any }) => {
+  const [localBaseStake, setLocalBaseStake] = useState(store.baseStake.toString());
+  const [localManualDrawdown, setLocalManualDrawdown] = useState(store.manualDrawdown.toString());
+  const [localRecoveryTarget, setLocalRecoveryTarget] = useState(store.recoveryTargetWins.toString());
 
-    <div className="space-y-3">
-      <div className="flex justify-between items-center">
-        <label className="text-xs font-medium text-muted-foreground flex items-center gap-1">
-          RR Ratio <Scale className="h-3 w-3" />
-        </label>
-        <span className="text-xs font-bold text-sky-blue">{store.riskRewardRatio}x</span>
-      </div>
-      <Slider 
-        value={[store.riskRewardRatio]} 
-        min={0.1} 
-        max={5} 
-        step={0.1}
-        onValueChange={([val]) => store.setRiskRewardRatio(val)}
-      />
-    </div>
+  useEffect(() => {
+    setLocalBaseStake(store.baseStake.toString());
+  }, [store.baseStake]);
 
-    <div className="space-y-4 pt-4 border-t border-border/30">
-      <div className="flex items-center justify-between">
-        <label className="text-xs font-medium text-muted-foreground flex items-center gap-2">
-          <PenLine className="h-3 w-3" /> Manual Recovery
-        </label>
-        <Switch 
-          checked={store.useManualDrawdown} 
-          onCheckedChange={store.setUseManualDrawdown} 
+  useEffect(() => {
+    setLocalManualDrawdown(store.manualDrawdown.toString());
+  }, [store.manualDrawdown]);
+
+  useEffect(() => {
+    setLocalRecoveryTarget(store.recoveryTargetWins.toString());
+  }, [store.recoveryTargetWins]);
+
+  const handleBaseStakeChange = (val: string) => {
+    setLocalBaseStake(val);
+    if (val !== '') store.setBaseStake(Number(val));
+  };
+
+  const handleManualDrawdownChange = (val: string) => {
+    setLocalManualDrawdown(val);
+    if (val !== '') store.setManualDrawdown(Number(val));
+  };
+
+  const handleRecoveryTargetChange = (val: string) => {
+    setLocalRecoveryTarget(val);
+    if (val !== '') store.setRecoveryTargetWins(Math.max(1, Number(val)));
+  };
+
+  return (
+    <div className="space-y-6 pb-20 md:pb-0">
+      <div className="space-y-3">
+        <label className="text-xs font-medium text-muted-foreground">Base Stake ($)</label>
+        <Input 
+          type="number" 
+          inputMode="decimal"
+          value={localBaseStake} 
+          onChange={(e) => handleBaseStakeChange(e.target.value)}
+          onFocus={(e) => e.target.select()}
+          className="bg-obsidian border-border"
         />
       </div>
-      
-      {store.useManualDrawdown && (
-        <div className="space-y-2 animate-in fade-in slide-in-from-top-1">
-          <label className="text-[10px] text-muted-foreground uppercase">Loss to Recover ($)</label>
-          <Input 
-            type="number" 
-            inputMode="decimal"
-            placeholder="Enter amount..."
-            value={store.manualDrawdown} 
-            onChange={(e) => store.setManualDrawdown(Number(e.target.value))}
-            className="bg-obsidian border-border h-8 text-xs"
+
+      <div className="space-y-3">
+        <div className="flex justify-between items-center">
+          <label className="text-xs font-medium text-muted-foreground flex items-center gap-1">
+            RR Ratio <Scale className="h-3 w-3" />
+          </label>
+          <span className="text-xs font-bold text-sky-blue">{store.riskRewardRatio}x</span>
+        </div>
+        <Slider 
+          value={[store.riskRewardRatio]} 
+          min={0.1} 
+          max={5} 
+          step={0.1}
+          onValueChange={([val]) => store.setRiskRewardRatio(val)}
+        />
+      </div>
+
+      <div className="space-y-4 pt-4 border-t border-border/30">
+        <div className="flex items-center justify-between">
+          <label className="text-xs font-medium text-muted-foreground flex items-center gap-2">
+            <PenLine className="h-3 w-3" /> Manual Recovery
+          </label>
+          <Switch 
+            checked={store.useManualDrawdown} 
+            onCheckedChange={store.setUseManualDrawdown} 
           />
         </div>
-      )}
-    </div>
+        
+        {store.useManualDrawdown && (
+          <div className="space-y-2 animate-in fade-in slide-in-from-top-1">
+            <label className="text-[10px] text-muted-foreground uppercase">Loss to Recover ($)</label>
+            <Input 
+              type="number" 
+              inputMode="decimal"
+              placeholder="Enter amount..."
+              value={localManualDrawdown} 
+              onChange={(e) => handleManualDrawdownChange(e.target.value)}
+              onFocus={(e) => e.target.select()}
+              className="bg-obsidian border-border h-8 text-xs"
+            />
+          </div>
+        )}
+      </div>
 
-    <div className="space-y-3">
-      <div className="flex justify-between items-center">
-        <label className="text-xs font-medium text-muted-foreground flex items-center gap-2">
-          <Target className="h-3 w-3" /> Recovery Trades
-        </label>
-        <Input 
-          type="number"
-          inputMode="numeric"
-          value={store.recoveryTargetWins}
-          onChange={(e) => store.setRecoveryTargetWins(Math.max(1, Number(e.target.value)))}
-          className="w-16 h-7 text-xs bg-obsidian text-right"
-          min={1}
+      <div className="space-y-3">
+        <div className="flex justify-between items-center">
+          <label className="text-xs font-medium text-muted-foreground flex items-center gap-2">
+            <Target className="h-3 w-3" /> Recovery Trades
+          </label>
+          <Input 
+            type="number"
+            inputMode="numeric"
+            value={localRecoveryTarget}
+            onChange={(e) => handleRecoveryTargetChange(e.target.value)}
+            onFocus={(e) => e.target.select()}
+            className="w-16 h-7 text-xs bg-obsidian text-right"
+            min={1}
+          />
+        </div>
+        <Slider 
+          value={[store.recoveryTargetWins]} 
+          min={1} 
+          max={30} 
+          step={1}
+          onValueChange={([val]) => store.setRecoveryTargetWins(val)}
         />
+        <div className="flex items-center gap-1 text-[10px] text-muted-foreground italic">
+          <Info className="h-3 w-3" />
+          {store.recoveryTargetWins <= 5 ? 'Aggressive recovery' : store.recoveryTargetWins <= 15 ? 'Balanced recovery' : 'Conservative recovery'}.
+        </div>
       </div>
-      <Slider 
-        value={[store.recoveryTargetWins]} 
-        min={1} 
-        max={30} 
-        step={1}
-        onValueChange={([val]) => store.setRecoveryTargetWins(val)}
-      />
-      <div className="flex items-center gap-1 text-[10px] text-muted-foreground italic">
-        <Info className="h-3 w-3" />
-        {store.recoveryTargetWins <= 5 ? 'Aggressive recovery' : store.recoveryTargetWins <= 15 ? 'Balanced recovery' : 'Conservative recovery'}.
-      </div>
-    </div>
 
-    <div className={cn(
-      "p-3 rounded-lg border flex flex-col gap-2",
-      stats.riskLevel === 'high' ? "bg-red-500/5 border-red-500/20" : 
-      stats.riskLevel === 'medium' ? "bg-yellow-500/5 border-yellow-500/20" : 
-      "bg-green-500/5 border-green-500/20"
-    )}>
-      <div className="flex items-center gap-2 text-[10px] font-bold uppercase">
-        {stats.riskLevel === 'high' ? <ShieldAlert className="h-3 w-3 text-red-500" /> : 
-         stats.riskLevel === 'medium' ? <Shield className="h-3 w-3 text-yellow-500" /> : 
-         <ShieldCheck className="h-3 w-3 text-green-500" />}
-        Risk Profile: {stats.riskLevel}
+      <div className={cn(
+        "p-3 rounded-lg border flex flex-col gap-2",
+        stats.riskLevel === 'high' ? "bg-red-500/5 border-red-500/20" : 
+        stats.riskLevel === 'medium' ? "bg-yellow-500/5 border-yellow-500/20" : 
+        "bg-green-500/5 border-green-500/20"
+      )}>
+        <div className="flex items-center gap-2 text-[10px] font-bold uppercase">
+          {stats.riskLevel === 'high' ? <ShieldAlert className="h-3 w-3 text-red-500" /> : 
+           stats.riskLevel === 'medium' ? <Shield className="h-3 w-3 text-yellow-500" /> : 
+           <ShieldCheck className="h-3 w-3 text-green-500" />}
+          Risk Profile: {stats.riskLevel}
+        </div>
+        <p className="text-[10px] text-muted-foreground leading-tight">
+          {stats.riskLevel === 'high' ? 'Warning: Recovery stake is very high. Consider increasing recovery trades.' : 
+           stats.riskLevel === 'medium' ? 'Recovery is active. Follow the plan strictly.' : 
+           'Strategy is within safe operational limits.'}
+        </p>
       </div>
-      <p className="text-[10px] text-muted-foreground leading-tight">
-        {stats.riskLevel === 'high' ? 'Warning: Recovery stake is very high. Consider increasing recovery trades.' : 
-         stats.riskLevel === 'medium' ? 'Recovery is active. Follow the plan strictly.' : 
-         'Strategy is within safe operational limits.'}
-      </p>
     </div>
-  </div>
-);
+  );
+};
 
 export default function Dashboard() {
   const store = useRecoupStore();
@@ -353,6 +389,7 @@ export default function Dashboard() {
                             inputMode="decimal"
                             value={tradeAmount} 
                             onChange={(e) => setTradeAmount(e.target.value)}
+                            onFocus={(e) => e.target.select()}
                             className="text-lg py-6 bg-obsidian"
                           />
                         </div>
