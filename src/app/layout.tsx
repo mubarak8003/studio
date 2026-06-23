@@ -17,9 +17,7 @@ export const metadata: Metadata = {
     capable: true,
     statusBarStyle: 'default',
     title: 'RecoupPro',
-    startupImage: [
-      logoImage?.imageUrl || '',
-    ],
+    startupImage: logoImage?.imageUrl ? [logoImage.imageUrl] : undefined,
   },
   formatDetection: {
     telephone: false,
