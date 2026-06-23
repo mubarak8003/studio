@@ -26,41 +26,51 @@ export type AppState = {
 };
 
 export function useRecoupStore() {
-  const [state, setState] = useState<AppState>(() => {
-    // Basic persistent storage for local demo
+  const [isHydrated, setIsHydrated] = useState(false);
+  const [state, setState] = useState<AppState>({
+    sessions: [],
+    activeSession: null,
+    recoveryTargetWins: 3,
+    baseStake: 10,
+    riskRewardRatio: 1
+  });
+
+  // Handle initial hydration from localStorage
+  useEffect(() => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('recouppro_state');
       if (saved) {
-        const parsed = JSON.parse(saved);
-        return {
-          ...parsed,
-          sessions: parsed.sessions.map((s: any) => ({
-            ...s,
-            startTime: new Date(s.startTime),
-            endTime: s.endTime ? new Date(s.endTime) : undefined,
-            trades: s.trades.map((t: any) => ({ ...t, timestamp: new Date(t.timestamp) }))
-          })),
-          activeSession: parsed.activeSession ? {
-             ...parsed.activeSession,
-             startTime: new Date(parsed.activeSession.startTime),
-             trades: parsed.activeSession.trades.map((t: any) => ({ ...t, timestamp: new Date(t.timestamp) }))
-          } : null,
-          riskRewardRatio: parsed.riskRewardRatio || 1
-        };
+        try {
+          const parsed = JSON.parse(saved);
+          setState({
+            ...parsed,
+            sessions: (parsed.sessions || []).map((s: any) => ({
+              ...s,
+              startTime: new Date(s.startTime),
+              endTime: s.endTime ? new Date(s.endTime) : undefined,
+              trades: (s.trades || []).map((t: any) => ({ ...t, timestamp: new Date(t.timestamp) }))
+            })),
+            activeSession: parsed.activeSession ? {
+               ...parsed.activeSession,
+               startTime: new Date(parsed.activeSession.startTime),
+               trades: (parsed.activeSession.trades || []).map((t: any) => ({ ...t, timestamp: new Date(t.timestamp) }))
+            } : null,
+            riskRewardRatio: parsed.riskRewardRatio || 1
+          });
+        } catch (e) {
+          console.error("Failed to parse recouppro_state", e);
+        }
       }
+      setIsHydrated(true);
     }
-    return {
-      sessions: [],
-      activeSession: null,
-      recoveryTargetWins: 3,
-      baseStake: 10,
-      riskRewardRatio: 1
-    };
-  });
+  }, []);
 
+  // Persist state to localStorage on changes, but only after hydration
   useEffect(() => {
-    localStorage.setItem('recouppro_state', JSON.stringify(state));
-  }, [state]);
+    if (isHydrated) {
+      localStorage.setItem('recouppro_state', JSON.stringify(state));
+    }
+  }, [state, isHydrated]);
 
   const startSession = () => {
     const newSession: Session = {
@@ -113,6 +123,7 @@ export function useRecoupStore() {
 
   return {
     ...state,
+    isHydrated,
     startSession,
     stopSession,
     addTrade,

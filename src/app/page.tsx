@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useRecoupStore } from './lib/store';
 import { 
   TrendingUp, 
@@ -13,7 +13,6 @@ import {
   Activity,
   Calculator,
   BrainCircuit,
-  AlertCircle,
   ChevronRight,
   Scale
 } from 'lucide-react';
@@ -30,6 +29,12 @@ export default function Dashboard() {
   const store = useRecoupStore();
   const [tradeAmount, setTradeAmount] = useState<string>('');
   const [showHistory, setShowHistory] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  // Avoid hydration mismatch by checking if component is mounted
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Logic for calculations
   const stats = useMemo(() => {
@@ -47,11 +52,6 @@ export default function Dashboard() {
     const netPnL = totalProfit - totalLoss;
     const currentDrawdown = netPnL < 0 ? Math.abs(netPnL) : 0;
     
-    // Recovery Math
-    // We need to win 'drawdown' amount over 'recoveryTargetWins' trades.
-    // Each trade needs to profit (drawdown / recoveryTargetWins).
-    // If RR is 2 (Risk 1 : Reward 2), stake = requiredProfit / 2.
-    // If RR is 0.8 (Binary options 80%), stake = requiredProfit / 0.8.
     const requiredProfitPerTrade = currentDrawdown > 0 
       ? currentDrawdown / store.recoveryTargetWins 
       : 0;
@@ -83,6 +83,11 @@ export default function Dashboard() {
     store.addTrade(type, amount);
     setTradeAmount('');
   };
+
+  // Safe rendering to match server during hydration
+  const activeSessionStatus = (mounted && store.isHydrated && store.activeSession) 
+    ? 'Session in progress...' 
+    : 'Start a session to begin tracking.';
 
   return (
     <div className="flex flex-col md:flex-row h-screen overflow-hidden">
@@ -159,11 +164,11 @@ export default function Dashboard() {
             <div>
               <h2 className="text-3xl font-headline font-bold mb-1">Trading Control</h2>
               <p className="text-muted-foreground">
-                {store.activeSession ? 'Session in progress...' : 'Start a session to begin tracking.'}
+                {activeSessionStatus}
               </p>
             </div>
             <div className="flex items-center gap-3">
-              {store.activeSession ? (
+              {(mounted && store.isHydrated && store.activeSession) ? (
                 <Button variant="destructive" className="gap-2" onClick={store.stopSession}>
                   <StopCircle className="h-4 w-4" /> Stop Session
                 </Button>
@@ -204,7 +209,7 @@ export default function Dashboard() {
                   </div>
                 </div>
 
-                {store.activeSession && (
+                {(mounted && store.isHydrated && store.activeSession) && (
                   <div className="mt-8 pt-8 border-t border-border/50">
                     <div className="flex gap-4">
                       <div className="flex-1">
@@ -305,7 +310,7 @@ export default function Dashboard() {
                         <p className="text-sm">No trades recorded yet</p>
                       </div>
                     )}
-                    {stats.allTrades.slice(0, 10).map((trade) => (
+                    {(mounted && store.isHydrated) && stats.allTrades.slice(0, 10).map((trade) => (
                       <div key={trade.id} className="flex items-center justify-between p-3 rounded-lg bg-obsidian/50 border border-border/30">
                         <div className="flex items-center gap-3">
                           <div className={cn(
