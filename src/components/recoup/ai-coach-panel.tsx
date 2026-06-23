@@ -1,11 +1,12 @@
 "use client"
 
 import React, { useState } from 'react';
-import { BrainCircuit, Sparkles, Loader2, CheckCircle2, AlertCircle, RefreshCw } from 'lucide-react';
+import { BrainCircuit, Sparkles, Loader2, CheckCircle2, AlertCircle, RefreshCw, AlertTriangle } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { aiStrategyCoachRecommendation, AIStrategyCoachRecommendationOutput } from '@/ai/flows/ai-strategy-coach-recommendation';
+import { cn } from '@/lib/utils';
 
 interface AICoachPanelProps {
   totalCurrentLoss: number;
@@ -23,10 +24,12 @@ export function AICoachPanel({
   averageLossAmount
 }: AICoachPanelProps) {
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [recommendation, setRecommendation] = useState<AIStrategyCoachRecommendationOutput | null>(null);
 
   const getCoachAdvice = async () => {
     setLoading(true);
+    setError(null);
     try {
       const res = await aiStrategyCoachRecommendation({
         totalCurrentLoss,
@@ -36,8 +39,9 @@ export function AICoachPanel({
         averageLossAmount
       });
       setRecommendation(res);
-    } catch (error) {
-      console.error("AI Coach Error:", error);
+    } catch (err: any) {
+      console.error("AI Coach Error:", err);
+      setError("The AI model is currently busy or unavailable. Please try again in a few moments.");
     } finally {
       setLoading(false);
     }
@@ -58,7 +62,7 @@ export function AICoachPanel({
       </CardHeader>
 
       <CardContent className="flex-1">
-        {!recommendation && !loading ? (
+        {!recommendation && !loading && !error ? (
           <div className="flex flex-col items-center justify-center py-12 text-center">
             <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
               <Sparkles className="h-8 w-8 text-primary opacity-50" />
@@ -74,6 +78,19 @@ export function AICoachPanel({
           <div className="flex flex-col items-center justify-center py-12">
             <Loader2 className="h-10 w-10 text-primary animate-spin mb-4" />
             <p className="text-sm font-medium animate-pulse">Consulting RecoupPro AI...</p>
+          </div>
+        ) : error ? (
+          <div className="flex flex-col items-center justify-center py-12 text-center">
+            <div className="h-12 w-12 rounded-full bg-destructive/10 flex items-center justify-center mb-4">
+              <AlertTriangle className="h-6 w-6 text-destructive" />
+            </div>
+            <p className="text-sm font-medium mb-2">Service Unavailable</p>
+            <p className="text-xs text-muted-foreground max-w-[220px] mb-6">
+              {error}
+            </p>
+            <Button onClick={getCoachAdvice} variant="outline" size="sm" className="gap-2">
+              <RefreshCw className="h-4 w-4" /> Retry
+            </Button>
           </div>
         ) : recommendation ? (
           <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2">
@@ -108,10 +125,10 @@ export function AICoachPanel({
         ) : null}
       </CardContent>
 
-      {recommendation && (
+      {(recommendation || error) && (
         <CardFooter className="pt-0 pb-6 flex justify-center">
           <Button variant="ghost" size="sm" onClick={getCoachAdvice} disabled={loading} className="text-xs gap-2">
-            <RefreshCw className={cn("h-3 w-3", loading && "animate-spin")} /> Re-analyze
+            <RefreshCw className={cn("h-3 w-3", loading && "animate-spin")} /> {recommendation ? 'Re-analyze' : 'Retry'}
           </Button>
         </CardFooter>
       )}

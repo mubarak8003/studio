@@ -86,7 +86,25 @@ const aiStrategyCoachRecommendationFlow = ai.defineFlow(
     outputSchema: AIStrategyCoachRecommendationOutputSchema,
   },
   async (input) => {
-    const { output } = await prompt(input);
-    return output!;
+    // Implement simple retry logic to handle temporary model unavailability (503s)
+    let lastError;
+    const maxAttempts = 2;
+    for (let attempt = 0; attempt < maxAttempts; attempt++) {
+      try {
+        const { output } = await prompt(input);
+        return output!;
+      } catch (err: any) {
+        lastError = err;
+        // If it's a 503 Service Unavailable, wait and try one more time
+        if (err?.message?.includes('503') || err?.message?.includes('UNAVAILABLE')) {
+          if (attempt < maxAttempts - 1) {
+            await new Promise((resolve) => setTimeout(resolve, 2000));
+            continue;
+          }
+        }
+        throw err;
+      }
+    }
+    throw lastError;
   }
 );
