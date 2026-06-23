@@ -7,10 +7,10 @@ const logoImage = PlaceHolderImages.find(img => img.id === 'app-logo');
 
 export const metadata: Metadata = {
   title: 'RecoupPro | Trading Recovery Strategy Coach',
-  description: 'Master your recovery with algorithmic precision and AI coaching.',
+  description: 'Master your recovery with algorithmic precision.',
   icons: {
-    icon: logoImage?.imageUrl || '/favicon.ico',
-    apple: logoImage?.imageUrl || '/apple-icon.png',
+    icon: logoImage?.imageUrl || 'https://picsum.photos/seed/rp-trading-logo/192/192',
+    apple: logoImage?.imageUrl || 'https://picsum.photos/seed/rp-trading-logo/192/192',
   },
   appleWebApp: {
     capable: true,

@@ -8,24 +8,19 @@ export default function manifest(): MetadataRoute.Manifest {
   return {
     name: 'RecoupPro Strategy Coach',
     short_name: 'RecoupPro',
-    description: 'Master your trading recovery with algorithmic precision and AI coaching.',
+    description: 'Master your trading recovery with algorithmic precision.',
     start_url: '/',
     display: 'standalone',
     background_color: '#0f171a',
     theme_color: '#14b8a6',
     icons: [
       {
-        src: logo?.imageUrl || '/favicon.ico',
-        sizes: 'any',
-        type: 'image/x-icon',
-      },
-      {
-        src: logo?.imageUrl || '',
+        src: logo?.imageUrl || 'https://picsum.photos/seed/rp-trading-logo/192/192',
         sizes: '192x192',
         type: 'image/png',
       },
       {
-        src: logo?.imageUrl || '',
+        src: logo?.imageUrl || 'https://picsum.photos/seed/rp-trading-logo/512/512',
         sizes: '512x512',
         type: 'image/png',
       },
