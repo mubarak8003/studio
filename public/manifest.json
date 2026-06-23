@@ -1,17 +1,17 @@
+
 {
-  "name": "RecoupPro Recovery Coach",
+  "name": "RecoupPro Trading Coach",
   "short_name": "RecoupPro",
-  "description": "Master your trading recovery with AI coaching.",
+  "description": "Smart Trading Recovery Strategy Coach",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#16181d",
-  "theme_color": "#647cf0",
+  "background_color": "#0f171a",
+  "theme_color": "#14b8a6",
   "icons": [
     {
       "src": "https://picsum.photos/seed/recouppro/192/192",
       "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any maskable"
+      "type": "image/png"
     },
     {
       "src": "https://picsum.photos/seed/recouppro/512/512",

@@ -1,3 +1,4 @@
+
 "use client"
 
 import React, { useState, useMemo, useEffect } from 'react';
@@ -49,6 +50,9 @@ import { AICoachPanel } from '@/components/recoup/ai-coach-panel';
 import { ModeToggle } from '@/components/mode-toggle';
 import { cn } from '@/lib/utils';
 
+/**
+ * Enhanced Logo inspired by professional trading charts
+ */
 const AppLogo = ({ className }: { className?: string }) => (
   <svg 
     viewBox="0 0 100 100" 
@@ -56,16 +60,21 @@ const AppLogo = ({ className }: { className?: string }) => (
     xmlns="http://www.w3.org/2000/svg" 
     className={className}
   >
-    <rect x="25" y="45" width="12" height="35" rx="2" fill="currentColor" opacity="0.3" />
-    <rect x="45" y="30" width="12" height="50" rx="2" fill="currentColor" opacity="0.6" />
-    <rect x="65" y="15" width="12" height="65" rx="2" fill="currentColor" />
+    {/* Stylized Bars representing growth */}
+    <rect x="30" y="45" width="10" height="35" rx="2" fill="currentColor" opacity="0.3" />
+    <rect x="50" y="30" width="10" height="50" rx="2" fill="currentColor" opacity="0.6" />
+    <rect x="70" y="15" width="10" height="65" rx="2" fill="currentColor" />
+    
+    {/* The Dynamic Zigzag Arrow line */}
     <path 
-      d="M10 70L30 50L50 65L85 20" 
+      d="M10 70L35 45L55 60L85 20" 
       stroke="currentColor" 
       strokeWidth="8" 
       strokeLinecap="round" 
       strokeLinejoin="round" 
     />
+    
+    {/* Arrow Head */}
     <path 
       d="M70 20H85V35" 
       stroke="currentColor" 
@@ -73,8 +82,11 @@ const AppLogo = ({ className }: { className?: string }) => (
       strokeLinecap="round" 
       strokeLinejoin="round" 
     />
+    
+    {/* Dynamic Speed Elements at the start of the trend */}
     <circle cx="12" cy="78" r="3" fill="currentColor" opacity="0.5" />
     <circle cx="5" cy="85" r="2" fill="currentColor" opacity="0.3" />
+    <path d="M5 70H12" stroke="currentColor" strokeWidth="3" strokeLinecap="round" opacity="0.4" />
   </svg>
 );
 
@@ -213,7 +225,7 @@ const StrategySettings = ({ store, stats }: { store: any, stats: any }) => {
           onValueChange={([val]) => store.setRecoveryTargetWins(val)}
         />
         <div className="flex items-center gap-1 text-[10px] text-muted-foreground italic">
-          <Info className="h-3 w-3" />
+          <span className="h-1.5 w-1.5 rounded-full bg-accent" />
           {store.recoveryTargetWins <= 5 ? 'Aggressive recovery' : store.recoveryTargetWins <= 15 ? 'Balanced recovery' : 'Conservative recovery'}.
         </div>
       </div>
