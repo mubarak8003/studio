@@ -1,4 +1,3 @@
-
 "use client"
 
 import React, { useState, useMemo, useEffect } from 'react';
@@ -312,11 +311,11 @@ export default function Dashboard() {
     <div className="flex flex-col min-h-svh overflow-x-hidden">
       {/* Mobile Top Navigation */}
       <header className="md:hidden sticky top-0 flex items-center justify-between p-4 border-b border-border bg-card/80 backdrop-blur-md z-40">
-        <div className="flex items-center gap-2">
-          <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center glow-primary">
-            <BrainCircuit className="text-primary-foreground h-5 w-5" />
+        <div className="flex items-center gap-3">
+          <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center glow-primary shadow-lg ring-1 ring-white/20">
+            <BrainCircuit className="text-white h-6 w-6" />
           </div>
-          <h1 className="text-xl font-headline font-bold text-sky-blue">RecoupPro</h1>
+          <h1 className="text-xl font-headline font-bold text-sky-blue tracking-tight">RecoupPro</h1>
         </div>
         <div className="flex items-center gap-2">
           <ModeToggle />
@@ -330,7 +329,9 @@ export default function Dashboard() {
               <div className="p-6 border-b border-border">
                 <SheetHeader>
                   <SheetTitle className="text-left flex items-center gap-3">
-                    <BrainCircuit className="h-6 w-6 text-primary" />
+                    <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-primary to-accent flex items-center justify-center glow-primary">
+                      <BrainCircuit className="h-5 w-5 text-white" />
+                    </div>
                     <span>Strategy Coach</span>
                   </SheetTitle>
                 </SheetHeader>
@@ -365,10 +366,13 @@ export default function Dashboard() {
         <aside className="w-80 border-r border-border bg-card/50 hidden md:flex flex-col p-6 sticky top-0 h-svh overflow-y-auto">
           <div className="flex items-center justify-between mb-8">
             <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-xl bg-primary flex items-center justify-center glow-primary">
-                <BrainCircuit className="text-primary-foreground h-6 w-6" />
+              <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-primary to-accent flex items-center justify-center glow-primary shadow-xl ring-2 ring-white/10">
+                <BrainCircuit className="text-white h-7 w-7" />
               </div>
-              <h1 className="text-2xl font-headline font-bold text-sky-blue">RecoupPro</h1>
+              <div className="flex flex-col">
+                <h1 className="text-2xl font-headline font-bold text-sky-blue leading-none tracking-tight">RecoupPro</h1>
+                <span className="text-[10px] text-muted-foreground font-semibold uppercase tracking-widest mt-1">Algo Coach</span>
+              </div>
             </div>
             <ModeToggle />
           </div>
