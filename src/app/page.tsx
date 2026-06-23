@@ -1,3 +1,4 @@
+
 "use client"
 
 import React, { useState, useMemo, useEffect } from 'react';
@@ -41,6 +42,7 @@ const StrategySettings = ({ store, stats }: { store: any, stats: any }) => {
   const [localBaseStake, setLocalBaseStake] = useState(store.baseStake.toString());
   const [localManualDrawdown, setLocalManualDrawdown] = useState(store.manualDrawdown.toString());
   const [localRecoveryTarget, setLocalRecoveryTarget] = useState(store.recoveryTargetWins.toString());
+  const [localRRRatio, setLocalRRRatio] = useState(store.riskRewardRatio.toString());
 
   useEffect(() => {
     setLocalBaseStake(store.baseStake.toString());
@@ -53,6 +55,10 @@ const StrategySettings = ({ store, stats }: { store: any, stats: any }) => {
   useEffect(() => {
     setLocalRecoveryTarget(store.recoveryTargetWins.toString());
   }, [store.recoveryTargetWins]);
+
+  useEffect(() => {
+    setLocalRRRatio(store.riskRewardRatio.toString());
+  }, [store.riskRewardRatio]);
 
   const handleBaseStakeChange = (val: string) => {
     setLocalBaseStake(val);
@@ -67,6 +73,13 @@ const StrategySettings = ({ store, stats }: { store: any, stats: any }) => {
   const handleRecoveryTargetChange = (val: string) => {
     setLocalRecoveryTarget(val);
     if (val !== '') store.setRecoveryTargetWins(Math.max(1, Number(val)));
+  };
+
+  const handleRRRatioChange = (val: string) => {
+    setLocalRRRatio(val);
+    if (val !== '' && !isNaN(Number(val))) {
+      store.setRiskRewardRatio(Number(val));
+    }
   };
 
   return (
@@ -88,7 +101,18 @@ const StrategySettings = ({ store, stats }: { store: any, stats: any }) => {
           <label className="text-xs font-medium text-muted-foreground flex items-center gap-1">
             RR Ratio <Scale className="h-3 w-3" />
           </label>
-          <span className="text-xs font-bold text-sky-blue">{store.riskRewardRatio}x</span>
+          <div className="flex items-center gap-1">
+            <Input 
+              type="number"
+              inputMode="decimal"
+              value={localRRRatio}
+              onChange={(e) => handleRRRatioChange(e.target.value)}
+              onFocus={(e) => e.target.select()}
+              className="w-16 h-7 text-xs bg-background text-right"
+              step="0.1"
+            />
+            <span className="text-xs font-bold text-sky-blue">x</span>
+          </div>
         </div>
         <Slider 
           value={[store.riskRewardRatio]} 
