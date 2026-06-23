@@ -14,7 +14,8 @@ import {
   Calculator,
   BrainCircuit,
   AlertCircle,
-  ChevronRight
+  ChevronRight,
+  Scale
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -47,11 +48,16 @@ export default function Dashboard() {
     const currentDrawdown = netPnL < 0 ? Math.abs(netPnL) : 0;
     
     // Recovery Math
-    const recoveryPerWin = currentDrawdown > 0 
+    // We need to win 'drawdown' amount over 'recoveryTargetWins' trades.
+    // Each trade needs to profit (drawdown / recoveryTargetWins).
+    // If RR is 2 (Risk 1 : Reward 2), stake = requiredProfit / 2.
+    // If RR is 0.8 (Binary options 80%), stake = requiredProfit / 0.8.
+    const requiredProfitPerTrade = currentDrawdown > 0 
       ? currentDrawdown / store.recoveryTargetWins 
       : 0;
       
-    const nextStake = store.baseStake + recoveryPerWin;
+    const recoveryStakeAdjustment = requiredProfitPerTrade / (store.riskRewardRatio || 1);
+    const nextStake = store.baseStake + recoveryStakeAdjustment;
     
     return {
       allTrades,
@@ -61,7 +67,7 @@ export default function Dashboard() {
       totalLoss,
       netPnL,
       currentDrawdown,
-      recoveryPerWin,
+      requiredProfitPerTrade,
       nextStake,
       winRate: allTrades.length > 0 
         ? (wins.length / allTrades.length) * 100 
@@ -80,7 +86,7 @@ export default function Dashboard() {
 
   return (
     <div className="flex flex-col md:flex-row h-screen overflow-hidden">
-      {/* Sidebar for Navigation/History (Optional Layout) */}
+      {/* Sidebar for Navigation/History */}
       <aside className="w-full md:w-80 border-r border-border bg-card/50 hidden md:flex flex-col p-6 overflow-y-auto">
         <div className="flex items-center gap-3 mb-8">
           <div className="h-10 w-10 rounded-xl bg-primary flex items-center justify-center glow-primary">
@@ -101,7 +107,11 @@ export default function Dashboard() {
         <Separator className="mb-8" />
 
         <div className="space-y-6">
-          <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Recovery Settings</h3>
+          <div className="flex items-center gap-2">
+            <Settings2 className="h-4 w-4 text-muted-foreground" />
+            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Recovery Settings</h3>
+          </div>
+          
           <div className="space-y-4">
             <div className="space-y-2">
               <label className="text-xs font-medium text-muted-foreground">Base Stake ($)</label>
@@ -112,15 +122,30 @@ export default function Dashboard() {
                 className="bg-obsidian border-border"
               />
             </div>
+
             <div className="space-y-2">
-              <label className="text-xs font-medium text-muted-foreground">Recovery Target (Wins)</label>
+              <label className="text-xs font-medium text-muted-foreground flex items-center gap-1">
+                Risk/Reward Ratio (RR) <Scale className="h-3 w-3" />
+              </label>
+              <Input 
+                type="number" 
+                step="0.1"
+                value={store.riskRewardRatio} 
+                onChange={(e) => store.setRiskRewardRatio(Number(e.target.value))}
+                className="bg-obsidian border-border"
+              />
+              <p className="text-[10px] text-muted-foreground italic">Target reward per $1 risked.</p>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-xs font-medium text-muted-foreground">Recovery Target (Trades)</label>
               <Input 
                 type="number" 
                 value={store.recoveryTargetWins} 
                 onChange={(e) => store.setRecoveryTargetWins(Number(e.target.value))}
                 className="bg-obsidian border-border"
               />
-              <p className="text-[10px] text-muted-foreground">Distribute losses over {store.recoveryTargetWins} sessions.</p>
+              <p className="text-[10px] text-muted-foreground">Recover losses over {store.recoveryTargetWins} successful trades.</p>
             </div>
           </div>
         </div>
@@ -167,10 +192,15 @@ export default function Dashboard() {
                   <div key={stats.nextStake} className="text-7xl md:text-8xl font-headline font-bold text-foreground animate-counter-up">
                     ${stats.nextStake.toFixed(2)}
                   </div>
-                  <div className="mt-4 flex items-center gap-2">
+                  <div className="mt-4 flex flex-col items-center gap-2">
                     <Badge variant={stats.currentDrawdown > 0 ? "destructive" : "secondary"}>
                       {stats.currentDrawdown > 0 ? `Recovering $${stats.currentDrawdown.toFixed(2)}` : 'At Target'}
                     </Badge>
+                    {stats.currentDrawdown > 0 && (
+                      <p className="text-xs text-muted-foreground">
+                        Targeting <b>${stats.requiredProfitPerTrade.toFixed(2)}</b> profit per trade (RR: {store.riskRewardRatio})
+                      </p>
+                    )}
                   </div>
                 </div>
 
@@ -179,7 +209,7 @@ export default function Dashboard() {
                     <div className="flex gap-4">
                       <div className="flex-1">
                         <Input 
-                          placeholder="Amount" 
+                          placeholder="Trade Result Amount" 
                           type="number" 
                           value={tradeAmount} 
                           onChange={(e) => setTradeAmount(e.target.value)}

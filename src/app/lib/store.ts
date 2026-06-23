@@ -22,6 +22,7 @@ export type AppState = {
   activeSession: Session | null;
   recoveryTargetWins: number;
   baseStake: number;
+  riskRewardRatio: number;
 };
 
 export function useRecoupStore() {
@@ -43,7 +44,8 @@ export function useRecoupStore() {
              ...parsed.activeSession,
              startTime: new Date(parsed.activeSession.startTime),
              trades: parsed.activeSession.trades.map((t: any) => ({ ...t, timestamp: new Date(t.timestamp) }))
-          } : null
+          } : null,
+          riskRewardRatio: parsed.riskRewardRatio || 1
         };
       }
     }
@@ -51,7 +53,8 @@ export function useRecoupStore() {
       sessions: [],
       activeSession: null,
       recoveryTargetWins: 3,
-      baseStake: 10
+      baseStake: 10,
+      riskRewardRatio: 1
     };
   });
 
@@ -104,6 +107,10 @@ export function useRecoupStore() {
     setState(prev => ({ ...prev, baseStake: n }));
   };
 
+  const setRiskRewardRatio = (n: number) => {
+    setState(prev => ({ ...prev, riskRewardRatio: n }));
+  };
+
   return {
     ...state,
     startSession,
@@ -111,5 +118,6 @@ export function useRecoupStore() {
     addTrade,
     setRecoveryTargetWins,
     setBaseStake,
+    setRiskRewardRatio,
   };
 }
