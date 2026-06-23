@@ -1,3 +1,4 @@
+
 "use client"
 
 import React, { useState, useMemo, useEffect } from 'react';
@@ -23,7 +24,8 @@ import {
   PenLine,
   Menu,
   ArrowLeft,
-  Trash2
+  Trash2,
+  ArrowUpRight
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -287,6 +289,7 @@ export default function Dashboard() {
       currentDrawdown,
       requiredProfitPerTrade,
       nextStake,
+      recoveryStakeAdjustment,
       riskLevel,
       winRate: allTrades.length > 0 
         ? (wins.length / allTrades.length) * 100 
@@ -426,29 +429,66 @@ export default function Dashboard() {
                         <Calculator className="h-5 w-5" /> Recommended Entry
                       </CardTitle>
                       <CardDescription className="text-xs md:text-sm">
-                        Stake size to recover <b>${stats.currentDrawdown.toFixed(2)}</b> in <b>{store.recoveryTargetWins}</b> winning trades
+                        Based on current drawdown of <b>${stats.currentDrawdown.toFixed(2)}</b> and <b>{store.riskRewardRatio}x</b> RR
                       </CardDescription>
                     </CardHeader>
                     <CardContent>
-                      <div className="flex flex-col items-center justify-center py-6 md:py-8">
+                      <div className="flex flex-col items-center justify-center py-6 md:py-8 border-b border-border/30 mb-6">
                         <div className="text-6xl md:text-8xl font-headline font-bold text-foreground">
                           ${stats.nextStake.toFixed(2)}
                         </div>
+                        <p className="text-xs text-muted-foreground mt-2 uppercase tracking-widest font-semibold">Total Trade Amount</p>
                         <div className="mt-4 flex flex-col items-center gap-2">
                           <Badge variant={stats.currentDrawdown > 0 ? "destructive" : "secondary"}>
                             {store.useManualDrawdown ? 'Manual Target: ' : 'Session Loss: '}${stats.currentDrawdown.toFixed(2)}
                           </Badge>
-                          {stats.currentDrawdown > 0 && (
-                            <p className="text-[10px] md:text-xs text-muted-foreground text-center max-w-xs px-4 leading-relaxed">
-                              Targeting <b>${stats.requiredProfitPerTrade.toFixed(2)}</b> profit per win. 
-                              Plan: {store.recoveryTargetWins} trades at {store.riskRewardRatio}x RR.
-                            </p>
-                          )}
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+                        <div className="p-4 rounded-xl bg-muted/30 border border-border/50">
+                           <h4 className="font-bold mb-3 flex items-center gap-2 text-muted-foreground">
+                             <Target className="h-3 w-3" /> Profit Breakdown
+                           </h4>
+                           <div className="space-y-2">
+                             <div className="flex justify-between items-center">
+                               <span>Base Profit Target:</span>
+                               <span className="font-mono font-bold">${(store.baseStake * store.riskRewardRatio).toFixed(2)}</span>
+                             </div>
+                             <div className="flex justify-between items-center text-red-400">
+                               <span>Recovery Target:</span>
+                               <span className="font-mono font-bold">+ ${stats.requiredProfitPerTrade.toFixed(2)}</span>
+                             </div>
+                             <Separator className="bg-border/50" />
+                             <div className="flex justify-between items-center text-primary font-bold">
+                               <span>Total Win Goal:</span>
+                               <span className="font-mono">${( (store.baseStake * store.riskRewardRatio) + stats.requiredProfitPerTrade ).toFixed(2)}</span>
+                             </div>
+                           </div>
+                        </div>
+
+                        <div className="p-4 rounded-xl bg-primary/5 border border-primary/10">
+                           <h4 className="font-bold mb-3 flex items-center gap-2 text-primary">
+                             <ArrowUpRight className="h-3 w-3" /> Investment Logic
+                           </h4>
+                           <div className="space-y-2">
+                             <div className="flex justify-between items-center">
+                               <span>Base Investment:</span>
+                               <span className="font-mono">${store.baseStake.toFixed(2)}</span>
+                             </div>
+                             <div className="flex justify-between items-center text-sky-400">
+                               <span>Recovery Adjustment:</span>
+                               <span className="font-mono">+ ${stats.recoveryStakeAdjustment.toFixed(2)}</span>
+                             </div>
+                             <div className="text-[10px] text-muted-foreground italic mt-2 leading-tight">
+                               Calculation: (Recovery Target / {store.riskRewardRatio} RR)
+                             </div>
+                           </div>
                         </div>
                       </div>
 
                       {store.activeSession && (
-                        <div className="mt-4 md:mt-8 pt-4 md:pt-8 border-t border-border/50">
+                        <div className="mt-8 pt-6 border-t border-border/50">
                           <div className="flex flex-col md:flex-row gap-3">
                             <div className="flex-1">
                               <Input 
