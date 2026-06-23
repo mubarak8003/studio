@@ -104,13 +104,43 @@ export function useRecoupStore() {
       amount,
       timestamp: new Date(),
     };
-    setState(prev => ({
-      ...prev,
-      activeSession: prev.activeSession ? {
-        ...prev.activeSession,
-        trades: [...prev.activeSession.trades, newTrade]
-      } : null
-    }));
+
+    setState(prev => {
+      // Calculate net PnL to determine if we are in recovery
+      const allTrades = [
+        ...(prev.activeSession?.trades || []),
+        ...prev.sessions.flatMap(s => s.trades)
+      ];
+      const netPnL = allTrades.reduce((sum, t) => sum + (t.type === 'win' ? t.amount : -t.amount), 0);
+      const inDrawdown = prev.useManualDrawdown ? prev.manualDrawdown > 0 : netPnL < 0;
+
+      let nextRecoveryTarget = prev.recoveryTargetWins;
+      let nextManualDrawdown = prev.manualDrawdown;
+
+      // Logic: If it's a win and we are recovering, decrease the win count needed
+      if (type === 'win' && inDrawdown && prev.recoveryTargetWins > 1) {
+        nextRecoveryTarget = prev.recoveryTargetWins - 1;
+      }
+
+      // Logic: If using manual recovery, update the remaining target amount dynamically
+      if (prev.useManualDrawdown) {
+        if (type === 'win') {
+          nextManualDrawdown = Math.max(0, prev.manualDrawdown - amount);
+        } else {
+          nextManualDrawdown = prev.manualDrawdown + amount;
+        }
+      }
+
+      return {
+        ...prev,
+        recoveryTargetWins: nextRecoveryTarget,
+        manualDrawdown: nextManualDrawdown,
+        activeSession: prev.activeSession ? {
+          ...prev.activeSession,
+          trades: [...prev.activeSession.trades, newTrade]
+        } : null
+      };
+    });
   };
 
   const setRecoveryTargetWins = (n: number) => {
