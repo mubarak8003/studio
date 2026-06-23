@@ -12,7 +12,6 @@ import {
   History,
   Activity,
   Calculator,
-  BrainCircuit,
   ChevronRight,
   Scale,
   ShieldAlert,
@@ -50,7 +49,35 @@ import { AICoachPanel } from '@/components/recoup/ai-coach-panel';
 import { ModeToggle } from '@/components/mode-toggle';
 import { cn } from '@/lib/utils';
 
-// Defined outside to prevent re-renders losing focus
+const AppLogo = ({ className }: { className?: string }) => (
+  <svg 
+    viewBox="0 0 100 100" 
+    fill="none" 
+    xmlns="http://www.w3.org/2000/svg" 
+    className={className}
+  >
+    <rect x="25" y="45" width="12" height="35" rx="2" fill="currentColor" opacity="0.3" />
+    <rect x="45" y="30" width="12" height="50" rx="2" fill="currentColor" opacity="0.6" />
+    <rect x="65" y="15" width="12" height="65" rx="2" fill="currentColor" />
+    <path 
+      d="M10 70L30 50L50 65L85 20" 
+      stroke="currentColor" 
+      strokeWidth="8" 
+      strokeLinecap="round" 
+      strokeLinejoin="round" 
+    />
+    <path 
+      d="M70 20H85V35" 
+      stroke="currentColor" 
+      strokeWidth="8" 
+      strokeLinecap="round" 
+      strokeLinejoin="round" 
+    />
+    <circle cx="12" cy="78" r="3" fill="currentColor" opacity="0.5" />
+    <circle cx="5" cy="85" r="2" fill="currentColor" opacity="0.3" />
+  </svg>
+);
+
 const StrategySettings = ({ store, stats }: { store: any, stats: any }) => {
   const [localBaseStake, setLocalBaseStake] = useState(store.baseStake.toString());
   const [localManualDrawdown, setLocalManualDrawdown] = useState(store.manualDrawdown.toString());
@@ -124,7 +151,7 @@ const StrategySettings = ({ store, stats }: { store: any, stats: any }) => {
               className="w-16 h-7 text-xs bg-background text-right"
               step="0.1"
             />
-            <span className="text-xs font-bold text-sky-blue">x</span>
+            <span className="text-xs font-bold text-accent">x</span>
           </div>
         </div>
         <Slider 
@@ -195,12 +222,12 @@ const StrategySettings = ({ store, stats }: { store: any, stats: any }) => {
         "p-3 rounded-lg border flex flex-col gap-2",
         stats.riskLevel === 'high' ? "bg-red-500/5 border-red-500/20" : 
         stats.riskLevel === 'medium' ? "bg-yellow-500/5 border-yellow-500/20" : 
-        "bg-green-500/5 border-green-500/20"
+        "bg-primary/5 border-primary/20"
       )}>
         <div className="flex items-center gap-2 text-[10px] font-bold uppercase">
           {stats.riskLevel === 'high' ? <ShieldAlert className="h-3 w-3 text-red-500" /> : 
            stats.riskLevel === 'medium' ? <Shield className="h-3 w-3 text-yellow-500" /> : 
-           <ShieldCheck className="h-3 w-3 text-green-500" />}
+           <ShieldCheck className="h-3 w-3 text-primary" />}
           Risk Profile: {stats.riskLevel}
         </div>
         <p className="text-[10px] text-muted-foreground leading-tight">
@@ -314,9 +341,9 @@ export default function Dashboard() {
       <header className="md:hidden sticky top-0 flex items-center justify-between p-4 border-b border-border bg-card/80 backdrop-blur-md z-40">
         <div className="flex items-center gap-3">
           <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center glow-primary shadow-lg ring-1 ring-white/20">
-            <BrainCircuit className="text-white h-6 w-6" />
+            <AppLogo className="text-white h-7 w-7" />
           </div>
-          <h1 className="text-xl font-headline font-bold text-sky-blue tracking-tight">RecoupPro</h1>
+          <h1 className="text-xl font-headline font-bold text-primary tracking-tight">RecoupPro</h1>
         </div>
         <div className="flex items-center gap-2">
           <ModeToggle />
@@ -331,7 +358,7 @@ export default function Dashboard() {
                 <SheetHeader>
                   <SheetTitle className="text-left flex items-center gap-3">
                     <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-primary to-accent flex items-center justify-center glow-primary">
-                      <BrainCircuit className="h-5 w-5 text-white" />
+                      <AppLogo className="h-6 w-6 text-white" />
                     </div>
                     <span>Strategy Coach</span>
                   </SheetTitle>
@@ -368,11 +395,11 @@ export default function Dashboard() {
           <div className="flex items-center justify-between mb-8">
             <div className="flex items-center gap-3">
               <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-primary to-accent flex items-center justify-center glow-primary shadow-xl ring-2 ring-white/10">
-                <BrainCircuit className="text-white h-7 w-7" />
+                <AppLogo className="text-white h-9 w-9" />
               </div>
               <div className="flex flex-col">
-                <h1 className="text-2xl font-headline font-bold text-sky-blue leading-none tracking-tight">RecoupPro</h1>
-                <span className="text-[10px] text-muted-foreground font-semibold uppercase tracking-widest mt-1">Algo Coach</span>
+                <h1 className="text-2xl font-headline font-bold text-primary leading-none tracking-tight">RecoupPro</h1>
+                <span className="text-[10px] text-muted-foreground font-semibold uppercase tracking-widest mt-1">Smart Recovery</span>
               </div>
             </div>
             <ModeToggle />
@@ -406,7 +433,7 @@ export default function Dashboard() {
                 {/* Dashboard View */}
                 <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                   <div>
-                    <h2 className="text-2xl md:text-3xl font-headline font-bold mb-1">Trading Control</h2>
+                    <h2 className="text-2xl md:text-3xl font-headline font-bold mb-1 text-foreground">Trading Control</h2>
                     <p className="text-muted-foreground text-xs md:text-sm">
                       {store.activeSession ? 'Session in progress...' : 'Start a session to begin tracking.'}
                     </p>
@@ -430,16 +457,16 @@ export default function Dashboard() {
                       <Calculator className="h-24 w-24" />
                     </div>
                     <CardHeader>
-                      <CardTitle className="flex items-center gap-2 text-sky-blue text-lg md:text-xl">
+                      <CardTitle className="flex items-center gap-2 text-primary text-lg md:text-xl">
                         <Calculator className="h-5 w-5" /> Recommended Entry
                       </CardTitle>
                       <CardDescription className="text-xs md:text-sm">
-                        Based on current drawdown of <b>${stats.currentDrawdown.toFixed(2)}</b> and <b>{store.riskRewardRatio}x</b> RR
+                        Based on target of <b>${stats.currentDrawdown.toFixed(2)}</b> in <b>{store.recoveryTargetWins}</b> trades
                       </CardDescription>
                     </CardHeader>
                     <CardContent>
                       <div className="flex flex-col items-center justify-center py-6 md:py-8 border-b border-border/30 mb-6">
-                        <div className="text-6xl md:text-8xl font-headline font-bold text-foreground">
+                        <div className="text-6xl md:text-8xl font-headline font-bold text-foreground transition-all duration-300">
                           ${stats.nextStake.toFixed(2)}
                         </div>
                         <p className="text-xs text-muted-foreground mt-2 uppercase tracking-widest font-semibold">Total Trade Amount</p>
@@ -460,8 +487,8 @@ export default function Dashboard() {
                                <span>Base Profit Target:</span>
                                <span className="font-mono font-bold">${(store.baseStake * store.riskRewardRatio).toFixed(2)}</span>
                              </div>
-                             <div className="flex justify-between items-center text-red-400">
-                               <span>Recovery Target:</span>
+                             <div className="flex justify-between items-center text-red-500">
+                               <span>Recovery Component:</span>
                                <span className="font-mono font-bold">+ ${stats.requiredProfitPerTrade.toFixed(2)}</span>
                              </div>
                              <Separator className="bg-border/50" />
@@ -481,12 +508,12 @@ export default function Dashboard() {
                                <span>Base Investment:</span>
                                <span className="font-mono">${store.baseStake.toFixed(2)}</span>
                              </div>
-                             <div className="flex justify-between items-center text-sky-400">
+                             <div className="flex justify-between items-center text-accent font-bold">
                                <span>Recovery Adjustment:</span>
                                <span className="font-mono">+ ${stats.recoveryStakeAdjustment.toFixed(2)}</span>
                              </div>
                              <div className="text-[10px] text-muted-foreground italic mt-2 leading-tight">
-                               Calculation: (Recovery Target / {store.riskRewardRatio} RR)
+                               Calculation: (Target / {store.riskRewardRatio} RR)
                              </div>
                            </div>
                         </div>
@@ -503,7 +530,7 @@ export default function Dashboard() {
                                 value={tradeAmount} 
                                 onChange={(e) => setTradeAmount(e.target.value)}
                                 onFocus={(e) => e.target.select()}
-                                className="text-lg py-6 bg-background"
+                                className="text-lg py-6 bg-background focus:ring-primary"
                               />
                             </div>
                             <div className="flex gap-3">
@@ -540,7 +567,7 @@ export default function Dashboard() {
                         </div>
                         <div className="w-full bg-secondary rounded-full h-2">
                           <div 
-                            className="bg-sky-blue h-2 rounded-full glow-accent transition-all duration-1000" 
+                            className="bg-primary h-2 rounded-full glow-primary transition-all duration-1000" 
                             style={{ width: `${stats.winRate}%` }} 
                           />
                         </div>
@@ -582,7 +609,7 @@ export default function Dashboard() {
                         <CardTitle className="text-lg">Trade Log</CardTitle>
                         <CardDescription className="text-xs">Recent entries</CardDescription>
                       </div>
-                      <Button variant="outline" size="sm" onClick={() => setShowHistory(true)} className="text-xs bg-sky-blue/10 text-sky-blue border-sky-blue/30 hover:bg-sky-blue/20">
+                      <Button variant="outline" size="sm" onClick={() => setShowHistory(true)} className="text-xs bg-primary/10 text-primary border-primary/30 hover:bg-primary/20">
                         View All <ChevronRight className="h-4 w-4 ml-1" />
                       </Button>
                     </CardHeader>
@@ -644,7 +671,7 @@ export default function Dashboard() {
                       <p className="text-muted-foreground text-sm">Review all session activity and recorded trades.</p>
                     </div>
                   </div>
-                  <Badge variant="outline" className="px-4 py-1 text-sky-blue border-sky-blue/30">
+                  <Badge variant="outline" className="px-4 py-1 text-primary border-primary/30">
                     Total Trades: {stats.allTrades.length}
                   </Badge>
                 </header>

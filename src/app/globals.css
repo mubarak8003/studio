@@ -10,42 +10,42 @@
     --card-foreground: 224 71.4% 4.1%;
     --popover: 0 0% 100%;
     --popover-foreground: 224 71.4% 4.1%;
-    --primary: 229 84% 67%;
+    --primary: 173 80% 40%;
     --primary-foreground: 210 20% 98%;
-    --secondary: 220 14.3% 95.9%;
-    --secondary-foreground: 220.9 39.3% 11%;
-    --muted: 220 14.3% 95.9%;
-    --muted-foreground: 220 8.9% 46.1%;
-    --accent: 203 76% 51%;
+    --secondary: 180 20% 96%;
+    --secondary-foreground: 180 50% 10%;
+    --muted: 180 20% 96%;
+    --muted-foreground: 180 10% 40%;
+    --accent: 195 90% 45%;
     --accent-foreground: 210 20% 98%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 20% 98%;
-    --border: 220 13% 91%;
-    --input: 220 13% 91%;
-    --ring: 229 84% 67%;
+    --border: 180 10% 90%;
+    --input: 180 10% 90%;
+    --ring: 173 80% 40%;
     --radius: 0.75rem;
   }
 
   .dark {
-    --background: 225 15% 10%;
+    --background: 225 15% 8%;
     --foreground: 210 20% 98%;
-    --card: 225 15% 12%;
+    --card: 225 15% 10%;
     --card-foreground: 210 20% 98%;
-    --popover: 225 15% 12%;
+    --popover: 225 15% 10%;
     --popover-foreground: 210 20% 98%;
-    --primary: 229 84% 67%;
+    --primary: 173 80% 45%;
     --primary-foreground: 210 20% 98%;
-    --secondary: 215 27.9% 16.9%;
+    --secondary: 180 20% 15%;
     --secondary-foreground: 210 20% 98%;
-    --muted: 215 27.9% 16.9%;
-    --muted-foreground: 217.9 10.6% 64.9%;
-    --accent: 203 76% 51%;
+    --muted: 180 20% 15%;
+    --muted-foreground: 180 10% 65%;
+    --accent: 195 90% 45%;
     --accent-foreground: 210 20% 98%;
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 210 20% 98%;
-    --border: 215 27.9% 25%;
-    --input: 215 27.9% 25%;
-    --ring: 229 84% 67%;
+    --border: 225 15% 18%;
+    --input: 225 15% 18%;
+    --ring: 173 80% 45%;
   }
 }
 
@@ -62,21 +62,21 @@
 }
 
 .bg-obsidian {
-  background-color: #16181d;
+  background-color: #0f171a;
 }
 
 .text-electric-blue {
-  color: #647cf0;
+  @apply text-primary;
 }
 
 .text-sky-blue {
-  color: #2699e1;
+  @apply text-accent;
 }
 
 .glow-primary {
-  box-shadow: 0 0 20px rgba(100, 124, 240, 0.2);
+  box-shadow: 0 0 20px rgba(20, 184, 166, 0.25);
 }
 
 .glow-accent {
-  box-shadow: 0 0 20px rgba(38, 153, 225, 0.2);
+  box-shadow: 0 0 20px rgba(14, 165, 233, 0.25);
 }
