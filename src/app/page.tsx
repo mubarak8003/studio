@@ -25,7 +25,9 @@ import {
   ArrowLeft,
   Trash2,
   ArrowUpRight,
-  Coins
+  Coins,
+  Briefcase,
+  AlertCircle
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -56,6 +58,8 @@ import {
 } from "@/components/ui/select";
 import { ModeToggle } from '@/components/mode-toggle';
 import { cn } from '@/lib/utils';
+
+type View = 'dashboard' | 'history' | 'sizer';
 
 const AppLogo = ({ className }: { className?: string }) => {
   const logoImage = PlaceHolderImages.find(img => img.id === 'app-logo');
@@ -236,10 +240,6 @@ const StrategySettings = ({ store, stats }: { store: any, stats: any }) => {
           step={1}
           onValueChange={([val]) => store.setRecoveryTargetWins(val)}
         />
-        <div className="flex items-center gap-1 text-[10px] text-muted-foreground italic">
-          <span className="h-1.5 w-1.5 rounded-full bg-accent" />
-          {store.recoveryTargetWins <= 5 ? 'Aggressive recovery' : store.recoveryTargetWins <= 15 ? 'Balanced recovery' : 'Conservative recovery'}.
-        </div>
       </div>
 
       <div className={cn(
@@ -288,10 +288,176 @@ const StrategySettings = ({ store, stats }: { store: any, stats: any }) => {
   );
 };
 
+const PositionSizer = ({ store }: { store: any }) => {
+  const [entry, setEntry] = useState('');
+  const [stop, setStop] = useState('');
+  const [target, setTarget] = useState('');
+  
+  const currencySymbol = CURRENCY_SYMBOLS[store.currency as CurrencyCode];
+
+  const results = useMemo(() => {
+    const e = parseFloat(entry);
+    const s = parseFloat(stop);
+    const t = parseFloat(target);
+    const balance = store.accountBalance || 0;
+    const riskPercent = store.riskPerTradePercent || 0;
+
+    if (isNaN(e) || isNaN(s) || e <= 0 || s <= 0 || e === s) return null;
+
+    const riskAmount = balance * (riskPercent / 100);
+    const riskPerShare = Math.abs(e - s);
+    const shares = Math.floor(riskAmount / riskPerShare);
+    const totalPositionValue = shares * e;
+    
+    let rewardToRisk = 0;
+    let potentialProfit = 0;
+    if (!isNaN(t) && t > 0) {
+      const profitPerShare = Math.abs(t - e);
+      potentialProfit = profitPerShare * shares;
+      rewardToRisk = profitPerShare / riskPerShare;
+    }
+
+    return {
+      riskAmount,
+      shares,
+      totalPositionValue,
+      rewardToRisk,
+      potentialProfit
+    };
+  }, [entry, stop, target, store.accountBalance, store.riskPerTradePercent]);
+
+  return (
+    <div className="space-y-8 animate-in fade-in duration-500">
+      <header>
+        <h2 className="text-2xl md:text-3xl font-headline font-bold mb-1">Position Sizer</h2>
+        <p className="text-muted-foreground text-sm">Calculate shares and risk based on stop loss.</p>
+      </header>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <Card className="lg:col-span-2">
+          <CardHeader>
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Calculator className="h-5 w-5 text-primary" /> Trade Parameters
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <label className="text-xs font-medium text-muted-foreground">Account Balance ({currencySymbol})</label>
+                <Input 
+                  type="number" 
+                  value={store.accountBalance} 
+                  onChange={(e) => store.setAccountBalance(parseFloat(e.target.value) || 0)}
+                  onFocus={(e) => e.target.select()}
+                />
+              </div>
+              <div className="space-y-2">
+                <div className="flex justify-between items-center">
+                  <label className="text-xs font-medium text-muted-foreground">Risk per Trade (%)</label>
+                  <span className="text-xs font-bold text-primary">{store.riskPerTradePercent}%</span>
+                </div>
+                <Slider 
+                  value={[store.riskPerTradePercent]} 
+                  min={0.1} 
+                  max={10} 
+                  step={0.1} 
+                  onValueChange={([v]) => store.setRiskPerTradePercent(v)} 
+                />
+              </div>
+            </div>
+
+            <Separator />
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="space-y-2">
+                <label className="text-xs font-medium text-muted-foreground">Entry Price</label>
+                <Input 
+                  type="number" 
+                  placeholder="0.00" 
+                  value={entry} 
+                  onChange={(e) => setEntry(e.target.value)} 
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-xs font-medium text-muted-foreground">Stop Loss</label>
+                <Input 
+                  type="number" 
+                  placeholder="0.00" 
+                  value={stop} 
+                  onChange={(e) => setStop(e.target.value)} 
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-xs font-medium text-muted-foreground">Target (Optional)</label>
+                <Input 
+                  type="number" 
+                  placeholder="0.00" 
+                  value={target} 
+                  onChange={(e) => setTarget(e.target.value)} 
+                />
+              </div>
+            </div>
+
+            {results ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-8 pt-6 border-t">
+                <div className="p-4 rounded-xl bg-primary/5 border border-primary/20 flex flex-col items-center justify-center py-8">
+                  <span className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-1">Recommended Shares</span>
+                  <div className="text-5xl font-headline font-bold text-primary">
+                    {results.shares.toLocaleString()}
+                  </div>
+                  <span className="text-[10px] text-muted-foreground mt-2">Units of stock</span>
+                </div>
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center p-3 rounded-lg bg-muted/30">
+                    <span className="text-xs text-muted-foreground">Total Capital Required</span>
+                    <span className="font-bold">{currencySymbol}{results.totalPositionValue.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                  </div>
+                  <div className="flex justify-between items-center p-3 rounded-lg bg-red-500/5 text-red-500">
+                    <span className="text-xs">Max Loss (Risk)</span>
+                    <span className="font-bold">-{currencySymbol}{results.riskAmount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                  </div>
+                  {results.rewardToRisk > 0 && (
+                    <div className="flex justify-between items-center p-3 rounded-lg bg-green-500/5 text-green-500">
+                      <span className="text-xs">Reward to Risk Ratio</span>
+                      <span className="font-bold">{results.rewardToRisk.toFixed(2)}:1</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-12 text-muted-foreground border-2 border-dashed rounded-xl">
+                <AlertCircle className="h-8 w-8 mb-2 opacity-20" />
+                <p className="text-sm">Enter Entry and Stop Loss prices to calculate size</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Strategy Note</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4 text-xs leading-relaxed text-muted-foreground">
+            <p>
+              Professional traders rarely risk more than <b>1-2%</b> of their total account on a single idea.
+            </p>
+            <p>
+              This calculator ensures that even if your Stop Loss is hit, you only lose exactly the amount of money you intended to risk.
+            </p>
+            <div className="p-3 bg-primary/10 rounded-lg border border-primary/20 text-foreground">
+              <b>Tip:</b> If the required capital is more than your account balance, you may need to reduce your risk % or use leverage if available.
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+};
+
 export default function Dashboard() {
   const store = useRecoupStore();
   const [tradeAmount, setTradeAmount] = useState<string>('');
-  const [showHistory, setShowHistory] = useState(false);
+  const [view, setView] = useState<View>('dashboard');
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -381,28 +547,33 @@ export default function Dashboard() {
                 <SheetHeader>
                   <SheetTitle className="text-left flex items-center gap-3">
                     <AppLogo className="h-8 w-8" />
-                    <span>Strategy Coach</span>
+                    <span>Trading Hub</span>
                   </SheetTitle>
                 </SheetHeader>
               </div>
               <div className="flex-1 overflow-y-auto p-6 scroll-smooth">
                 <div className="space-y-8">
                   <nav className="space-y-2">
-                    <Button variant={!showHistory ? "secondary" : "ghost"} className="w-full justify-start gap-3" onClick={() => setShowHistory(false)}>
+                    <Button variant={view === 'dashboard' ? "secondary" : "ghost"} className="w-full justify-start gap-3" onClick={() => setView('dashboard')}>
                       <Activity className="h-4 w-4" /> Dashboard
                     </Button>
-                    <Button variant={showHistory ? "secondary" : "ghost"} className="w-full justify-start gap-3" onClick={() => setShowHistory(true)}>
+                    <Button variant={view === 'sizer' ? "secondary" : "ghost"} className="w-full justify-start gap-3" onClick={() => setView('sizer')}>
+                      <Briefcase className="h-4 w-4" /> Position Sizer
+                    </Button>
+                    <Button variant={view === 'history' ? "secondary" : "ghost"} className="w-full justify-start gap-3" onClick={() => setView('history')}>
                       <History className="h-4 w-4" /> History
                     </Button>
                   </nav>
                   <Separator />
-                  <div className="space-y-6">
-                    <div className="flex items-center gap-2">
-                      <Settings2 className="h-4 w-4 text-muted-foreground" />
-                      <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Strategy Engine</h3>
+                  {view !== 'sizer' && (
+                    <div className="space-y-6">
+                      <div className="flex items-center gap-2">
+                        <Settings2 className="h-4 w-4 text-muted-foreground" />
+                        <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Strategy Engine</h3>
+                      </div>
+                      <StrategySettings store={store} stats={stats} />
                     </div>
-                    <StrategySettings store={store} stats={stats} />
-                  </div>
+                  )}
                 </div>
               </div>
             </SheetContent>
@@ -417,36 +588,42 @@ export default function Dashboard() {
               <AppLogo className="h-12 w-12" />
               <div className="flex flex-col">
                 <h1 className="text-2xl font-headline font-bold text-primary leading-none tracking-tight">RecoupPro</h1>
-                <span className="text-[10px] text-muted-foreground font-semibold uppercase tracking-widest mt-1">Smart Recovery</span>
+                <span className="text-[10px] text-muted-foreground font-semibold uppercase tracking-widest mt-1">Smart Trading</span>
               </div>
             </div>
             <ModeToggle />
           </div>
 
           <nav className="space-y-2 mb-8">
-            <Button variant={!showHistory ? "secondary" : "ghost"} className="w-full justify-start gap-3" onClick={() => setShowHistory(false)}>
+            <Button variant={view === 'dashboard' ? "secondary" : "ghost"} className="w-full justify-start gap-3" onClick={() => setView('dashboard')}>
               <Activity className="h-4 w-4" /> Dashboard
             </Button>
-            <Button variant={showHistory ? "secondary" : "ghost"} className="w-full justify-start gap-3" onClick={() => setShowHistory(true)}>
+            <Button variant={view === 'sizer' ? "secondary" : "ghost"} className="w-full justify-start gap-3" onClick={() => setView('sizer')}>
+              <Briefcase className="h-4 w-4" /> Position Sizer
+            </Button>
+            <Button variant={view === 'history' ? "secondary" : "ghost"} className="w-full justify-start gap-3" onClick={() => setView('history')}>
               <History className="h-4 w-4" /> History
             </Button>
           </nav>
 
-          <Separator className="mb-8" />
-
-          <div className="space-y-6">
-            <div className="flex items-center gap-2">
-              <Settings2 className="h-4 w-4 text-muted-foreground" />
-              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Strategy Engine</h3>
-            </div>
-            <StrategySettings store={store} stats={stats} />
-          </div>
+          {view !== 'sizer' && (
+            <>
+              <Separator className="mb-8" />
+              <div className="space-y-6">
+                <div className="flex items-center gap-2">
+                  <Settings2 className="h-4 w-4 text-muted-foreground" />
+                  <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Strategy Engine</h3>
+                </div>
+                <StrategySettings store={store} stats={stats} />
+              </div>
+            </>
+          )}
         </aside>
 
         <main className="flex-1 min-h-svh p-4 md:p-10 bg-background/40 overflow-x-hidden">
-          <div className="max-w-5xl mx-auto space-y-8 animate-in fade-in duration-500">
-            {!showHistory ? (
-              <>
+          <div className="max-w-5xl mx-auto space-y-8">
+            {view === 'dashboard' && (
+              <div className="animate-in fade-in duration-500 space-y-8">
                 <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                   <div>
                     <h2 className="text-2xl md:text-3xl font-headline font-bold mb-1 text-foreground">Trading Control</h2>
@@ -625,7 +802,7 @@ export default function Dashboard() {
                         <CardTitle className="text-lg">Trade Log</CardTitle>
                         <CardDescription className="text-xs">Recent entries</CardDescription>
                       </div>
-                      <Button variant="outline" size="sm" onClick={() => setShowHistory(true)} className="text-xs bg-primary/10 text-primary border-primary/30 hover:bg-primary/20">
+                      <Button variant="outline" size="sm" onClick={() => setView('history')} className="text-xs bg-primary/10 text-primary border-primary/30 hover:bg-primary/20">
                         View All <ChevronRight className="h-4 w-4 ml-1" />
                       </Button>
                     </CardHeader>
@@ -665,12 +842,14 @@ export default function Dashboard() {
                     </CardContent>
                   </Card>
                 </div>
-              </>
-            ) : (
-              <div className="space-y-6">
+              </div>
+            )}
+
+            {view === 'history' && (
+              <div className="space-y-6 animate-in fade-in duration-500">
                 <header className="flex items-center justify-between mb-8">
                   <div className="flex items-center gap-4">
-                    <Button variant="ghost" size="icon" onClick={() => setShowHistory(false)}>
+                    <Button variant="ghost" size="icon" onClick={() => setView('dashboard')}>
                       <ArrowLeft className="h-5 w-5" />
                     </Button>
                     <div>
@@ -689,7 +868,7 @@ export default function Dashboard() {
                       <History className="h-12 w-12 text-muted-foreground mb-4 opacity-20" />
                       <h3 className="text-lg font-semibold">No history yet</h3>
                       <p className="text-muted-foreground text-sm mb-6">Your recorded trades will appear here.</p>
-                      <Button onClick={() => setShowHistory(false)}>Return to Dashboard</Button>
+                      <Button onClick={() => setView('dashboard')}>Return to Dashboard</Button>
                     </Card>
                   ) : (
                     <Card className="bg-card">
@@ -743,6 +922,10 @@ export default function Dashboard() {
                   )}
                 </div>
               </div>
+            )}
+
+            {view === 'sizer' && (
+              <PositionSizer store={store} />
             )}
           </div>
         </main>

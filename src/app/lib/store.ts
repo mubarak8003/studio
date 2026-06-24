@@ -28,6 +28,9 @@ export type AppState = {
   manualDrawdown: number;
   useManualDrawdown: boolean;
   currency: CurrencyCode;
+  // Position Sizer Defaults
+  accountBalance: number;
+  riskPerTradePercent: number;
 };
 
 const DEFAULT_STATE: AppState = {
@@ -38,7 +41,9 @@ const DEFAULT_STATE: AppState = {
   riskRewardRatio: 1,
   manualDrawdown: 0,
   useManualDrawdown: false,
-  currency: 'INR'
+  currency: 'INR',
+  accountBalance: 100000,
+  riskPerTradePercent: 1
 };
 
 export const CURRENCY_SYMBOLS: Record<CurrencyCode, string> = {
@@ -58,7 +63,7 @@ export function useRecoupStore() {
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('recouppro_state_v2');
+      const saved = localStorage.getItem('recouppro_state_v3');
       if (saved) {
         try {
           const parsed = JSON.parse(saved);
@@ -87,7 +92,7 @@ export function useRecoupStore() {
 
   useEffect(() => {
     if (isHydrated) {
-      localStorage.setItem('recouppro_state_v2', JSON.stringify(state));
+      localStorage.setItem('recouppro_state_v3', JSON.stringify(state));
     }
   }, [state, isHydrated]);
 
@@ -179,16 +184,24 @@ export function useRecoupStore() {
     setState(prev => ({ ...prev, currency: c }));
   };
 
+  const setAccountBalance = (n: number) => {
+    setState(prev => ({ ...prev, accountBalance: n }));
+  };
+
+  const setRiskPerTradePercent = (n: number) => {
+    setState(prev => ({ ...prev, riskPerTradePercent: n }));
+  };
+
   const resetAllData = () => {
     setState(prev => ({
       ...DEFAULT_STATE,
-      // Preserve the "last settings" as requested by user
       baseStake: prev.baseStake,
       currency: prev.currency,
       riskRewardRatio: prev.riskRewardRatio,
       recoveryTargetWins: prev.recoveryTargetWins,
       useManualDrawdown: prev.useManualDrawdown,
-      // Clear history
+      accountBalance: prev.accountBalance,
+      riskPerTradePercent: prev.riskPerTradePercent,
       sessions: [],
       activeSession: null,
       manualDrawdown: 0
@@ -207,6 +220,8 @@ export function useRecoupStore() {
     setManualDrawdown,
     setUseManualDrawdown,
     setCurrency,
+    setAccountBalance,
+    setRiskPerTradePercent,
     resetAllData
   };
 }
