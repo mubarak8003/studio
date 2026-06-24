@@ -66,7 +66,7 @@ type View = 'dashboard' | 'history' | 'sizer';
 const AppLogo = ({ className }: { className?: string }) => {
   return (
     <div className={cn("flex items-center justify-center bg-[#14b8a6] rounded-[22%] shadow-lg aspect-square glow-primary ring-1 ring-white/10", className)}>
-      <span className="text-white font-headline font-bold text-2xl md:text-3xl leading-none select-none tracking-tighter">RP</span>
+      <span className="text-white font-headline font-bold text-xl md:text-2xl leading-none select-none tracking-tighter">RP</span>
     </div>
   );
 };
@@ -411,7 +411,7 @@ const PositionSizer = ({ store }: { store: any }) => {
                           type="number" 
                           inputMode="decimal"
                           value={localRiskPercent} 
-                          onChange={(e) => handleRiskPercentChange(val => val)} // local string state logic
+                          onChange={(e) => handleRiskPercentChange(e.target.value)}
                           onFocus={(e) => e.target.select()}
                           className="w-16 h-8 text-xs bg-background text-right"
                           step="0.1"
@@ -869,7 +869,20 @@ export default function Dashboard() {
                         </div>
                       </div>
 
-                      <div className="space-y-3 pt-4 border-t border-border/50">
+                      <Separator className="bg-border/50" />
+
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="flex justify-between items-center text-xs">
+                          <span className="text-muted-foreground">Wins</span>
+                          <span className="font-bold text-green-500">{stats.wins.length}</span>
+                        </div>
+                        <div className="flex justify-between items-center text-xs">
+                          <span className="text-muted-foreground">Losses</span>
+                          <span className="font-bold text-red-500">{stats.losses.length}</span>
+                        </div>
+                      </div>
+
+                      <div className="space-y-3 pt-2">
                          <div className="flex justify-between items-center text-sm">
                             <span className="text-muted-foreground flex items-center gap-2"><Plus className="h-3 w-3 text-green-500" /> Avg Win</span>
                             <span>{currencySymbol}{stats.avgWin.toFixed(2)}</span>
