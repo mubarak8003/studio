@@ -27,7 +27,9 @@ import {
   ArrowUpRight,
   Coins,
   Briefcase,
-  AlertCircle
+  AlertCircle,
+  Percent,
+  Wallet
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -56,6 +58,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { ModeToggle } from '@/components/mode-toggle';
 import { cn } from '@/lib/utils';
 
@@ -292,18 +295,29 @@ const PositionSizer = ({ store }: { store: any }) => {
   const [entry, setEntry] = useState('');
   const [stop, setStop] = useState('');
   const [target, setTarget] = useState('');
-  const [localRisk, setLocalRisk] = useState(store.riskPerTradePercent.toString());
+  const [localRiskPercent, setLocalRiskPercent] = useState(store.riskPerTradePercent.toString());
+  const [localRiskAmount, setLocalRiskAmount] = useState(store.riskAmountFixed.toString());
   
   const currencySymbol = CURRENCY_SYMBOLS[store.currency as CurrencyCode];
 
   useEffect(() => {
-    setLocalRisk(store.riskPerTradePercent.toString());
+    setLocalRiskPercent(store.riskPerTradePercent.toString());
   }, [store.riskPerTradePercent]);
 
-  const handleRiskChange = (val: string) => {
-    setLocalRisk(val);
+  useEffect(() => {
+    setLocalRiskAmount(store.riskAmountFixed.toString());
+  }, [store.riskAmountFixed]);
+
+  const handleRiskPercentChange = (val: string) => {
+    setLocalRiskPercent(val);
     const num = parseFloat(val);
     if (!isNaN(num)) store.setRiskPerTradePercent(num);
+  };
+
+  const handleRiskAmountChange = (val: string) => {
+    setLocalRiskAmount(val);
+    const num = parseFloat(val);
+    if (!isNaN(num)) store.setRiskAmountFixed(num);
   };
 
   const results = useMemo(() => {
@@ -311,11 +325,16 @@ const PositionSizer = ({ store }: { store: any }) => {
     const s = parseFloat(stop);
     const t = parseFloat(target);
     const balance = store.accountBalance || 0;
-    const riskPercent = store.riskPerTradePercent || 0;
+    
+    let riskAmount = 0;
+    if (store.riskType === 'percentage') {
+      riskAmount = balance * ((store.riskPerTradePercent || 0) / 100);
+    } else {
+      riskAmount = store.riskAmountFixed || 0;
+    }
 
-    if (isNaN(e) || isNaN(s) || e <= 0 || s <= 0 || e === s) return null;
+    if (isNaN(e) || isNaN(s) || e <= 0 || s <= 0 || e === s || riskAmount <= 0) return null;
 
-    const riskAmount = balance * (riskPercent / 100);
     const riskPerShare = Math.abs(e - s);
     const shares = Math.floor(riskAmount / riskPerShare);
     const totalPositionValue = shares * e;
@@ -335,7 +354,7 @@ const PositionSizer = ({ store }: { store: any }) => {
       rewardToRisk,
       potentialProfit
     };
-  }, [entry, stop, target, store.accountBalance, store.riskPerTradePercent]);
+  }, [entry, stop, target, store.accountBalance, store.riskPerTradePercent, store.riskAmountFixed, store.riskType]);
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
@@ -352,7 +371,7 @@ const PositionSizer = ({ store }: { store: any }) => {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-end">
               <div className="space-y-2">
                 <label className="text-xs font-medium text-muted-foreground">Account Balance ({currencySymbol})</label>
                 <Input 
@@ -364,29 +383,63 @@ const PositionSizer = ({ store }: { store: any }) => {
                   className="bg-background"
                 />
               </div>
+
               <div className="space-y-3">
-                <div className="flex justify-between items-center">
-                  <label className="text-xs font-medium text-muted-foreground">Risk per Trade (%)</label>
-                  <div className="flex items-center gap-1">
-                    <Input 
-                      type="number" 
-                      inputMode="decimal"
-                      value={localRisk} 
-                      onChange={(e) => handleRiskChange(e.target.value)}
-                      onFocus={(e) => e.target.select()}
-                      className="w-16 h-8 text-xs bg-background text-right"
-                      step="0.1"
-                    />
-                    <span className="text-xs font-bold text-primary">%</span>
+                <Tabs value={store.riskType} onValueChange={(val) => store.setRiskType(val as 'percentage' | 'amount')}>
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="text-xs font-medium text-muted-foreground">Risk Type</label>
+                    <TabsList className="h-7 bg-muted/50 p-0.5">
+                      <TabsTrigger value="percentage" className="text-[10px] px-2 h-6 gap-1">
+                        <Percent className="h-3 w-3" /> %
+                      </TabsTrigger>
+                      <TabsTrigger value="amount" className="text-[10px] px-2 h-6 gap-1">
+                        <Wallet className="h-3 w-3" /> {currencySymbol}
+                      </TabsTrigger>
+                    </TabsList>
                   </div>
-                </div>
-                <Slider 
-                  value={[store.riskPerTradePercent]} 
-                  min={0.1} 
-                  max={10} 
-                  step={0.1} 
-                  onValueChange={([v]) => store.setRiskPerTradePercent(v)} 
-                />
+
+                  <TabsContent value="percentage" className="space-y-3 m-0">
+                    <div className="flex justify-between items-center">
+                      <label className="text-xs font-medium text-muted-foreground">Risk per Trade (%)</label>
+                      <div className="flex items-center gap-1">
+                        <Input 
+                          type="number" 
+                          inputMode="decimal"
+                          value={localRiskPercent} 
+                          onChange={(e) => handleRiskPercentChange(e.target.value)}
+                          onFocus={(e) => e.target.select()}
+                          className="w-16 h-8 text-xs bg-background text-right"
+                          step="0.1"
+                        />
+                        <span className="text-xs font-bold text-primary">%</span>
+                      </div>
+                    </div>
+                    <Slider 
+                      value={[store.riskPerTradePercent]} 
+                      min={0.1} 
+                      max={10} 
+                      step={0.1} 
+                      onValueChange={([v]) => store.setRiskPerTradePercent(v)} 
+                    />
+                  </TabsContent>
+
+                  <TabsContent value="amount" className="m-0">
+                    <div className="flex justify-between items-center mb-2">
+                      <label className="text-xs font-medium text-muted-foreground">Fixed Risk Amount ({currencySymbol})</label>
+                      <div className="flex items-center gap-1">
+                        <Input 
+                          type="number" 
+                          inputMode="decimal"
+                          value={localRiskAmount} 
+                          onChange={(e) => handleRiskAmountChange(e.target.value)}
+                          onFocus={(e) => e.target.select()}
+                          className="w-24 h-8 text-xs bg-background text-right font-bold"
+                          placeholder="0.00"
+                        />
+                      </div>
+                    </div>
+                  </TabsContent>
+                </Tabs>
               </div>
             </div>
 

@@ -31,6 +31,8 @@ export type AppState = {
   // Position Sizer Defaults
   accountBalance: number;
   riskPerTradePercent: number;
+  riskAmountFixed: number;
+  riskType: 'percentage' | 'amount';
 };
 
 const DEFAULT_STATE: AppState = {
@@ -43,7 +45,9 @@ const DEFAULT_STATE: AppState = {
   useManualDrawdown: false,
   currency: 'INR',
   accountBalance: 100000,
-  riskPerTradePercent: 1
+  riskPerTradePercent: 1,
+  riskAmountFixed: 1000,
+  riskType: 'percentage'
 };
 
 export const CURRENCY_SYMBOLS: Record<CurrencyCode, string> = {
@@ -63,7 +67,7 @@ export function useRecoupStore() {
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('recouppro_state_v3');
+      const saved = localStorage.getItem('recouppro_state_v4');
       if (saved) {
         try {
           const parsed = JSON.parse(saved);
@@ -92,7 +96,7 @@ export function useRecoupStore() {
 
   useEffect(() => {
     if (isHydrated) {
-      localStorage.setItem('recouppro_state_v3', JSON.stringify(state));
+      localStorage.setItem('recouppro_state_v4', JSON.stringify(state));
     }
   }, [state, isHydrated]);
 
@@ -192,6 +196,14 @@ export function useRecoupStore() {
     setState(prev => ({ ...prev, riskPerTradePercent: n }));
   };
 
+  const setRiskAmountFixed = (n: number) => {
+    setState(prev => ({ ...prev, riskAmountFixed: n }));
+  };
+
+  const setRiskType = (t: 'percentage' | 'amount') => {
+    setState(prev => ({ ...prev, riskType: t }));
+  };
+
   const resetAllData = () => {
     setState(prev => ({
       ...DEFAULT_STATE,
@@ -202,6 +214,8 @@ export function useRecoupStore() {
       useManualDrawdown: prev.useManualDrawdown,
       accountBalance: prev.accountBalance,
       riskPerTradePercent: prev.riskPerTradePercent,
+      riskAmountFixed: prev.riskAmountFixed,
+      riskType: prev.riskType,
       sessions: [],
       activeSession: null,
       manualDrawdown: 0
@@ -222,6 +236,8 @@ export function useRecoupStore() {
     setCurrency,
     setAccountBalance,
     setRiskPerTradePercent,
+    setRiskAmountFixed,
+    setRiskType,
     resetAllData
   };
 }
