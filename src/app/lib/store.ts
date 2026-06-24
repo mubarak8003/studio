@@ -17,7 +17,7 @@ export type Session = {
   isActive: boolean;
 };
 
-export type CurrencyCode = 'USD' | 'INR' | 'EUR' | 'GBP';
+export type CurrencyCode = 'USD' | 'INR' | 'EUR' | 'GBP' | 'AED' | 'SAR' | 'PKR' | 'BDT';
 
 export type AppState = {
   sessions: Session[];
@@ -38,14 +38,18 @@ const DEFAULT_STATE: AppState = {
   riskRewardRatio: 1,
   manualDrawdown: 0,
   useManualDrawdown: false,
-  currency: 'USD'
+  currency: 'INR'
 };
 
 export const CURRENCY_SYMBOLS: Record<CurrencyCode, string> = {
   USD: '$',
   INR: '₹',
   EUR: '€',
-  GBP: '£'
+  GBP: '£',
+  AED: 'د.إ',
+  SAR: '﷼',
+  PKR: '₨',
+  BDT: '৳'
 };
 
 export function useRecoupStore() {
@@ -54,7 +58,7 @@ export function useRecoupStore() {
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('recouppro_state');
+      const saved = localStorage.getItem('recouppro_state_v2');
       if (saved) {
         try {
           const parsed = JSON.parse(saved);
@@ -83,7 +87,7 @@ export function useRecoupStore() {
 
   useEffect(() => {
     if (isHydrated) {
-      localStorage.setItem('recouppro_state', JSON.stringify(state));
+      localStorage.setItem('recouppro_state_v2', JSON.stringify(state));
     }
   }, [state, isHydrated]);
 
@@ -117,7 +121,6 @@ export function useRecoupStore() {
     };
 
     setState(prev => {
-      // Calculate net PnL to determine if we are in recovery
       const allTrades = [
         ...(prev.activeSession?.trades || []),
         ...prev.sessions.flatMap(s => s.trades)
@@ -128,12 +131,10 @@ export function useRecoupStore() {
       let nextRecoveryTarget = prev.recoveryTargetWins;
       let nextManualDrawdown = prev.manualDrawdown;
 
-      // Logic: If it's a win and we are recovering, decrease the win count needed
       if (type === 'win' && inDrawdown && prev.recoveryTargetWins > 1) {
         nextRecoveryTarget = prev.recoveryTargetWins - 1;
       }
 
-      // Logic: If using manual recovery, update the remaining target amount dynamically
       if (prev.useManualDrawdown) {
         if (type === 'win') {
           nextManualDrawdown = Math.max(0, prev.manualDrawdown - amount);
@@ -180,6 +181,7 @@ export function useRecoupStore() {
 
   const resetAllData = () => {
     setState(DEFAULT_STATE);
+    localStorage.removeItem('recouppro_state_v2');
   };
 
   return {

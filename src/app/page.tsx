@@ -57,9 +57,6 @@ import {
 import { ModeToggle } from '@/components/mode-toggle';
 import { cn } from '@/lib/utils';
 
-/**
- * Premium Logo using the selected landscape image
- */
 const AppLogo = ({ className }: { className?: string }) => {
   const logoImage = PlaceHolderImages.find(img => img.id === 'app-logo');
   
@@ -104,24 +101,26 @@ const StrategySettings = ({ store, stats }: { store: any, stats: any }) => {
 
   const handleBaseStakeChange = (val: string) => {
     setLocalBaseStake(val);
-    if (val !== '') store.setBaseStake(Number(val));
+    const num = parseFloat(val);
+    if (!isNaN(num)) store.setBaseStake(num);
   };
 
   const handleManualDrawdownChange = (val: string) => {
     setLocalManualDrawdown(val);
-    if (val !== '') store.setManualDrawdown(Number(val));
+    const num = parseFloat(val);
+    if (!isNaN(num)) store.setManualDrawdown(num);
   };
 
   const handleRecoveryTargetChange = (val: string) => {
     setLocalRecoveryTarget(val);
-    if (val !== '') store.setRecoveryTargetWins(Math.max(1, Number(val)));
+    const num = parseInt(val);
+    if (!isNaN(num)) store.setRecoveryTargetWins(Math.max(1, num));
   };
 
   const handleRRRatioChange = (val: string) => {
     setLocalRRRatio(val);
-    if (val !== '' && !isNaN(Number(val))) {
-      store.setRiskRewardRatio(Number(val));
-    }
+    const num = parseFloat(val);
+    if (!isNaN(num)) store.setRiskRewardRatio(num);
   };
 
   const currencySymbol = CURRENCY_SYMBOLS[store.currency as CurrencyCode];
@@ -141,6 +140,10 @@ const StrategySettings = ({ store, stats }: { store: any, stats: any }) => {
             <SelectItem value="USD">USD ($)</SelectItem>
             <SelectItem value="EUR">EUR (€)</SelectItem>
             <SelectItem value="GBP">GBP (£)</SelectItem>
+            <SelectItem value="AED">AED (د.إ)</SelectItem>
+            <SelectItem value="SAR">SAR (﷼)</SelectItem>
+            <SelectItem value="PKR">PKR (₨)</SelectItem>
+            <SelectItem value="BDT">BDT (৳)</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -360,7 +363,6 @@ export default function Dashboard() {
 
   return (
     <div className="flex flex-col min-h-svh overflow-x-hidden">
-      {/* Mobile Top Navigation */}
       <header className="md:hidden sticky top-0 flex items-center justify-between p-4 border-b border-border bg-card/80 backdrop-blur-md z-40">
         <div className="flex items-center gap-3">
           <AppLogo className="h-10 w-10" />
@@ -409,7 +411,6 @@ export default function Dashboard() {
       </header>
 
       <div className="flex flex-1 relative">
-        {/* Desktop Sidebar */}
         <aside className="w-80 border-r border-border bg-card/50 hidden md:flex flex-col p-6 sticky top-0 h-svh overflow-y-auto">
           <div className="flex items-center justify-between mb-8">
             <div className="flex items-center gap-3">
@@ -442,12 +443,10 @@ export default function Dashboard() {
           </div>
         </aside>
 
-        {/* Main Content Area */}
         <main className="flex-1 min-h-svh p-4 md:p-10 bg-background/40 overflow-x-hidden">
           <div className="max-w-5xl mx-auto space-y-8 animate-in fade-in duration-500">
             {!showHistory ? (
               <>
-                {/* Dashboard View */}
                 <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                   <div>
                     <h2 className="text-2xl md:text-3xl font-headline font-bold mb-1 text-foreground">Trading Control</h2>
@@ -668,7 +667,6 @@ export default function Dashboard() {
                 </div>
               </>
             ) : (
-              /* History View */
               <div className="space-y-6">
                 <header className="flex items-center justify-between mb-8">
                   <div className="flex items-center gap-4">
