@@ -66,7 +66,7 @@ type View = 'dashboard' | 'history' | 'sizer';
 const AppLogo = ({ className }: { className?: string }) => {
   return (
     <div className={cn("flex items-center justify-center bg-[#14b8a6] rounded-[22%] shadow-lg aspect-square glow-primary ring-1 ring-white/10", className)}>
-      <span className="text-white font-headline font-bold text-[65%] leading-none select-none">RP</span>
+      <span className="text-white font-headline font-bold text-2xl md:text-3xl leading-none select-none tracking-tighter">RP</span>
     </div>
   );
 };
@@ -411,7 +411,7 @@ const PositionSizer = ({ store }: { store: any }) => {
                           type="number" 
                           inputMode="decimal"
                           value={localRiskPercent} 
-                          onChange={(e) => handleRiskPercentChange(e.target.value)}
+                          onChange={(e) => handleRiskPercentChange(val => val)} // local string state logic
                           onFocus={(e) => e.target.select()}
                           className="w-16 h-8 text-xs bg-background text-right"
                           step="0.1"
