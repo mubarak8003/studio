@@ -292,8 +292,19 @@ const PositionSizer = ({ store }: { store: any }) => {
   const [entry, setEntry] = useState('');
   const [stop, setStop] = useState('');
   const [target, setTarget] = useState('');
+  const [localRisk, setLocalRisk] = useState(store.riskPerTradePercent.toString());
   
   const currencySymbol = CURRENCY_SYMBOLS[store.currency as CurrencyCode];
+
+  useEffect(() => {
+    setLocalRisk(store.riskPerTradePercent.toString());
+  }, [store.riskPerTradePercent]);
+
+  const handleRiskChange = (val: string) => {
+    setLocalRisk(val);
+    const num = parseFloat(val);
+    if (!isNaN(num)) store.setRiskPerTradePercent(num);
+  };
 
   const results = useMemo(() => {
     const e = parseFloat(entry);
@@ -346,15 +357,28 @@ const PositionSizer = ({ store }: { store: any }) => {
                 <label className="text-xs font-medium text-muted-foreground">Account Balance ({currencySymbol})</label>
                 <Input 
                   type="number" 
+                  inputMode="decimal"
                   value={store.accountBalance} 
                   onChange={(e) => store.setAccountBalance(parseFloat(e.target.value) || 0)}
                   onFocus={(e) => e.target.select()}
+                  className="bg-background"
                 />
               </div>
-              <div className="space-y-2">
+              <div className="space-y-3">
                 <div className="flex justify-between items-center">
                   <label className="text-xs font-medium text-muted-foreground">Risk per Trade (%)</label>
-                  <span className="text-xs font-bold text-primary">{store.riskPerTradePercent}%</span>
+                  <div className="flex items-center gap-1">
+                    <Input 
+                      type="number" 
+                      inputMode="decimal"
+                      value={localRisk} 
+                      onChange={(e) => handleRiskChange(e.target.value)}
+                      onFocus={(e) => e.target.select()}
+                      className="w-16 h-8 text-xs bg-background text-right"
+                      step="0.1"
+                    />
+                    <span className="text-xs font-bold text-primary">%</span>
+                  </div>
                 </div>
                 <Slider 
                   value={[store.riskPerTradePercent]} 
@@ -373,27 +397,33 @@ const PositionSizer = ({ store }: { store: any }) => {
                 <label className="text-xs font-medium text-muted-foreground">Entry Price</label>
                 <Input 
                   type="number" 
+                  inputMode="decimal"
                   placeholder="0.00" 
                   value={entry} 
                   onChange={(e) => setEntry(e.target.value)} 
+                  onFocus={(e) => e.target.select()}
                 />
               </div>
               <div className="space-y-2">
                 <label className="text-xs font-medium text-muted-foreground">Stop Loss</label>
                 <Input 
                   type="number" 
+                  inputMode="decimal"
                   placeholder="0.00" 
                   value={stop} 
                   onChange={(e) => setStop(e.target.value)} 
+                  onFocus={(e) => e.target.select()}
                 />
               </div>
               <div className="space-y-2">
                 <label className="text-xs font-medium text-muted-foreground">Target (Optional)</label>
                 <Input 
                   type="number" 
+                  inputMode="decimal"
                   placeholder="0.00" 
                   value={target} 
                   onChange={(e) => setTarget(e.target.value)} 
+                  onFocus={(e) => e.target.select()}
                 />
               </div>
             </div>
