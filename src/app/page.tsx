@@ -66,21 +66,9 @@ import { cn } from '@/lib/utils';
 type View = 'dashboard' | 'history' | 'sizer';
 
 const AppLogo = ({ className }: { className?: string }) => {
-  const logoImage = PlaceHolderImages.find(img => img.id === 'app-logo');
-  
   return (
-    <div className={cn("relative overflow-hidden rounded-xl shadow-lg ring-1 ring-white/20", className)}>
-      {logoImage ? (
-        <Image 
-          src={logoImage.imageUrl} 
-          alt="RecoupPro Logo" 
-          fill
-          className="object-cover"
-          data-ai-hint={logoImage.imageHint}
-        />
-      ) : (
-        <div className="w-full h-full bg-primary flex items-center justify-center text-white font-bold">RP</div>
-      )}
+    <div className={cn("flex items-center justify-center bg-primary rounded-xl shadow-lg glow-primary ring-1 ring-white/20", className)}>
+      <span className="text-white font-headline font-bold text-lg select-none">RP</span>
     </div>
   );
 };
@@ -109,24 +97,28 @@ const StrategySettings = ({ store, stats }: { store: any, stats: any }) => {
 
   const handleBaseStakeChange = (val: string) => {
     setLocalBaseStake(val);
+    if (val === '') return;
     const num = parseFloat(val);
     if (!isNaN(num)) store.setBaseStake(num);
   };
 
   const handleManualDrawdownChange = (val: string) => {
     setLocalManualDrawdown(val);
+    if (val === '') return;
     const num = parseFloat(val);
     if (!isNaN(num)) store.setManualDrawdown(num);
   };
 
   const handleRecoveryTargetChange = (val: string) => {
     setLocalRecoveryTarget(val);
+    if (val === '') return;
     const num = parseInt(val);
     if (!isNaN(num)) store.setRecoveryTargetWins(Math.max(1, num));
   };
 
   const handleRRRatioChange = (val: string) => {
     setLocalRRRatio(val);
+    if (val === '') return;
     const num = parseFloat(val);
     if (!isNaN(num)) store.setRiskRewardRatio(num);
   };
@@ -316,18 +308,21 @@ const PositionSizer = ({ store }: { store: any }) => {
 
   const handleAccountBalanceChange = (val: string) => {
     setLocalAccountBalance(val);
+    if (val === '') return;
     const num = parseFloat(val);
     if (!isNaN(num)) store.setAccountBalance(num);
   };
 
   const handleRiskPercentChange = (val: string) => {
     setLocalRiskPercent(val);
+    if (val === '') return;
     const num = parseFloat(val);
     if (!isNaN(num)) store.setRiskPerTradePercent(num);
   };
 
   const handleRiskAmountChange = (val: string) => {
     setLocalRiskAmount(val);
+    if (val === '') return;
     const num = parseFloat(val);
     if (!isNaN(num)) store.setRiskAmountFixed(num);
   };

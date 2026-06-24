@@ -3,9 +3,9 @@
   "placeholderImages": [
     {
       "id": "app-logo",
-      "description": "Professional abstract trading logo with teal and cyan gradients",
-      "imageUrl": "https://picsum.photos/seed/rp-trading-logo/512/512",
-      "imageHint": "abstract teal logo"
+      "description": "Professional abstract teal RP branding icon for mobile installation",
+      "imageUrl": "https://picsum.photos/seed/rp-branding-v1/512/512",
+      "imageHint": "abstract teal RP"
     }
   ]
 }
