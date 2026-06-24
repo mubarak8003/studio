@@ -180,8 +180,19 @@ export function useRecoupStore() {
   };
 
   const resetAllData = () => {
-    setState(DEFAULT_STATE);
-    localStorage.removeItem('recouppro_state_v2');
+    setState(prev => ({
+      ...DEFAULT_STATE,
+      // Preserve the "last settings" as requested by user
+      baseStake: prev.baseStake,
+      currency: prev.currency,
+      riskRewardRatio: prev.riskRewardRatio,
+      recoveryTargetWins: prev.recoveryTargetWins,
+      useManualDrawdown: prev.useManualDrawdown,
+      // Clear history
+      sessions: [],
+      activeSession: null,
+      manualDrawdown: 0
+    }));
   };
 
   return {
