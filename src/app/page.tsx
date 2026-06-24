@@ -3,8 +3,6 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
 import { useRecoupStore, CURRENCY_SYMBOLS, CurrencyCode } from './lib/store';
-import Image from 'next/image';
-import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { 
   TrendingUp, 
   TrendingDown, 
@@ -67,8 +65,8 @@ type View = 'dashboard' | 'history' | 'sizer';
 
 const AppLogo = ({ className }: { className?: string }) => {
   return (
-    <div className={cn("flex items-center justify-center bg-primary rounded-2xl shadow-lg glow-primary ring-1 ring-white/20", className)}>
-      <span className="text-white font-headline font-bold text-lg select-none">RP</span>
+    <div className={cn("flex items-center justify-center bg-[#14b8a6] rounded-[22%] shadow-lg aspect-square glow-primary ring-1 ring-white/10", className)}>
+      <span className="text-white font-headline font-bold text-[45%] leading-none select-none">RP</span>
     </div>
   );
 };
@@ -268,7 +266,7 @@ const StrategySettings = ({ store, stats }: { store: any, stats: any }) => {
             <AlertDialogHeader>
               <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
               <AlertDialogDescription>
-                This will permanently delete all your sessions, trade history, and reset your strategy settings. This action cannot be undone.
+                This will permanently delete all your sessions, trade history, and reset your data. Your strategy settings (Currency, Stake) will be preserved.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
