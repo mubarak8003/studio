@@ -67,7 +67,7 @@ type View = 'dashboard' | 'history' | 'sizer';
 
 const AppLogo = ({ className }: { className?: string }) => {
   return (
-    <div className={cn("flex items-center justify-center bg-primary rounded-xl shadow-lg glow-primary ring-1 ring-white/20", className)}>
+    <div className={cn("flex items-center justify-center bg-primary rounded-2xl shadow-lg glow-primary ring-1 ring-white/20", className)}>
       <span className="text-white font-headline font-bold text-lg select-none">RP</span>
     </div>
   );
