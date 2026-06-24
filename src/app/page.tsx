@@ -66,7 +66,7 @@ type View = 'dashboard' | 'history' | 'sizer';
 const AppLogo = ({ className }: { className?: string }) => {
   return (
     <div className={cn("flex items-center justify-center bg-[#14b8a6] rounded-[22%] shadow-lg aspect-square glow-primary ring-1 ring-white/10", className)}>
-      <span className="text-white font-headline font-bold text-[45%] leading-none select-none">RP</span>
+      <span className="text-white font-headline font-bold text-[65%] leading-none select-none">RP</span>
     </div>
   );
 };
@@ -793,7 +793,7 @@ export default function Dashboard() {
                                <span>Recovery Adjustment:</span>
                                <span className="font-mono">+ {currencySymbol}{stats.recoveryStakeAdjustment.toFixed(2)}</span>
                              </div>
-                             <div className="text-[10px] text-muted-foreground italic mt-2 leading-tight">
+                             <div className="text-[10px] text-muted-foreground italic mt-2 translation-all duration-1000">
                                Calculation: (Target / {store.riskRewardRatio} RR)
                              </div>
                            </div>
