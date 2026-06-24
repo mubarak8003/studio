@@ -1,3 +1,4 @@
+
 "use client"
 
 import React, { useState, useMemo, useEffect } from 'react';
@@ -295,10 +296,15 @@ const PositionSizer = ({ store }: { store: any }) => {
   const [entry, setEntry] = useState('');
   const [stop, setStop] = useState('');
   const [target, setTarget] = useState('');
+  const [localAccountBalance, setLocalAccountBalance] = useState(store.accountBalance.toString());
   const [localRiskPercent, setLocalRiskPercent] = useState(store.riskPerTradePercent.toString());
   const [localRiskAmount, setLocalRiskAmount] = useState(store.riskAmountFixed.toString());
   
   const currencySymbol = CURRENCY_SYMBOLS[store.currency as CurrencyCode];
+
+  useEffect(() => {
+    setLocalAccountBalance(store.accountBalance.toString());
+  }, [store.accountBalance]);
 
   useEffect(() => {
     setLocalRiskPercent(store.riskPerTradePercent.toString());
@@ -307,6 +313,12 @@ const PositionSizer = ({ store }: { store: any }) => {
   useEffect(() => {
     setLocalRiskAmount(store.riskAmountFixed.toString());
   }, [store.riskAmountFixed]);
+
+  const handleAccountBalanceChange = (val: string) => {
+    setLocalAccountBalance(val);
+    const num = parseFloat(val);
+    if (!isNaN(num)) store.setAccountBalance(num);
+  };
 
   const handleRiskPercentChange = (val: string) => {
     setLocalRiskPercent(val);
@@ -377,8 +389,8 @@ const PositionSizer = ({ store }: { store: any }) => {
                 <Input 
                   type="number" 
                   inputMode="decimal"
-                  value={store.accountBalance} 
-                  onChange={(e) => store.setAccountBalance(parseFloat(e.target.value) || 0)}
+                  value={localAccountBalance} 
+                  onChange={(e) => handleAccountBalanceChange(e.target.value)}
                   onFocus={(e) => e.target.select()}
                   className="bg-background"
                 />
