@@ -30,7 +30,8 @@ import {
   Percent,
   Wallet,
   Notebook,
-  Divide
+  Divide,
+  Equal
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -71,6 +72,71 @@ const AppLogo = ({ className }: { className?: string }) => {
     <div className={cn("flex items-center justify-center bg-[#14b8a6] rounded-[22%] shadow-lg aspect-square glow-primary ring-1 ring-white/10", className)}>
       <span className="text-white font-headline font-bold text-xl md:text-2xl leading-none select-none tracking-tighter">RP</span>
     </div>
+  );
+};
+
+const QuickPercentTool = () => {
+  const [baseNum, setBaseNum] = useState('');
+  const [percent, setPercent] = useState('');
+
+  const result = useMemo(() => {
+    const b = parseFloat(baseNum);
+    const p = parseFloat(percent);
+    if (isNaN(b) || isNaN(p)) return null;
+    return (b * p) / 100;
+  }, [baseNum, percent]);
+
+  return (
+    <Card className="bg-card border-border">
+      <CardHeader>
+        <CardTitle className="text-sm font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+          <Percent className="h-4 w-4 text-primary" /> Quick Percent Tool
+        </CardTitle>
+        <CardDescription className="text-[10px]">Calculate percentage of any number</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="grid grid-cols-2 gap-3">
+          <div className="space-y-1.5">
+            <label className="text-[10px] text-muted-foreground uppercase">Number</label>
+            <Input 
+              type="number" 
+              inputMode="decimal"
+              placeholder="e.g. 100" 
+              value={baseNum} 
+              onChange={(e) => setBaseNum(e.target.value)}
+              className="h-8 text-xs bg-background"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <label className="text-[10px] text-muted-foreground uppercase">Percent (%)</label>
+            <Input 
+              type="number" 
+              inputMode="decimal"
+              placeholder="e.g. 40" 
+              value={percent} 
+              onChange={(e) => setPercent(e.target.value)}
+              className="h-8 text-xs bg-background"
+            />
+          </div>
+        </div>
+
+        {result !== null ? (
+          <div className="p-3 rounded-lg bg-primary/5 border border-primary/20 flex flex-col items-center justify-center">
+            <span className="text-[10px] font-bold text-muted-foreground uppercase mb-1">Result</span>
+            <div className="text-2xl font-headline font-bold text-primary">
+              {result.toLocaleString(undefined, { maximumFractionDigits: 4 })}
+            </div>
+            <p className="text-[10px] text-muted-foreground mt-1">
+              {percent}% of {baseNum}
+            </p>
+          </div>
+        ) : (
+          <div className="h-16 flex items-center justify-center border border-dashed rounded-lg border-border/50 text-muted-foreground text-[10px]">
+            Enter values to calculate
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 };
 
@@ -527,22 +593,26 @@ const PositionSizer = ({ store }: { store: any }) => {
           </CardContent>
         </Card>
 
-        <Card className="bg-card border-border">
-          <CardHeader>
-            <CardTitle className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Strategy Note</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4 text-xs leading-relaxed text-muted-foreground">
-            <p>
-              Professional traders rarely risk more than <b>1-2%</b> of their total account on a single idea.
-            </p>
-            <p>
-              This calculator ensures that even if your Stop Loss is hit, you only lose exactly the amount of money you intended to risk.
-            </p>
-            <div className="p-3 bg-primary/10 rounded-lg border border-primary/20 text-foreground">
-              <b>Tip:</b> If the required capital is more than your account balance, you may need to reduce your risk % or use leverage if available.
-            </div>
-          </CardContent>
-        </Card>
+        <div className="space-y-6">
+          <QuickPercentTool />
+          
+          <Card className="bg-card border-border">
+            <CardHeader>
+              <CardTitle className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Strategy Note</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4 text-xs leading-relaxed text-muted-foreground">
+              <p>
+                Professional traders rarely risk more than <b>1-2%</b> of their total account on a single idea.
+              </p>
+              <p>
+                This calculator ensures that even if your Stop Loss is hit, you only lose exactly the amount of money you intended to risk.
+              </p>
+              <div className="p-3 bg-primary/10 rounded-lg border border-primary/20 text-foreground">
+                <b>Tip:</b> If the required capital is more than your account balance, you may need to reduce your risk % or use leverage if available.
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
   );
@@ -559,13 +629,11 @@ export default function Dashboard() {
   }, []);
 
   const stats = useMemo(() => {
-    // 1. Get all trades in chronological order to calculate the High Water Mark
     const chronTrades = [
       ...(store.activeSession?.trades || []),
       ...store.sessions.flatMap(s => s.trades)
     ].sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
     
-    // 2. Calculate running PnL and track the Peak (High Water Mark)
     let runningPnL = 0;
     let peakPnL = 0;
     
@@ -575,8 +643,6 @@ export default function Dashboard() {
     });
 
     const netPnL = runningPnL;
-    
-    // 3. Current Drawdown from High Water Mark (Peak to Current Valley)
     const highWaterMarkDrawdown = peakPnL - netPnL;
     
     const currentDrawdown = store.useManualDrawdown 
@@ -1076,4 +1142,3 @@ export default function Dashboard() {
     </div>
   );
 }
-
