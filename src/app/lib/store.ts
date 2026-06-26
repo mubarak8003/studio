@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState, useEffect } from 'react';
@@ -33,6 +34,7 @@ export type AppState = {
   riskPerTradePercent: number;
   riskAmountFixed: number;
   riskType: 'percentage' | 'amount';
+  notes: string;
 };
 
 const DEFAULT_STATE: AppState = {
@@ -47,7 +49,8 @@ const DEFAULT_STATE: AppState = {
   accountBalance: 100000,
   riskPerTradePercent: 1,
   riskAmountFixed: 1000,
-  riskType: 'percentage'
+  riskType: 'percentage',
+  notes: ''
 };
 
 export const CURRENCY_SYMBOLS: Record<CurrencyCode, string> = {
@@ -67,7 +70,7 @@ export function useRecoupStore() {
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('recouppro_state_v4');
+      const saved = localStorage.getItem('recouppro_state_v5');
       if (saved) {
         try {
           const parsed = JSON.parse(saved);
@@ -96,7 +99,7 @@ export function useRecoupStore() {
 
   useEffect(() => {
     if (isHydrated) {
-      localStorage.setItem('recouppro_state_v4', JSON.stringify(state));
+      localStorage.setItem('recouppro_state_v5', JSON.stringify(state));
     }
   }, [state, isHydrated]);
 
@@ -204,6 +207,10 @@ export function useRecoupStore() {
     setState(prev => ({ ...prev, riskType: t }));
   };
 
+  const setNotes = (n: string) => {
+    setState(prev => ({ ...prev, notes: n }));
+  };
+
   const resetAllData = () => {
     setState(prev => ({
       ...DEFAULT_STATE,
@@ -218,7 +225,8 @@ export function useRecoupStore() {
       riskType: prev.riskType,
       sessions: [],
       activeSession: null,
-      manualDrawdown: 0
+      manualDrawdown: 0,
+      notes: ''
     }));
   };
 
@@ -238,6 +246,7 @@ export function useRecoupStore() {
     setRiskPerTradePercent,
     setRiskAmountFixed,
     setRiskType,
+    setNotes,
     resetAllData
   };
 }

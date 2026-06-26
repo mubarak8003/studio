@@ -28,7 +28,8 @@ import {
   Briefcase,
   AlertCircle,
   Percent,
-  Wallet
+  Wallet,
+  Notebook
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -38,6 +39,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Slider } from '@/components/ui/slider';
 import { Switch } from '@/components/ui/switch';
+import { Textarea } from '@/components/ui/textarea';
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { 
   AlertDialog, 
@@ -218,9 +220,9 @@ const StrategySettings = ({ store, stats }: { store: any, stats: any }) => {
             <Target className="h-3 w-3" /> Recovery Trades
           </label>
           <Input 
-            type="number"
+            type="number" 
             inputMode="numeric"
-            value={localRecoveryTarget}
+            value={localRecoveryTarget} 
             onChange={(e) => handleRecoveryTargetChange(e.target.value)}
             onFocus={(e) => e.target.select()}
             className="w-16 h-7 text-xs bg-background text-right"
@@ -901,7 +903,7 @@ export default function Dashboard() {
                   </Card>
                 </div>
 
-                <div className="grid grid-cols-1 gap-6 pb-12">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pb-12">
                   <Card className="bg-card/50 border-border">
                     <CardHeader className="flex flex-row items-center justify-between">
                       <div>
@@ -945,6 +947,23 @@ export default function Dashboard() {
                           ))}
                         </div>
                       </ScrollArea>
+                    </CardContent>
+                  </Card>
+
+                  <Card className="bg-card border-border">
+                    <CardHeader>
+                      <CardTitle className="text-lg flex items-center gap-2 text-foreground">
+                        <Notebook className="h-5 w-5 text-primary" /> Trading Notes 📝
+                      </CardTitle>
+                      <CardDescription className="text-xs">Journal your thoughts or strategy reminders.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <Textarea 
+                        placeholder="Start typing your notes here..."
+                        className="min-h-[256px] bg-background border-border resize-none"
+                        value={store.notes}
+                        onChange={(e) => store.setNotes(e.target.value)}
+                      />
                     </CardContent>
                   </Card>
                 </div>
