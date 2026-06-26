@@ -558,22 +558,29 @@ export default function Dashboard() {
   }, []);
 
   const stats = useMemo(() => {
-    const allTrades = [
+    // 1. Get all trades in chronological order to calculate the High Water Mark
+    const chronTrades = [
       ...(store.activeSession?.trades || []),
       ...store.sessions.flatMap(s => s.trades)
-    ].sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
+    ].sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
     
-    const wins = allTrades.filter(t => t.type === 'win');
-    const losses = allTrades.filter(t => t.type === 'loss');
+    // 2. Calculate running PnL and track the Peak (High Water Mark)
+    let runningPnL = 0;
+    let peakPnL = 0;
     
-    const totalProfit = wins.reduce((sum, t) => sum + t.amount, 0);
-    const totalLoss = losses.reduce((sum, t) => sum + t.amount, 0);
+    chronTrades.forEach(t => {
+      runningPnL += (t.type === 'win' ? t.amount : -t.amount);
+      if (runningPnL > peakPnL) peakPnL = runningPnL;
+    });
+
+    const netPnL = runningPnL;
     
-    const netPnL = totalProfit - totalLoss;
+    // 3. Current Drawdown from High Water Mark (Peak to Current Valley)
+    const highWaterMarkDrawdown = peakPnL - netPnL;
     
     const currentDrawdown = store.useManualDrawdown 
       ? store.manualDrawdown 
-      : (netPnL < 0 ? Math.abs(netPnL) : 0);
+      : (highWaterMarkDrawdown > 0 ? highWaterMarkDrawdown : 0);
     
     const requiredProfitPerTrade = currentDrawdown > 0 
       ? currentDrawdown / (store.recoveryTargetWins || 1) 
@@ -589,23 +596,27 @@ export default function Dashboard() {
       else if (recoveryRatio > 0.5) riskLevel = 'medium';
     }
 
+    const wins = chronTrades.filter(t => t.type === 'win');
+    const losses = chronTrades.filter(t => t.type === 'loss');
+    const allTradesDesc = [...chronTrades].reverse();
+
     return {
-      allTrades,
+      allTrades: allTradesDesc,
       wins,
       losses,
-      totalProfit,
-      totalLoss,
+      totalProfit: wins.reduce((sum, t) => sum + t.amount, 0),
+      totalLoss: losses.reduce((sum, t) => sum + t.amount, 0),
       netPnL,
       currentDrawdown,
       requiredProfitPerTrade,
       nextStake,
       recoveryStakeAdjustment,
       riskLevel,
-      winRate: allTrades.length > 0 
-        ? (wins.length / allTrades.length) * 100 
+      winRate: chronTrades.length > 0 
+        ? (wins.length / chronTrades.length) * 100 
         : 0,
-      avgWin: wins.length > 0 ? totalProfit / wins.length : 0,
-      avgLoss: losses.length > 0 ? totalLoss / losses.length : 0,
+      avgWin: wins.length > 0 ? wins.reduce((sum, t) => sum + t.amount, 0) / wins.length : 0,
+      avgLoss: losses.length > 0 ? losses.reduce((sum, t) => sum + t.amount, 0) / losses.length : 0,
     };
   }, [store]);
 
@@ -758,7 +769,7 @@ export default function Dashboard() {
                         <p className="text-xs text-muted-foreground mt-2 uppercase tracking-widest font-semibold">Total Trade Amount</p>
                         <div className="mt-4 flex flex-col items-center gap-2">
                           <Badge variant={stats.currentDrawdown > 0 ? "destructive" : "secondary"}>
-                            {store.useManualDrawdown ? 'Manual Target: ' : 'Session Loss: '}{currencySymbol}{stats.currentDrawdown.toFixed(2)}
+                            {store.useManualDrawdown ? 'Manual Target: ' : 'Recovery Target: '}{currencySymbol}{stats.currentDrawdown.toFixed(2)}
                           </Badge>
                         </div>
                       </div>
@@ -871,7 +882,7 @@ export default function Dashboard() {
                         <div className="space-y-1">
                           <span className="text-[10px] text-muted-foreground uppercase tracking-tight">Current Drawdown</span>
                           <div className="text-lg md:text-xl font-headline font-bold text-red-400">
-                            {currencySymbol}{Math.max(0, -stats.netPnL).toFixed(2)}
+                            {currencySymbol}{stats.currentDrawdown.toFixed(2)}
                           </div>
                         </div>
                       </div>
