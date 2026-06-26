@@ -364,12 +364,12 @@ const PositionSizer = ({ store }: { store: any }) => {
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
       <header>
-        <h2 className="text-2xl md:text-3xl font-headline font-bold mb-1">Position Sizer</h2>
+        <h2 className="text-2xl md:text-3xl font-headline font-bold mb-1 text-foreground">Position Sizer</h2>
         <p className="text-muted-foreground text-sm">Calculate shares and risk based on stop loss.</p>
       </header>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <Card className="lg:col-span-2">
+        <Card className="lg:col-span-2 bg-card border-border">
           <CardHeader>
             <CardTitle className="text-lg flex items-center gap-2">
               <Calculator className="h-5 w-5 text-primary" /> Trade Parameters
@@ -385,7 +385,7 @@ const PositionSizer = ({ store }: { store: any }) => {
                   value={localAccountBalance} 
                   onChange={(e) => handleAccountBalanceChange(e.target.value)}
                   onFocus={(e) => e.target.select()}
-                  className="bg-background"
+                  className="bg-background border-border"
                 />
               </div>
 
@@ -448,7 +448,7 @@ const PositionSizer = ({ store }: { store: any }) => {
               </div>
             </div>
 
-            <Separator />
+            <Separator className="bg-border/30" />
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="space-y-2">
@@ -460,6 +460,7 @@ const PositionSizer = ({ store }: { store: any }) => {
                   value={entry} 
                   onChange={(e) => setEntry(e.target.value)} 
                   onFocus={(e) => e.target.select()}
+                  className="bg-background border-border"
                 />
               </div>
               <div className="space-y-2">
@@ -471,6 +472,7 @@ const PositionSizer = ({ store }: { store: any }) => {
                   value={stop} 
                   onChange={(e) => setStop(e.target.value)} 
                   onFocus={(e) => e.target.select()}
+                  className="bg-background border-border"
                 />
               </div>
               <div className="space-y-2">
@@ -482,12 +484,13 @@ const PositionSizer = ({ store }: { store: any }) => {
                   value={target} 
                   onChange={(e) => setTarget(e.target.value)} 
                   onFocus={(e) => e.target.select()}
+                  className="bg-background border-border"
                 />
               </div>
             </div>
 
             {results ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-8 pt-6 border-t">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-8 pt-6 border-t border-border/30">
                 <div className="p-4 rounded-xl bg-primary/5 border border-primary/20 flex flex-col items-center justify-center py-8">
                   <span className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-1">Recommended Shares</span>
                   <div className="text-5xl font-headline font-bold text-primary">
@@ -498,7 +501,7 @@ const PositionSizer = ({ store }: { store: any }) => {
                 <div className="space-y-4">
                   <div className="flex justify-between items-center p-3 rounded-lg bg-muted/30">
                     <span className="text-xs text-muted-foreground">Total Capital Required</span>
-                    <span className="font-bold">{currencySymbol}{results.totalPositionValue.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                    <span className="font-bold text-foreground">{currencySymbol}{results.totalPositionValue.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
                   </div>
                   <div className="flex justify-between items-center p-3 rounded-lg bg-red-500/5 text-red-500">
                     <span className="text-xs">Max Loss (Risk)</span>
@@ -513,7 +516,7 @@ const PositionSizer = ({ store }: { store: any }) => {
                 </div>
               </div>
             ) : (
-              <div className="flex flex-col items-center justify-center py-12 text-muted-foreground border-2 border-dashed rounded-xl">
+              <div className="flex flex-col items-center justify-center py-12 text-muted-foreground border-2 border-dashed rounded-xl border-border/50">
                 <AlertCircle className="h-8 w-8 mb-2 opacity-20" />
                 <p className="text-sm">Enter Entry and Stop Loss prices to calculate size</p>
               </div>
@@ -521,7 +524,7 @@ const PositionSizer = ({ store }: { store: any }) => {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="bg-card border-border">
           <CardHeader>
             <CardTitle className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Strategy Note</CardTitle>
           </CardHeader>
@@ -633,7 +636,7 @@ export default function Dashboard() {
             <SheetContent side="left" className="w-[85vw] max-w-sm bg-card border-r border-border p-0 flex flex-col">
               <div className="p-6 border-b border-border">
                 <SheetHeader>
-                  <SheetTitle className="text-left flex items-center gap-3">
+                  <SheetTitle className="text-left flex items-center gap-3 text-foreground">
                     <AppLogo className="h-8 w-8" />
                     <span>Trading Hub</span>
                   </SheetTitle>
@@ -652,7 +655,7 @@ export default function Dashboard() {
                       <History className="h-4 w-4" /> History
                     </Button>
                   </nav>
-                  <Separator />
+                  <Separator className="bg-border/30" />
                   {view !== 'sizer' && (
                     <div className="space-y-6">
                       <div className="flex items-center gap-2">
@@ -683,20 +686,20 @@ export default function Dashboard() {
           </div>
 
           <nav className="space-y-2 mb-8">
-            <Button variant={view === 'dashboard' ? "secondary" : "ghost"} className="w-full justify-start gap-3" onClick={() => setView('dashboard')}>
+            <Button variant={view === 'dashboard' ? "secondary" : "ghost"} className="w-full justify-start gap-3 text-foreground" onClick={() => setView('dashboard')}>
               <Activity className="h-4 w-4" /> Dashboard
             </Button>
-            <Button variant={view === 'sizer' ? "secondary" : "ghost"} className="w-full justify-start gap-3" onClick={() => setView('sizer')}>
+            <Button variant={view === 'sizer' ? "secondary" : "ghost"} className="w-full justify-start gap-3 text-foreground" onClick={() => setView('sizer')}>
               <Briefcase className="h-4 w-4" /> Position Sizer
             </Button>
-            <Button variant={view === 'history' ? "secondary" : "ghost"} className="w-full justify-start gap-3" onClick={() => setView('history')}>
+            <Button variant={view === 'history' ? "secondary" : "ghost"} className="w-full justify-start gap-3 text-foreground" onClick={() => setView('history')}>
               <History className="h-4 w-4" /> History
             </Button>
           </nav>
 
           {view !== 'sizer' && (
             <>
-              <Separator className="mb-8" />
+              <Separator className="mb-8 bg-border/30" />
               <div className="space-y-6">
                 <div className="flex items-center gap-2">
                   <Settings2 className="h-4 w-4 text-muted-foreground" />
@@ -733,8 +736,8 @@ export default function Dashboard() {
                 </header>
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                  <Card className="lg:col-span-2 bg-card border-primary/20 backdrop-blur-md relative overflow-hidden">
-                    <div className="absolute top-0 right-0 p-4 opacity-5 hidden md:block">
+                  <Card className="lg:col-span-2 bg-card border-border backdrop-blur-md relative overflow-hidden">
+                    <div className="absolute top-0 right-0 p-4 opacity-5 hidden md:block text-foreground">
                       <Calculator className="h-24 w-24" />
                     </div>
                     <CardHeader>
@@ -764,7 +767,7 @@ export default function Dashboard() {
                              <Target className="h-3 w-3" /> Profit Breakdown
                            </h4>
                            <div className="space-y-2">
-                             <div className="flex justify-between items-center">
+                             <div className="flex justify-between items-center text-foreground">
                                <span>Base Profit Target:</span>
                                <span className="font-mono font-bold">{currencySymbol}{(store.baseStake * store.riskRewardRatio).toFixed(2)}</span>
                              </div>
@@ -785,7 +788,7 @@ export default function Dashboard() {
                              <ArrowUpRight className="h-3 w-3" /> Investment Logic
                            </h4>
                            <div className="space-y-2">
-                             <div className="flex justify-between items-center">
+                             <div className="flex justify-between items-center text-foreground">
                                <span>Base Investment:</span>
                                <span className="font-mono">{currencySymbol}{store.baseStake.toFixed(2)}</span>
                              </div>
@@ -811,23 +814,25 @@ export default function Dashboard() {
                                 value={tradeAmount} 
                                 onChange={(e) => setTradeAmount(e.target.value)}
                                 onFocus={(e) => e.target.select()}
-                                className="text-lg py-6 bg-background focus:ring-primary"
+                                className="text-lg py-6 bg-background focus:ring-primary border-border"
                               />
                             </div>
                             <div className="flex gap-3">
                               <Button 
+                                variant="outline"
                                 size="lg" 
-                                className="flex-1 bg-green-400 hover:bg-green-500 h-auto px-6 py-4 md:py-2 text-white"
+                                className="flex-1 border-green-500/50 hover:bg-green-500/10 h-auto px-6 py-4 md:py-2"
                                 onClick={() => handleAddTrade('win')}
                               >
-                                <TrendingUp className="h-6 w-6" />
+                                <TrendingUp className="h-6 w-6 text-green-500" />
                               </Button>
                               <Button 
+                                variant="outline"
                                 size="lg" 
-                                className="flex-1 bg-red-400 hover:bg-red-500 h-auto px-6 py-4 md:py-2 text-white"
+                                className="flex-1 border-red-500/50 hover:bg-red-500/10 h-auto px-6 py-4 md:py-2"
                                 onClick={() => handleAddTrade('loss')}
                               >
-                                <TrendingDown className="h-6 w-6" />
+                                <TrendingDown className="h-6 w-6 text-red-500" />
                               </Button>
                             </div>
                           </div>
@@ -844,7 +849,7 @@ export default function Dashboard() {
                       <div>
                         <div className="flex justify-between text-sm mb-2">
                           <span className="text-muted-foreground">Win Rate</span>
-                          <span className="font-bold">{stats.winRate.toFixed(1)}%</span>
+                          <span className="font-bold text-foreground">{stats.winRate.toFixed(1)}%</span>
                         </div>
                         <div className="w-full bg-secondary rounded-full h-2">
                           <div 
@@ -883,11 +888,11 @@ export default function Dashboard() {
                       </div>
 
                       <div className="space-y-3 pt-2">
-                         <div className="flex justify-between items-center text-sm">
+                         <div className="flex justify-between items-center text-sm text-foreground">
                             <span className="text-muted-foreground flex items-center gap-2"><Plus className="h-3 w-3 text-green-500" /> Avg Win</span>
                             <span>{currencySymbol}{stats.avgWin.toFixed(2)}</span>
                          </div>
-                         <div className="flex justify-between items-center text-sm">
+                         <div className="flex justify-between items-center text-sm text-foreground">
                             <span className="text-muted-foreground flex items-center gap-2"><div className="h-[2px] w-3 bg-red-500" /> Avg Loss</span>
                             <span>{currencySymbol}{stats.avgLoss.toFixed(2)}</span>
                          </div>
@@ -900,7 +905,7 @@ export default function Dashboard() {
                   <Card className="bg-card/50 border-border">
                     <CardHeader className="flex flex-row items-center justify-between">
                       <div>
-                        <CardTitle className="text-lg">Trade Log</CardTitle>
+                        <CardTitle className="text-lg text-foreground">Trade Log</CardTitle>
                         <CardDescription className="text-xs">Recent entries</CardDescription>
                       </div>
                       <Button variant="outline" size="sm" onClick={() => setView('history')} className="text-xs bg-primary/10 text-primary border-primary/30 hover:bg-primary/20">
@@ -926,7 +931,7 @@ export default function Dashboard() {
                                   {trade.type === 'win' ? <TrendingUp className="h-4 w-4" /> : <TrendingDown className="h-4 w-4" />}
                                 </div>
                                 <div>
-                                  <p className="text-sm font-semibold">{currencySymbol}{trade.amount.toFixed(2)}</p>
+                                  <p className="text-sm font-semibold text-foreground">{currencySymbol}{trade.amount.toFixed(2)}</p>
                                   <p className="text-[10px] text-muted-foreground">{trade.timestamp.toLocaleTimeString()}</p>
                                 </div>
                               </div>
@@ -954,7 +959,7 @@ export default function Dashboard() {
                       <ArrowLeft className="h-5 w-5" />
                     </Button>
                     <div>
-                      <h2 className="text-3xl font-headline font-bold">Trade History</h2>
+                      <h2 className="text-3xl font-headline font-bold text-foreground">Trade History</h2>
                       <p className="text-muted-foreground text-sm">Review all session activity and recorded trades.</p>
                     </div>
                   </div>
@@ -965,16 +970,16 @@ export default function Dashboard() {
 
                 <div className="grid grid-cols-1 gap-6">
                   {stats.allTrades.length === 0 ? (
-                    <Card className="border-dashed border-2 flex flex-col items-center justify-center py-20 bg-background/50">
+                    <Card className="border-dashed border-2 flex flex-col items-center justify-center py-20 bg-background/50 border-border/50">
                       <History className="h-12 w-12 text-muted-foreground mb-4 opacity-20" />
-                      <h3 className="text-lg font-semibold">No history yet</h3>
+                      <h3 className="text-lg font-semibold text-foreground">No history yet</h3>
                       <p className="text-muted-foreground text-sm mb-6">Your recorded trades will appear here.</p>
                       <Button onClick={() => setView('dashboard')}>Return to Dashboard</Button>
                     </Card>
                   ) : (
-                    <Card className="bg-card">
+                    <Card className="bg-card border-border">
                       <CardHeader className="flex flex-row items-center justify-between">
-                        <CardTitle className="text-lg">Full Audit Log</CardTitle>
+                        <CardTitle className="text-lg text-foreground">Full Audit Log</CardTitle>
                         <div className="flex items-center gap-4">
                            <div className="flex items-center gap-4 text-sm mr-4 hidden md:flex">
                               <span className="flex items-center gap-1 text-green-500"><TrendingUp className="h-3 w-3" /> {stats.wins.length} Wins</span>
@@ -996,7 +1001,7 @@ export default function Dashboard() {
                                 </div>
                                 <div>
                                   <div className="flex items-center gap-2">
-                                    <p className="text-lg font-bold">{currencySymbol}{trade.amount.toFixed(2)}</p>
+                                    <p className="text-lg font-bold text-foreground">{currencySymbol}{trade.amount.toFixed(2)}</p>
                                     <Badge variant="outline" className={cn(
                                       "text-[10px] h-5",
                                       trade.type === 'win' ? "text-green-500 border-green-500/30" : "text-red-500 border-red-500/30"
