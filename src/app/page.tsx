@@ -817,14 +817,14 @@ export default function Dashboard() {
                             <div className="flex gap-3">
                               <Button 
                                 size="lg" 
-                                className="flex-1 bg-green-600 hover:bg-green-700 h-auto px-6 py-4 md:py-2 text-white"
+                                className="flex-1 bg-green-500 hover:bg-green-600 h-auto px-6 py-4 md:py-2 text-white"
                                 onClick={() => handleAddTrade('win')}
                               >
                                 <TrendingUp className="h-6 w-6" />
                               </Button>
                               <Button 
                                 size="lg" 
-                                className="flex-1 bg-red-600 hover:bg-red-700 h-auto px-6 py-4 md:py-2 text-white"
+                                className="flex-1 bg-red-500 hover:bg-red-600 h-auto px-6 py-4 md:py-2 text-white"
                                 onClick={() => handleAddTrade('loss')}
                               >
                                 <TrendingDown className="h-6 w-6" />
@@ -872,11 +872,11 @@ export default function Dashboard() {
                       <Separator className="bg-border/50" />
 
                       <div className="grid grid-cols-2 gap-4">
-                        <div className="flex justify-between items-center text-xs">
+                        <div className="flex justify-between items-center text-xs p-2 rounded bg-green-500/5 border border-green-500/10">
                           <span className="text-muted-foreground">Wins</span>
                           <span className="font-bold text-green-500">{stats.wins.length}</span>
                         </div>
-                        <div className="flex justify-between items-center text-xs">
+                        <div className="flex justify-between items-center text-xs p-2 rounded bg-red-500/5 border border-red-500/10">
                           <span className="text-muted-foreground">Losses</span>
                           <span className="font-bold text-red-500">{stats.losses.length}</span>
                         </div>
