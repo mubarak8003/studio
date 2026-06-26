@@ -821,7 +821,7 @@ export default function Dashboard() {
                               <Button 
                                 variant="outline"
                                 size="lg" 
-                                className="flex-1 border-green-500/50 hover:bg-green-500/10 h-auto px-6 py-4 md:py-2"
+                                className="flex-1 bg-green-500/5 border-green-500/20 hover:bg-green-500/10 h-auto px-6 py-4 md:py-2"
                                 onClick={() => handleAddTrade('win')}
                               >
                                 <TrendingUp className="h-6 w-6 text-green-500" />
@@ -829,7 +829,7 @@ export default function Dashboard() {
                               <Button 
                                 variant="outline"
                                 size="lg" 
-                                className="flex-1 border-red-500/50 hover:bg-red-500/10 h-auto px-6 py-4 md:py-2"
+                                className="flex-1 bg-red-500/5 border-red-500/20 hover:bg-red-500/10 h-auto px-6 py-4 md:py-2"
                                 onClick={() => handleAddTrade('loss')}
                               >
                                 <TrendingDown className="h-6 w-6 text-red-500" />
