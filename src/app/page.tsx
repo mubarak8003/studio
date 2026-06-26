@@ -817,14 +817,14 @@ export default function Dashboard() {
                             <div className="flex gap-3">
                               <Button 
                                 size="lg" 
-                                className="flex-1 bg-green-500 hover:bg-green-600 h-auto px-6 py-4 md:py-2 text-white"
+                                className="flex-1 bg-green-400 hover:bg-green-500 h-auto px-6 py-4 md:py-2 text-white"
                                 onClick={() => handleAddTrade('win')}
                               >
                                 <TrendingUp className="h-6 w-6" />
                               </Button>
                               <Button 
                                 size="lg" 
-                                className="flex-1 bg-red-500 hover:bg-red-600 h-auto px-6 py-4 md:py-2 text-white"
+                                className="flex-1 bg-red-400 hover:bg-red-500 h-auto px-6 py-4 md:py-2 text-white"
                                 onClick={() => handleAddTrade('loss')}
                               >
                                 <TrendingDown className="h-6 w-6" />
