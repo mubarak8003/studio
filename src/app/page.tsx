@@ -29,7 +29,8 @@ import {
   AlertCircle,
   Percent,
   Wallet,
-  Notebook
+  Notebook,
+  Divide
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -889,12 +890,18 @@ export default function Dashboard() {
 
                       <Separator className="bg-border/50" />
 
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="flex justify-between items-center text-xs p-2 rounded bg-green-500/5 border border-green-500/10">
+                      <div className="flex items-center gap-3">
+                        <div className="flex-1 flex justify-between items-center text-xs p-2 rounded bg-green-500/5 border border-green-500/10">
                           <span className="text-muted-foreground">Wins</span>
                           <span className="font-bold text-green-500">{stats.wins.length}</span>
                         </div>
-                        <div className="flex justify-between items-center text-xs p-2 rounded bg-red-500/5 border border-red-500/10">
+                        
+                        <div className="flex flex-col items-center justify-center px-1 text-[10px] font-bold text-muted-foreground/50 bg-muted/20 rounded h-8 min-w-8">
+                           <span className="leading-none">Diff</span>
+                           <span className="leading-none">{Math.abs(stats.wins.length - stats.losses.length)}</span>
+                        </div>
+
+                        <div className="flex-1 flex justify-between items-center text-xs p-2 rounded bg-red-500/5 border border-red-500/10">
                           <span className="text-muted-foreground">Losses</span>
                           <span className="font-bold text-red-500">{stats.losses.length}</span>
                         </div>
@@ -1069,3 +1076,4 @@ export default function Dashboard() {
     </div>
   );
 }
+
