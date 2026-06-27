@@ -70,7 +70,7 @@ type View = 'dashboard' | 'history' | 'sizer';
 const AppLogo = ({ className }: { className?: string }) => {
   return (
     <div className={cn("flex items-center justify-center bg-[#14b8a6] rounded-[22%] shadow-lg aspect-square glow-primary ring-1 ring-white/10", className)}>
-      <span className="text-white font-headline font-bold text-xl md:text-2xl leading-none select-none tracking-tighter">RP</span>
+      <span className="text-white font-headline font-bold text-xl leading-none select-none tracking-tighter">RP</span>
     </div>
   );
 };
@@ -141,55 +141,6 @@ const QuickPercentTool = () => {
 };
 
 const StrategySettings = ({ store, stats }: { store: any, stats: any }) => {
-  const [localBaseStake, setLocalBaseStake] = useState(store.baseStake.toString());
-  const [localManualDrawdown, setLocalManualDrawdown] = useState(store.manualDrawdown.toString());
-  const [localRecoveryTarget, setLocalRecoveryTarget] = useState(store.recoveryTargetWins.toString());
-  const [localRRRatio, setLocalRRRatio] = useState(store.riskRewardRatio.toString());
-
-  useEffect(() => {
-    setLocalBaseStake(store.baseStake.toString());
-  }, [store.baseStake]);
-
-  useEffect(() => {
-    setLocalManualDrawdown(store.manualDrawdown.toString());
-  }, [store.manualDrawdown]);
-
-  useEffect(() => {
-    setLocalRecoveryTarget(store.recoveryTargetWins.toString());
-  }, [store.recoveryTargetWins]);
-
-  useEffect(() => {
-    setLocalRRRatio(store.riskRewardRatio.toString());
-  }, [store.riskRewardRatio]);
-
-  const handleBaseStakeChange = (val: string) => {
-    setLocalBaseStake(val);
-    if (val === '') return;
-    const num = parseFloat(val);
-    if (!isNaN(num)) store.setBaseStake(num);
-  };
-
-  const handleManualDrawdownChange = (val: string) => {
-    setLocalManualDrawdown(val);
-    if (val === '') return;
-    const num = parseFloat(val);
-    if (!isNaN(num)) store.setManualDrawdown(num);
-  };
-
-  const handleRecoveryTargetChange = (val: string) => {
-    setLocalRecoveryTarget(val);
-    if (val === '') return;
-    const num = parseInt(val);
-    if (!isNaN(num)) store.setRecoveryTargetWins(Math.max(1, num));
-  };
-
-  const handleRRRatioChange = (val: string) => {
-    setLocalRRRatio(val);
-    if (val === '') return;
-    const num = parseFloat(val);
-    if (!isNaN(num)) store.setRiskRewardRatio(num);
-  };
-
   const currencySymbol = CURRENCY_SYMBOLS[store.currency as CurrencyCode];
 
   return (
@@ -220,8 +171,8 @@ const StrategySettings = ({ store, stats }: { store: any, stats: any }) => {
         <Input 
           type="number" 
           inputMode="decimal"
-          value={localBaseStake} 
-          onChange={(e) => handleBaseStakeChange(e.target.value)}
+          value={store.baseStake} 
+          onChange={(e) => store.setBaseStake(parseFloat(e.target.value) || 0)}
           onFocus={(e) => e.target.select()}
           className="bg-background border-border"
         />
@@ -236,9 +187,8 @@ const StrategySettings = ({ store, stats }: { store: any, stats: any }) => {
             <Input 
               type="number" 
               inputMode="decimal"
-              value={localRRRatio} 
-              onChange={(e) => handleRRRatioChange(e.target.value)}
-              onFocus={(e) => e.target.select()}
+              value={store.riskRewardRatio} 
+              onChange={(e) => store.setRiskRewardRatio(parseFloat(e.target.value) || 0)}
               className="w-16 h-7 text-xs bg-background text-right"
               step="0.1"
             />
@@ -266,15 +216,14 @@ const StrategySettings = ({ store, stats }: { store: any, stats: any }) => {
         </div>
         
         {store.useManualDrawdown && (
-          <div className="space-y-2 animate-in fade-in slide-in-from-top-1">
+          <div className="space-y-2">
             <label className="text-[10px] text-muted-foreground uppercase">Loss to Recover ({currencySymbol})</label>
             <Input 
               type="number" 
               inputMode="decimal"
               placeholder="Enter amount..."
-              value={localManualDrawdown} 
-              onChange={(e) => handleManualDrawdownChange(e.target.value)}
-              onFocus={(e) => e.target.select()}
+              value={store.manualDrawdown} 
+              onChange={(e) => store.setManualDrawdown(parseFloat(e.target.value) || 0)}
               className="bg-background border-border h-8 text-xs"
             />
           </div>
@@ -289,11 +238,9 @@ const StrategySettings = ({ store, stats }: { store: any, stats: any }) => {
           <Input 
             type="number" 
             inputMode="numeric"
-            value={localRecoveryTarget} 
-            onChange={(e) => handleRecoveryTargetChange(e.target.value)}
-            onFocus={(e) => e.target.select()}
+            value={store.recoveryTargetWins} 
+            onChange={(e) => store.setRecoveryTargetWins(parseInt(e.target.value) || 1)}
             className="w-16 h-7 text-xs bg-background text-right"
-            min={1}
           />
         </div>
         <Slider 
@@ -335,7 +282,7 @@ const StrategySettings = ({ store, stats }: { store: any, stats: any }) => {
             <AlertDialogHeader>
               <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
               <AlertDialogDescription>
-                This will permanently delete all your sessions, trade history, and reset your data. Your strategy settings (Currency, Stake) will be preserved.
+                This will permanently delete all your sessions, trade history, and reset your data. Your settings and notes will be preserved.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
@@ -355,44 +302,7 @@ const PositionSizer = ({ store }: { store: any }) => {
   const [entry, setEntry] = useState('');
   const [stop, setStop] = useState('');
   const [target, setTarget] = useState('');
-  const [localAccountBalance, setLocalAccountBalance] = useState(store.accountBalance.toString());
-  const [localRiskPercent, setLocalRiskPercent] = useState(store.riskPerTradePercent.toString());
-  const [localRiskAmount, setLocalRiskAmount] = useState(store.riskAmountFixed.toString());
-  
   const currencySymbol = CURRENCY_SYMBOLS[store.currency as CurrencyCode];
-
-  useEffect(() => {
-    setLocalAccountBalance(store.accountBalance.toString());
-  }, [store.accountBalance]);
-
-  useEffect(() => {
-    setLocalRiskPercent(store.riskPerTradePercent.toString());
-  }, [store.riskPerTradePercent]);
-
-  useEffect(() => {
-    setLocalRiskAmount(store.riskAmountFixed.toString());
-  }, [store.riskAmountFixed]);
-
-  const handleAccountBalanceChange = (val: string) => {
-    setLocalAccountBalance(val);
-    if (val === '') return;
-    const num = parseFloat(val);
-    if (!isNaN(num)) store.setAccountBalance(num);
-  };
-
-  const handleRiskPercentChange = (val: string) => {
-    setLocalRiskPercent(val);
-    if (val === '') return;
-    const num = parseFloat(val);
-    if (!isNaN(num)) store.setRiskPerTradePercent(num);
-  };
-
-  const handleRiskAmountChange = (val: string) => {
-    setLocalRiskAmount(val);
-    if (val === '') return;
-    const num = parseFloat(val);
-    if (!isNaN(num)) store.setRiskAmountFixed(num);
-  };
 
   const results = useMemo(() => {
     const e = parseFloat(entry);
@@ -451,9 +361,8 @@ const PositionSizer = ({ store }: { store: any }) => {
                 <Input 
                   type="number" 
                   inputMode="decimal"
-                  value={localAccountBalance} 
-                  onChange={(e) => handleAccountBalanceChange(e.target.value)}
-                  onFocus={(e) => e.target.select()}
+                  value={store.accountBalance} 
+                  onChange={(e) => store.setAccountBalance(parseFloat(e.target.value) || 0)}
                   className="bg-background border-border"
                 />
               </div>
@@ -475,18 +384,7 @@ const PositionSizer = ({ store }: { store: any }) => {
                   <TabsContent value="percentage" className="space-y-3 m-0">
                     <div className="flex justify-between items-center">
                       <label className="text-xs font-medium text-muted-foreground">Risk per Trade (%)</label>
-                      <div className="flex items-center gap-1">
-                        <Input 
-                          type="number" 
-                          inputMode="decimal"
-                          value={localRiskPercent} 
-                          onChange={(e) => handleRiskPercentChange(e.target.value)}
-                          onFocus={(e) => e.target.select()}
-                          className="w-16 h-8 text-xs bg-background text-right"
-                          step="0.1"
-                        />
-                        <span className="text-xs font-bold text-primary">%</span>
-                      </div>
+                      <span className="text-xs font-bold text-primary">{store.riskPerTradePercent}%</span>
                     </div>
                     <Slider 
                       value={[store.riskPerTradePercent]} 
@@ -500,17 +398,13 @@ const PositionSizer = ({ store }: { store: any }) => {
                   <TabsContent value="amount" className="m-0">
                     <div className="flex justify-between items-center mb-2">
                       <label className="text-xs font-medium text-muted-foreground">Fixed Risk Amount ({currencySymbol})</label>
-                      <div className="flex items-center gap-1">
-                        <Input 
-                          type="number" 
-                          inputMode="decimal"
-                          value={localRiskAmount} 
-                          onChange={(e) => handleRiskAmountChange(e.target.value)}
-                          onFocus={(e) => e.target.select()}
-                          className="w-24 h-8 text-xs bg-background text-right font-bold"
-                          placeholder="0.00"
-                        />
-                      </div>
+                      <Input 
+                        type="number" 
+                        inputMode="decimal"
+                        value={store.riskAmountFixed} 
+                        onChange={(e) => store.setRiskAmountFixed(parseFloat(e.target.value) || 0)}
+                        className="w-24 h-8 text-xs bg-background text-right"
+                      />
                     </div>
                   </TabsContent>
                 </Tabs>
@@ -522,39 +416,15 @@ const PositionSizer = ({ store }: { store: any }) => {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="space-y-2">
                 <label className="text-xs font-medium text-muted-foreground">Entry Price</label>
-                <Input 
-                  type="number" 
-                  inputMode="decimal"
-                  placeholder="0.00" 
-                  value={entry} 
-                  onChange={(e) => setEntry(e.target.value)} 
-                  onFocus={(e) => e.target.select()}
-                  className="bg-background border-border"
-                />
+                <Input placeholder="0.00" value={entry} onChange={(e) => setEntry(e.target.value)} className="bg-background border-border" />
               </div>
               <div className="space-y-2">
                 <label className="text-xs font-medium text-muted-foreground">Stop Loss</label>
-                <Input 
-                  type="number" 
-                  inputMode="decimal"
-                  placeholder="0.00" 
-                  value={stop} 
-                  onChange={(e) => setStop(e.target.value)} 
-                  onFocus={(e) => e.target.select()}
-                  className="bg-background border-border"
-                />
+                <Input placeholder="0.00" value={stop} onChange={(e) => setStop(e.target.value)} className="bg-background border-border" />
               </div>
               <div className="space-y-2">
                 <label className="text-xs font-medium text-muted-foreground">Target (Optional)</label>
-                <Input 
-                  type="number" 
-                  inputMode="decimal"
-                  placeholder="0.00" 
-                  value={target} 
-                  onChange={(e) => setTarget(e.target.value)} 
-                  onFocus={(e) => e.target.select()}
-                  className="bg-background border-border"
-                />
+                <Input placeholder="0.00" value={target} onChange={(e) => setTarget(e.target.value)} className="bg-background border-border" />
               </div>
             </div>
 
@@ -607,9 +477,6 @@ const PositionSizer = ({ store }: { store: any }) => {
               <p>
                 This calculator ensures that even if your Stop Loss is hit, you only lose exactly the amount of money you intended to risk.
               </p>
-              <div className="p-3 bg-primary/10 rounded-lg border border-primary/20 text-foreground">
-                <b>Tip:</b> If the required capital is more than your account balance, you may need to reduce your risk % or use leverage if available.
-              </div>
             </CardContent>
           </Card>
         </div>
@@ -643,11 +510,11 @@ export default function Dashboard() {
     });
 
     const netPnL = runningPnL;
-    const highWaterMarkDrawdown = peakPnL - netPnL;
+    const hwmDrawdown = peakPnL - netPnL;
     
     const currentDrawdown = store.useManualDrawdown 
       ? store.manualDrawdown 
-      : (highWaterMarkDrawdown > 0 ? highWaterMarkDrawdown : 0);
+      : (hwmDrawdown > 0 ? hwmDrawdown : 0);
     
     const requiredProfitPerTrade = currentDrawdown > 0 
       ? currentDrawdown / (store.recoveryTargetWins || 1) 
@@ -876,7 +743,7 @@ export default function Dashboard() {
                                <span>Recovery Adjustment:</span>
                                <span className="font-mono">+ {currencySymbol}{stats.recoveryStakeAdjustment.toFixed(2)}</span>
                              </div>
-                             <div className="text-[10px] text-muted-foreground italic mt-2 translation-all duration-1000">
+                             <div className="text-[10px] text-muted-foreground italic mt-2">
                                Calculation: (Target / {store.riskRewardRatio} RR)
                              </div>
                            </div>
@@ -893,7 +760,6 @@ export default function Dashboard() {
                                 inputMode="decimal"
                                 value={tradeAmount} 
                                 onChange={(e) => setTradeAmount(e.target.value)}
-                                onFocus={(e) => e.target.select()}
                                 className="text-lg py-6 bg-background focus:ring-primary border-border"
                               />
                             </div>
@@ -1066,9 +932,6 @@ export default function Dashboard() {
                       <p className="text-muted-foreground text-sm">Review all session activity and recorded trades.</p>
                     </div>
                   </div>
-                  <Badge variant="outline" className="px-4 py-1 text-primary border-primary/30">
-                    Total Trades: {stats.allTrades.length}
-                  </Badge>
                 </header>
 
                 <div className="grid grid-cols-1 gap-6">
@@ -1081,21 +944,14 @@ export default function Dashboard() {
                     </Card>
                   ) : (
                     <Card className="bg-card border-border">
-                      <CardHeader className="flex flex-row items-center justify-between">
+                      <CardHeader>
                         <CardTitle className="text-lg text-foreground">Full Audit Log</CardTitle>
-                        <div className="flex items-center gap-4">
-                           <div className="flex items-center gap-4 text-sm mr-4 hidden md:flex">
-                              <span className="flex items-center gap-1 text-green-500"><TrendingUp className="h-3 w-3" /> {stats.wins.length} Wins</span>
-                              <span className="flex items-center gap-1 text-red-500"><TrendingDown className="h-3 w-3" /> {stats.losses.length} Losses</span>
-                           </div>
-                        </div>
                       </CardHeader>
                       <CardContent>
                         <div className="space-y-4">
-                          {stats.allTrades.map((trade, idx) => (
-                            <div key={trade.id} className="flex items-center justify-between p-4 rounded-xl bg-background border border-border/30 hover:border-primary/20 transition-colors">
+                          {stats.allTrades.map((trade) => (
+                            <div key={trade.id} className="flex items-center justify-between p-4 rounded-xl bg-background border border-border/30">
                               <div className="flex items-center gap-4">
-                                <div className="text-xs text-muted-foreground font-mono w-6">#{stats.allTrades.length - idx}</div>
                                 <div className={cn(
                                   "p-3 rounded-xl",
                                   trade.type === 'win' ? "bg-green-500/10 text-green-500" : "bg-red-500/10 text-red-500"
@@ -1103,26 +959,17 @@ export default function Dashboard() {
                                   {trade.type === 'win' ? <TrendingUp className="h-5 w-5" /> : <TrendingDown className="h-5 w-5" />}
                                 </div>
                                 <div>
-                                  <div className="flex items-center gap-2">
-                                    <p className="text-lg font-bold text-foreground">{currencySymbol}{trade.amount.toFixed(2)}</p>
-                                    <Badge variant="outline" className={cn(
-                                      "text-[10px] h-5",
-                                      trade.type === 'win' ? "text-green-500 border-green-500/30" : "text-red-500 border-red-500/30"
-                                    )}>
-                                      {trade.type.toUpperCase()}
-                                    </Badge>
-                                  </div>
+                                  <p className="text-lg font-bold text-foreground">{currencySymbol}{trade.amount.toFixed(2)}</p>
                                   <p className="text-xs text-muted-foreground">
                                     {trade.timestamp.toLocaleDateString()} at {trade.timestamp.toLocaleTimeString()}
                                   </p>
                                 </div>
                               </div>
-                              <div className="text-right hidden sm:block">
-                                <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-semibold">Status</p>
-                                <p className={cn("text-xs font-bold", trade.type === 'win' ? "text-green-500" : "text-red-500")}>
-                                  {trade.type === 'win' ? 'PROFIT' : 'LOSS'}
-                                </p>
-                              </div>
+                              <Badge variant="outline" className={cn(
+                                trade.type === 'win' ? "text-green-500 border-green-500/30" : "text-red-500 border-red-500/30"
+                              )}>
+                                {trade.type.toUpperCase()}
+                              </Badge>
                             </div>
                           ))}
                         </div>

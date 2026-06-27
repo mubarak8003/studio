@@ -70,7 +70,7 @@ export function useRecoupStore() {
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('recouppro_state_v5');
+      const saved = localStorage.getItem('recouppro_state_v6');
       if (saved) {
         try {
           const parsed = JSON.parse(saved);
@@ -99,7 +99,7 @@ export function useRecoupStore() {
 
   useEffect(() => {
     if (isHydrated) {
-      localStorage.setItem('recouppro_state_v5', JSON.stringify(state));
+      localStorage.setItem('recouppro_state_v6', JSON.stringify(state));
     }
   }, [state, isHydrated]);
 
@@ -133,17 +133,27 @@ export function useRecoupStore() {
     };
 
     setState(prev => {
+      // Calculate Drawdown based on High Water Mark (HWM)
       const allTrades = [
-        ...(prev.activeSession?.trades || []),
-        ...prev.sessions.flatMap(s => s.trades)
-      ];
-      const netPnL = allTrades.reduce((sum, t) => sum + (t.type === 'win' ? t.amount : -t.amount), 0);
-      const inDrawdown = prev.useManualDrawdown ? prev.manualDrawdown > 0 : netPnL < 0;
+        ...prev.sessions.flatMap(s => s.trades),
+        ...(prev.activeSession?.trades || [])
+      ].sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
+
+      let currentPnL = 0;
+      let peakPnL = 0;
+      allTrades.forEach(t => {
+        currentPnL += (t.type === 'win' ? t.amount : -t.amount);
+        if (currentPnL > peakPnL) peakPnL = currentPnL;
+      });
+
+      const hwmDrawdown = Math.max(0, peakPnL - currentPnL);
+      const isInDrawdown = prev.useManualDrawdown ? prev.manualDrawdown > 0 : hwmDrawdown > 0;
 
       let nextRecoveryTarget = prev.recoveryTargetWins;
       let nextManualDrawdown = prev.manualDrawdown;
 
-      if (type === 'win' && inDrawdown && prev.recoveryTargetWins > 1) {
+      // Logic: Decrease recovery count if winning while in a drawdown
+      if (type === 'win' && isInDrawdown && prev.recoveryTargetWins > 1) {
         nextRecoveryTarget = prev.recoveryTargetWins - 1;
       }
 
@@ -214,6 +224,7 @@ export function useRecoupStore() {
   const resetAllData = () => {
     setState(prev => ({
       ...DEFAULT_STATE,
+      // Preserve settings and notes
       baseStake: prev.baseStake,
       currency: prev.currency,
       riskRewardRatio: prev.riskRewardRatio,
@@ -223,7 +234,7 @@ export function useRecoupStore() {
       riskPerTradePercent: prev.riskPerTradePercent,
       riskAmountFixed: prev.riskAmountFixed,
       riskType: prev.riskType,
-      notes: prev.notes, // Preserve trading notes during reset
+      notes: prev.notes, // CRITICAL: Preserve notes during reset
       sessions: [],
       activeSession: null,
       manualDrawdown: 0,
