@@ -70,7 +70,7 @@ export function useRecoupStore() {
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('recouppro_state_v6');
+      const saved = localStorage.getItem('recouppro_state_v7');
       if (saved) {
         try {
           const parsed = JSON.parse(saved);
@@ -99,7 +99,7 @@ export function useRecoupStore() {
 
   useEffect(() => {
     if (isHydrated) {
-      localStorage.setItem('recouppro_state_v6', JSON.stringify(state));
+      localStorage.setItem('recouppro_state_v7', JSON.stringify(state));
     }
   }, [state, isHydrated]);
 
@@ -133,7 +133,7 @@ export function useRecoupStore() {
     };
 
     setState(prev => {
-      // Calculate Drawdown based on High Water Mark (HWM)
+      // Logic for HWM Drawdown
       const allTrades = [
         ...prev.sessions.flatMap(s => s.trades),
         ...(prev.activeSession?.trades || [])
@@ -146,13 +146,13 @@ export function useRecoupStore() {
         if (currentPnL > peakPnL) peakPnL = currentPnL;
       });
 
-      const hwmDrawdown = Math.max(0, peakPnL - currentPnL);
+      const hwmDrawdown = Math.max(0, peakPnL - (currentPnL + (type === 'win' ? amount : -amount)));
       const isInDrawdown = prev.useManualDrawdown ? prev.manualDrawdown > 0 : hwmDrawdown > 0;
 
       let nextRecoveryTarget = prev.recoveryTargetWins;
       let nextManualDrawdown = prev.manualDrawdown;
 
-      // Logic: Decrease recovery count if winning while in a drawdown
+      // CRITICAL: Decrease recovery count if winning while in a drawdown
       if (type === 'win' && isInDrawdown && prev.recoveryTargetWins > 1) {
         nextRecoveryTarget = prev.recoveryTargetWins - 1;
       }
@@ -234,7 +234,7 @@ export function useRecoupStore() {
       riskPerTradePercent: prev.riskPerTradePercent,
       riskAmountFixed: prev.riskAmountFixed,
       riskType: prev.riskType,
-      notes: prev.notes, // CRITICAL: Preserve notes during reset
+      notes: prev.notes, // Preserve notes during reset
       sessions: [],
       activeSession: null,
       manualDrawdown: 0,

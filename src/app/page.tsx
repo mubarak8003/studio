@@ -30,8 +30,6 @@ import {
   Percent,
   Wallet,
   Notebook,
-  Divide,
-  Equal
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -104,6 +102,7 @@ const QuickPercentTool = () => {
               placeholder="e.g. 100" 
               value={baseNum} 
               onChange={(e) => setBaseNum(e.target.value)}
+              onFocus={(e) => e.target.select()}
               className="h-8 text-xs bg-background"
             />
           </div>
@@ -115,6 +114,7 @@ const QuickPercentTool = () => {
               placeholder="e.g. 40" 
               value={percent} 
               onChange={(e) => setPercent(e.target.value)}
+              onFocus={(e) => e.target.select()}
               className="h-8 text-xs bg-background"
             />
           </div>
@@ -189,6 +189,7 @@ const StrategySettings = ({ store, stats }: { store: any, stats: any }) => {
               inputMode="decimal"
               value={store.riskRewardRatio} 
               onChange={(e) => store.setRiskRewardRatio(parseFloat(e.target.value) || 0)}
+              onFocus={(e) => e.target.select()}
               className="w-16 h-7 text-xs bg-background text-right"
               step="0.1"
             />
@@ -224,6 +225,7 @@ const StrategySettings = ({ store, stats }: { store: any, stats: any }) => {
               placeholder="Enter amount..."
               value={store.manualDrawdown} 
               onChange={(e) => store.setManualDrawdown(parseFloat(e.target.value) || 0)}
+              onFocus={(e) => e.target.select()}
               className="bg-background border-border h-8 text-xs"
             />
           </div>
@@ -240,6 +242,7 @@ const StrategySettings = ({ store, stats }: { store: any, stats: any }) => {
             inputMode="numeric"
             value={store.recoveryTargetWins} 
             onChange={(e) => store.setRecoveryTargetWins(parseInt(e.target.value) || 1)}
+            onFocus={(e) => e.target.select()}
             className="w-16 h-7 text-xs bg-background text-right"
           />
         </div>
@@ -317,7 +320,7 @@ const PositionSizer = ({ store }: { store: any }) => {
       riskAmount = store.riskAmountFixed || 0;
     }
 
-    if (isNaN(e) || isNaN(s) || e <= 0 || s <= 0 || e === s || riskAmount <= 0) return null;
+    if (isNaN(e) || iNaN(s) || e <= 0 || s <= 0 || e === s || riskAmount <= 0) return null;
 
     const riskPerShare = Math.abs(e - s);
     const shares = Math.floor(riskAmount / riskPerShare);
@@ -363,6 +366,7 @@ const PositionSizer = ({ store }: { store: any }) => {
                   inputMode="decimal"
                   value={store.accountBalance} 
                   onChange={(e) => store.setAccountBalance(parseFloat(e.target.value) || 0)}
+                  onFocus={(e) => e.target.select()}
                   className="bg-background border-border"
                 />
               </div>
@@ -403,6 +407,7 @@ const PositionSizer = ({ store }: { store: any }) => {
                         inputMode="decimal"
                         value={store.riskAmountFixed} 
                         onChange={(e) => store.setRiskAmountFixed(parseFloat(e.target.value) || 0)}
+                        onFocus={(e) => e.target.select()}
                         className="w-24 h-8 text-xs bg-background text-right"
                       />
                     </div>
@@ -416,15 +421,15 @@ const PositionSizer = ({ store }: { store: any }) => {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="space-y-2">
                 <label className="text-xs font-medium text-muted-foreground">Entry Price</label>
-                <Input placeholder="0.00" value={entry} onChange={(e) => setEntry(e.target.value)} className="bg-background border-border" />
+                <Input placeholder="0.00" value={entry} onChange={(e) => setEntry(e.target.value)} onFocus={(e) => e.target.select()} className="bg-background border-border" />
               </div>
               <div className="space-y-2">
                 <label className="text-xs font-medium text-muted-foreground">Stop Loss</label>
-                <Input placeholder="0.00" value={stop} onChange={(e) => setStop(e.target.value)} className="bg-background border-border" />
+                <Input placeholder="0.00" value={stop} onChange={(e) => setStop(e.target.value)} onFocus={(e) => e.target.select()} className="bg-background border-border" />
               </div>
               <div className="space-y-2">
                 <label className="text-xs font-medium text-muted-foreground">Target (Optional)</label>
-                <Input placeholder="0.00" value={target} onChange={(e) => setTarget(e.target.value)} className="bg-background border-border" />
+                <Input placeholder="0.00" value={target} onChange={(e) => setTarget(e.target.value)} onFocus={(e) => e.target.select()} className="bg-background border-border" />
               </div>
             </div>
 
@@ -760,6 +765,7 @@ export default function Dashboard() {
                                 inputMode="decimal"
                                 value={tradeAmount} 
                                 onChange={(e) => setTradeAmount(e.target.value)}
+                                onFocus={(e) => e.target.select()}
                                 className="text-lg py-6 bg-background focus:ring-primary border-border"
                               />
                             </div>
