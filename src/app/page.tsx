@@ -143,8 +143,6 @@ const QuickPercentTool = () => {
 const StrategySettings = ({ store, stats }: { store: any, stats: any }) => {
   const currencySymbol = CURRENCY_SYMBOLS[store.currency as CurrencyCode];
 
-  // Helper to handle clearing zeros by managing as strings temporarily if needed, 
-  // but target.select() handles the immediate overwrite.
   const handleNumericInputFocus = (e: React.FocusEvent<HTMLInputElement>) => {
     e.target.select();
   };
@@ -177,7 +175,7 @@ const StrategySettings = ({ store, stats }: { store: any, stats: any }) => {
         <Input 
           type="text" 
           inputMode="decimal"
-          value={store.baseStake === 0 && document.activeElement !== null ? "" : store.baseStake} 
+          value={store.baseStake === 0 ? "" : store.baseStake} 
           onChange={(e) => store.setBaseStake(e.target.value === '' ? 0 : parseFloat(e.target.value) || 0)}
           onFocus={handleNumericInputFocus}
           className="bg-background border-border"
@@ -193,10 +191,10 @@ const StrategySettings = ({ store, stats }: { store: any, stats: any }) => {
             <Input 
               type="text" 
               inputMode="decimal"
-              value={store.riskRewardRatio} 
+              value={store.riskRewardRatio === 0 ? "" : store.riskRewardRatio} 
               onChange={(e) => store.setRiskRewardRatio(e.target.value === '' ? 0 : parseFloat(e.target.value) || 0)}
               onFocus={handleNumericInputFocus}
-              className="w-16 h-7 text-xs bg-background text-right"
+              className="w-20 h-7 text-xs bg-background text-right"
             />
             <span className="text-xs font-bold text-accent">x</span>
           </div>
@@ -205,7 +203,7 @@ const StrategySettings = ({ store, stats }: { store: any, stats: any }) => {
           value={[store.riskRewardRatio]} 
           min={0.1} 
           max={5} 
-          step={0.1}
+          step={0.01}
           onValueChange={([val]) => store.setRiskRewardRatio(val)}
         />
       </div>
@@ -245,7 +243,7 @@ const StrategySettings = ({ store, stats }: { store: any, stats: any }) => {
           <Input 
             type="text" 
             inputMode="numeric"
-            value={store.recoveryTargetWins} 
+            value={store.recoveryTargetWins === 0 ? "" : store.recoveryTargetWins} 
             onChange={(e) => store.setRecoveryTargetWins(e.target.value === '' ? 0 : parseInt(e.target.value) || 0)}
             onFocus={handleNumericInputFocus}
             className="w-16 h-7 text-xs bg-background text-right"
@@ -290,7 +288,7 @@ const StrategySettings = ({ store, stats }: { store: any, stats: any }) => {
             <AlertDialogHeader>
               <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
               <AlertDialogDescription>
-                This will permanently delete all your sessions, trade history, and reset your data. Your settings and notes will be preserved.
+                This will permanently delete all your sessions and trade history. Your settings and strategy notes will be preserved.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
