@@ -225,7 +225,6 @@ export function useRecoupStore() {
   const resetAllData = () => {
     setState(prev => ({
       ...DEFAULT_STATE,
-      // Preserve settings and notes
       baseStake: prev.baseStake,
       currency: prev.currency,
       riskRewardRatio: prev.riskRewardRatio,
@@ -235,7 +234,7 @@ export function useRecoupStore() {
       riskPerTradePercent: prev.riskPerTradePercent,
       riskAmountFixed: prev.riskAmountFixed,
       riskType: prev.riskType,
-      notes: prev.notes, // CRITICAL: Preserve notes during reset
+      notes: prev.notes,
       sessions: [],
       activeSession: null,
       manualDrawdown: 0,

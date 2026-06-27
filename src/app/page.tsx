@@ -97,7 +97,7 @@ const QuickPercentTool = () => {
           <div className="space-y-1.5">
             <label className="text-[10px] text-muted-foreground uppercase">Number</label>
             <Input 
-              type="number" 
+              type="text" 
               inputMode="decimal"
               placeholder="e.g. 100" 
               value={baseNum} 
@@ -109,7 +109,7 @@ const QuickPercentTool = () => {
           <div className="space-y-1.5">
             <label className="text-[10px] text-muted-foreground uppercase">Percent (%)</label>
             <Input 
-              type="number" 
+              type="text" 
               inputMode="decimal"
               placeholder="e.g. 40" 
               value={percent} 
@@ -143,7 +143,8 @@ const QuickPercentTool = () => {
 const StrategySettings = ({ store, stats }: { store: any, stats: any }) => {
   const currencySymbol = CURRENCY_SYMBOLS[store.currency as CurrencyCode];
 
-  // Helper to handle numeric input clearing
+  // Helper to handle clearing zeros by managing as strings temporarily if needed, 
+  // but target.select() handles the immediate overwrite.
   const handleNumericInputFocus = (e: React.FocusEvent<HTMLInputElement>) => {
     e.target.select();
   };
@@ -174,10 +175,10 @@ const StrategySettings = ({ store, stats }: { store: any, stats: any }) => {
       <div className="space-y-3">
         <label className="text-xs font-medium text-muted-foreground">Base Stake ({currencySymbol})</label>
         <Input 
-          type="number" 
+          type="text" 
           inputMode="decimal"
-          value={store.baseStake} 
-          onChange={(e) => store.setBaseStake(parseFloat(e.target.value) || 0)}
+          value={store.baseStake === 0 && document.activeElement !== null ? "" : store.baseStake} 
+          onChange={(e) => store.setBaseStake(e.target.value === '' ? 0 : parseFloat(e.target.value) || 0)}
           onFocus={handleNumericInputFocus}
           className="bg-background border-border"
         />
@@ -190,13 +191,12 @@ const StrategySettings = ({ store, stats }: { store: any, stats: any }) => {
           </label>
           <div className="flex items-center gap-1">
             <Input 
-              type="number" 
+              type="text" 
               inputMode="decimal"
               value={store.riskRewardRatio} 
-              onChange={(e) => store.setRiskRewardRatio(parseFloat(e.target.value) || 0)}
+              onChange={(e) => store.setRiskRewardRatio(e.target.value === '' ? 0 : parseFloat(e.target.value) || 0)}
               onFocus={handleNumericInputFocus}
               className="w-16 h-7 text-xs bg-background text-right"
-              step="0.1"
             />
             <span className="text-xs font-bold text-accent">x</span>
           </div>
@@ -225,11 +225,11 @@ const StrategySettings = ({ store, stats }: { store: any, stats: any }) => {
           <div className="space-y-2">
             <label className="text-[10px] text-muted-foreground uppercase">Loss to Recover ({currencySymbol})</label>
             <Input 
-              type="number" 
+              type="text" 
               inputMode="decimal"
               placeholder="Enter amount..."
-              value={store.manualDrawdown} 
-              onChange={(e) => store.setManualDrawdown(parseFloat(e.target.value) || 0)}
+              value={store.manualDrawdown === 0 ? "" : store.manualDrawdown} 
+              onChange={(e) => store.setManualDrawdown(e.target.value === '' ? 0 : parseFloat(e.target.value) || 0)}
               onFocus={handleNumericInputFocus}
               className="bg-background border-border h-8 text-xs"
             />
@@ -243,10 +243,10 @@ const StrategySettings = ({ store, stats }: { store: any, stats: any }) => {
             <Target className="h-3 w-3" /> Recovery Trades
           </label>
           <Input 
-            type="number" 
+            type="text" 
             inputMode="numeric"
             value={store.recoveryTargetWins} 
-            onChange={(e) => store.setRecoveryTargetWins(parseInt(e.target.value) || 1)}
+            onChange={(e) => store.setRecoveryTargetWins(e.target.value === '' ? 0 : parseInt(e.target.value) || 0)}
             onFocus={handleNumericInputFocus}
             className="w-16 h-7 text-xs bg-background text-right"
           />
@@ -371,10 +371,10 @@ const PositionSizer = ({ store }: { store: any }) => {
               <div className="space-y-2">
                 <label className="text-xs font-medium text-muted-foreground">Account Balance ({currencySymbol})</label>
                 <Input 
-                  type="number" 
+                  type="text" 
                   inputMode="decimal"
-                  value={store.accountBalance} 
-                  onChange={(e) => store.setAccountBalance(parseFloat(e.target.value) || 0)}
+                  value={store.accountBalance === 0 ? "" : store.accountBalance} 
+                  onChange={(e) => store.setAccountBalance(e.target.value === '' ? 0 : parseFloat(e.target.value) || 0)}
                   onFocus={handleNumericInputFocus}
                   className="bg-background border-border"
                 />
@@ -412,10 +412,10 @@ const PositionSizer = ({ store }: { store: any }) => {
                     <div className="flex justify-between items-center mb-2">
                       <label className="text-xs font-medium text-muted-foreground">Fixed Risk Amount ({currencySymbol})</label>
                       <Input 
-                        type="number" 
+                        type="text" 
                         inputMode="decimal"
-                        value={store.riskAmountFixed} 
-                        onChange={(e) => store.setRiskAmountFixed(parseFloat(e.target.value) || 0)}
+                        value={store.riskAmountFixed === 0 ? "" : store.riskAmountFixed} 
+                        onChange={(e) => store.setRiskAmountFixed(e.target.value === '' ? 0 : parseFloat(e.target.value) || 0)}
                         onFocus={handleNumericInputFocus}
                         className="w-24 h-8 text-xs bg-background text-right"
                       />
@@ -774,7 +774,7 @@ export default function Dashboard() {
                             <div className="flex-1">
                               <Input 
                                 placeholder={`Trade P/L Amount (${currencySymbol})`}
-                                type="number" 
+                                type="text" 
                                 inputMode="decimal"
                                 value={tradeAmount} 
                                 onChange={(e) => setTradeAmount(e.target.value)}
