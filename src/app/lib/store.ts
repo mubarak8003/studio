@@ -70,7 +70,7 @@ export function useRecoupStore() {
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('recouppro_state_v7');
+      const saved = localStorage.getItem('recouppro_state_v8');
       if (saved) {
         try {
           const parsed = JSON.parse(saved);
@@ -99,7 +99,7 @@ export function useRecoupStore() {
 
   useEffect(() => {
     if (isHydrated) {
-      localStorage.setItem('recouppro_state_v7', JSON.stringify(state));
+      localStorage.setItem('recouppro_state_v8', JSON.stringify(state));
     }
   }, [state, isHydrated]);
 
@@ -125,6 +125,7 @@ export function useRecoupStore() {
 
   const addTrade = (type: 'win' | 'loss', amount: number) => {
     if (!state.activeSession) return;
+    
     const newTrade: Trade = {
       id: crypto.randomUUID(),
       type,
@@ -133,27 +134,27 @@ export function useRecoupStore() {
     };
 
     setState(prev => {
-      // Logic for HWM Drawdown
-      const allTrades = [
+      // Calculate current performance to see if we ARE in a drawdown before this trade
+      const allTradesSoFar = [
         ...prev.sessions.flatMap(s => s.trades),
         ...(prev.activeSession?.trades || [])
       ].sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
 
       let currentPnL = 0;
       let peakPnL = 0;
-      allTrades.forEach(t => {
+      allTradesSoFar.forEach(t => {
         currentPnL += (t.type === 'win' ? t.amount : -t.amount);
         if (currentPnL > peakPnL) peakPnL = currentPnL;
       });
 
-      const hwmDrawdown = Math.max(0, peakPnL - (currentPnL + (type === 'win' ? amount : -amount)));
-      const isInDrawdown = prev.useManualDrawdown ? prev.manualDrawdown > 0 : hwmDrawdown > 0;
+      const hwmDrawdown = Math.max(0, peakPnL - currentPnL);
+      const isActuallyInDrawdown = prev.useManualDrawdown ? prev.manualDrawdown > 0 : hwmDrawdown > 0;
 
       let nextRecoveryTarget = prev.recoveryTargetWins;
       let nextManualDrawdown = prev.manualDrawdown;
 
-      // CRITICAL: Decrease recovery count if winning while in a drawdown
-      if (type === 'win' && isInDrawdown && prev.recoveryTargetWins > 1) {
+      // Decrease recovery count if winning while in a drawdown
+      if (type === 'win' && isActuallyInDrawdown && prev.recoveryTargetWins > 1) {
         nextRecoveryTarget = prev.recoveryTargetWins - 1;
       }
 
@@ -234,7 +235,7 @@ export function useRecoupStore() {
       riskPerTradePercent: prev.riskPerTradePercent,
       riskAmountFixed: prev.riskAmountFixed,
       riskType: prev.riskType,
-      notes: prev.notes, // Preserve notes during reset
+      notes: prev.notes, // CRITICAL: Preserve notes during reset
       sessions: [],
       activeSession: null,
       manualDrawdown: 0,
