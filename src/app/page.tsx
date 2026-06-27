@@ -140,7 +140,6 @@ const QuickPercentTool = () => {
   );
 };
 
-// Helper for numeric inputs that allows clearing and typing 0.85 etc.
 const SmartNumericInput = ({ 
   value, 
   onChange, 
@@ -964,9 +963,14 @@ export default function Dashboard() {
                     <Button variant="ghost" size="icon" onClick={() => setView('dashboard')}>
                       <ArrowLeft className="h-5 w-5" />
                     </Button>
-                    <div>
-                      <h2 className="text-3xl font-headline font-bold text-foreground">Trade History</h2>
-                      <p className="text-muted-foreground text-sm">Review all session activity and recorded trades.</p>
+                    <div className="flex items-center gap-3">
+                      <div>
+                        <h2 className="text-3xl font-headline font-bold text-foreground">Trade History</h2>
+                        <p className="text-muted-foreground text-sm">Review all session activity and recorded trades.</p>
+                      </div>
+                      <Badge variant="secondary" className="h-6">
+                        {stats.allTrades.length} Total Trades
+                      </Badge>
                     </div>
                   </div>
                 </header>
