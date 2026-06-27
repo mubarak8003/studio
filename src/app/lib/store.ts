@@ -223,10 +223,10 @@ export function useRecoupStore() {
       riskPerTradePercent: prev.riskPerTradePercent,
       riskAmountFixed: prev.riskAmountFixed,
       riskType: prev.riskType,
+      notes: prev.notes, // Preserve trading notes during reset
       sessions: [],
       activeSession: null,
       manualDrawdown: 0,
-      notes: ''
     }));
   };
 
