@@ -958,21 +958,19 @@ export default function Dashboard() {
 
             {view === 'history' && (
               <div className="space-y-6 animate-in fade-in duration-500">
-                <header className="flex items-center justify-between mb-8">
+                <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
                   <div className="flex items-center gap-4">
                     <Button variant="ghost" size="icon" onClick={() => setView('dashboard')}>
                       <ArrowLeft className="h-5 w-5" />
                     </Button>
-                    <div className="flex items-center gap-3">
-                      <div>
-                        <h2 className="text-3xl font-headline font-bold text-foreground">Trade History</h2>
-                        <p className="text-muted-foreground text-sm">Review all session activity and recorded trades.</p>
-                      </div>
-                      <Badge variant="secondary" className="h-6">
-                        {stats.allTrades.length} Total Trades
-                      </Badge>
+                    <div>
+                      <h2 className="text-2xl md:text-3xl font-headline font-bold text-foreground leading-tight">Trade History</h2>
+                      <p className="text-muted-foreground text-xs md:text-sm">Review all session activity and recorded trades.</p>
                     </div>
                   </div>
+                  <Badge variant="secondary" className="px-4 py-1.5 h-auto text-sm w-fit shrink-0">
+                    {stats.allTrades.length} Total Trades
+                  </Badge>
                 </header>
 
                 <div className="grid grid-cols-1 gap-6">
