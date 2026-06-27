@@ -140,12 +140,58 @@ const QuickPercentTool = () => {
   );
 };
 
+// Helper for numeric inputs that allows clearing and typing 0.85 etc.
+const SmartNumericInput = ({ 
+  value, 
+  onChange, 
+  className, 
+  placeholder,
+  ...props 
+}: { 
+  value: number, 
+  onChange: (val: number) => void, 
+  className?: string,
+  placeholder?: string,
+  [key: string]: any
+}) => {
+  const [inputValue, setInputValue] = useState(value === 0 ? "" : value.toString());
+
+  useEffect(() => {
+    // Sync with store if store changes from outside (reset/recovery)
+    setInputValue(value === 0 ? "" : value.toString());
+  }, [value]);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    // Allow empty string or just a decimal point while typing
+    if (val === "" || val === ".") {
+      setInputValue(val);
+      onChange(0);
+      return;
+    }
+    const parsed = parseFloat(val);
+    if (!isNaN(parsed)) {
+      setInputValue(val);
+      onChange(parsed);
+    }
+  };
+
+  return (
+    <Input 
+      {...props}
+      type="text" 
+      inputMode="decimal"
+      placeholder={placeholder}
+      value={inputValue}
+      onChange={handleChange}
+      onFocus={(e) => e.target.select()}
+      className={className}
+    />
+  );
+};
+
 const StrategySettings = ({ store, stats }: { store: any, stats: any }) => {
   const currencySymbol = CURRENCY_SYMBOLS[store.currency as CurrencyCode];
-
-  const handleNumericInputFocus = (e: React.FocusEvent<HTMLInputElement>) => {
-    e.target.select();
-  };
 
   return (
     <div className="space-y-6 pb-20 md:pb-0">
@@ -172,12 +218,9 @@ const StrategySettings = ({ store, stats }: { store: any, stats: any }) => {
 
       <div className="space-y-3">
         <label className="text-xs font-medium text-muted-foreground">Base Stake ({currencySymbol})</label>
-        <Input 
-          type="text" 
-          inputMode="decimal"
-          value={store.baseStake === 0 ? "" : store.baseStake} 
-          onChange={(e) => store.setBaseStake(e.target.value === '' ? 0 : parseFloat(e.target.value) || 0)}
-          onFocus={handleNumericInputFocus}
+        <SmartNumericInput 
+          value={store.baseStake} 
+          onChange={store.setBaseStake}
           className="bg-background border-border"
         />
       </div>
@@ -188,12 +231,9 @@ const StrategySettings = ({ store, stats }: { store: any, stats: any }) => {
             RR Ratio <Scale className="h-3 w-3" />
           </label>
           <div className="flex items-center gap-1">
-            <Input 
-              type="text" 
-              inputMode="decimal"
-              value={store.riskRewardRatio === 0 ? "" : store.riskRewardRatio} 
-              onChange={(e) => store.setRiskRewardRatio(e.target.value === '' ? 0 : parseFloat(e.target.value) || 0)}
-              onFocus={handleNumericInputFocus}
+            <SmartNumericInput 
+              value={store.riskRewardRatio} 
+              onChange={store.setRiskRewardRatio}
               className="w-20 h-7 text-xs bg-background text-right"
             />
             <span className="text-xs font-bold text-accent">x</span>
@@ -222,13 +262,10 @@ const StrategySettings = ({ store, stats }: { store: any, stats: any }) => {
         {store.useManualDrawdown && (
           <div className="space-y-2">
             <label className="text-[10px] text-muted-foreground uppercase">Loss to Recover ({currencySymbol})</label>
-            <Input 
-              type="text" 
-              inputMode="decimal"
+            <SmartNumericInput 
+              value={store.manualDrawdown} 
+              onChange={store.setManualDrawdown}
               placeholder="Enter amount..."
-              value={store.manualDrawdown === 0 ? "" : store.manualDrawdown} 
-              onChange={(e) => store.setManualDrawdown(e.target.value === '' ? 0 : parseFloat(e.target.value) || 0)}
-              onFocus={handleNumericInputFocus}
               className="bg-background border-border h-8 text-xs"
             />
           </div>
@@ -240,12 +277,9 @@ const StrategySettings = ({ store, stats }: { store: any, stats: any }) => {
           <label className="text-xs font-medium text-muted-foreground flex items-center gap-2">
             <Target className="h-3 w-3" /> Recovery Trades
           </label>
-          <Input 
-            type="text" 
-            inputMode="numeric"
-            value={store.recoveryTargetWins === 0 ? "" : store.recoveryTargetWins} 
-            onChange={(e) => store.setRecoveryTargetWins(e.target.value === '' ? 0 : parseInt(e.target.value) || 0)}
-            onFocus={handleNumericInputFocus}
+          <SmartNumericInput 
+            value={store.recoveryTargetWins} 
+            onChange={store.setRecoveryTargetWins}
             className="w-16 h-7 text-xs bg-background text-right"
           />
         </div>
@@ -288,7 +322,7 @@ const StrategySettings = ({ store, stats }: { store: any, stats: any }) => {
             <AlertDialogHeader>
               <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
               <AlertDialogDescription>
-                This will permanently delete all your sessions and trade history. Your settings and strategy notes will be preserved.
+                This will permanently delete all your sessions and trade history. Your strategy notes 📝 will NOT be deleted.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
@@ -309,10 +343,6 @@ const PositionSizer = ({ store }: { store: any }) => {
   const [stop, setStop] = useState('');
   const [target, setTarget] = useState('');
   const currencySymbol = CURRENCY_SYMBOLS[store.currency as CurrencyCode];
-
-  const handleNumericInputFocus = (e: React.FocusEvent<HTMLInputElement>) => {
-    e.target.select();
-  };
 
   const results = useMemo(() => {
     const e = parseFloat(entry);
@@ -368,12 +398,9 @@ const PositionSizer = ({ store }: { store: any }) => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-end">
               <div className="space-y-2">
                 <label className="text-xs font-medium text-muted-foreground">Account Balance ({currencySymbol})</label>
-                <Input 
-                  type="text" 
-                  inputMode="decimal"
-                  value={store.accountBalance === 0 ? "" : store.accountBalance} 
-                  onChange={(e) => store.setAccountBalance(e.target.value === '' ? 0 : parseFloat(e.target.value) || 0)}
-                  onFocus={handleNumericInputFocus}
+                <SmartNumericInput 
+                  value={store.accountBalance} 
+                  onChange={store.setAccountBalance}
                   className="bg-background border-border"
                 />
               </div>
@@ -409,12 +436,9 @@ const PositionSizer = ({ store }: { store: any }) => {
                   <TabsContent value="amount" className="m-0">
                     <div className="flex justify-between items-center mb-2">
                       <label className="text-xs font-medium text-muted-foreground">Fixed Risk Amount ({currencySymbol})</label>
-                      <Input 
-                        type="text" 
-                        inputMode="decimal"
-                        value={store.riskAmountFixed === 0 ? "" : store.riskAmountFixed} 
-                        onChange={(e) => store.setRiskAmountFixed(e.target.value === '' ? 0 : parseFloat(e.target.value) || 0)}
-                        onFocus={handleNumericInputFocus}
+                      <SmartNumericInput 
+                        value={store.riskAmountFixed} 
+                        onChange={store.setRiskAmountFixed}
                         className="w-24 h-8 text-xs bg-background text-right"
                       />
                     </div>
@@ -428,15 +452,15 @@ const PositionSizer = ({ store }: { store: any }) => {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="space-y-2">
                 <label className="text-xs font-medium text-muted-foreground">Entry Price</label>
-                <Input placeholder="0.00" value={entry} onChange={(e) => setEntry(e.target.value)} onFocus={handleNumericInputFocus} className="bg-background border-border" />
+                <Input placeholder="0.00" value={entry} onChange={(e) => setEntry(e.target.value)} onFocus={(e) => e.target.select()} className="bg-background border-border" />
               </div>
               <div className="space-y-2">
                 <label className="text-xs font-medium text-muted-foreground">Stop Loss</label>
-                <Input placeholder="0.00" value={stop} onChange={(e) => setStop(e.target.value)} onFocus={handleNumericInputFocus} className="bg-background border-border" />
+                <Input placeholder="0.00" value={stop} onChange={(e) => setStop(e.target.value)} onFocus={(e) => e.target.select()} className="bg-background border-border" />
               </div>
               <div className="space-y-2">
                 <label className="text-xs font-medium text-muted-foreground">Target (Optional)</label>
-                <Input placeholder="0.00" value={target} onChange={(e) => setTarget(e.target.value)} onFocus={handleNumericInputFocus} className="bg-background border-border" />
+                <Input placeholder="0.00" value={target} onChange={(e) => setTarget(e.target.value)} onFocus={(e) => e.target.select()} className="bg-background border-border" />
               </div>
             </div>
 
@@ -509,8 +533,8 @@ export default function Dashboard() {
 
   const stats = useMemo(() => {
     const chronTrades = [
-      ...(store.activeSession?.trades || []),
-      ...store.sessions.flatMap(s => s.trades)
+      ...store.sessions.flatMap(s => s.trades),
+      ...(store.activeSession?.trades || [])
     ].sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
     
     let runningPnL = 0;
@@ -576,10 +600,6 @@ export default function Dashboard() {
   if (!mounted) return null;
 
   const currencySymbol = CURRENCY_SYMBOLS[store.currency as CurrencyCode];
-
-  const handleNumericInputFocus = (e: React.FocusEvent<HTMLInputElement>) => {
-    e.target.select();
-  };
 
   return (
     <div className="flex flex-col min-h-svh overflow-x-hidden">
@@ -776,7 +796,7 @@ export default function Dashboard() {
                                 inputMode="decimal"
                                 value={tradeAmount} 
                                 onChange={(e) => setTradeAmount(e.target.value)}
-                                onFocus={handleNumericInputFocus}
+                                onFocus={(e) => e.target.select()}
                                 className="text-lg py-6 bg-background focus:ring-primary border-border"
                               />
                             </div>
