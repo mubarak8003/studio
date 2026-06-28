@@ -30,6 +30,7 @@ import {
   Percent,
   Wallet,
   Notebook,
+  CalendarDays,
   AreaChart as ChartIcon,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -373,7 +374,7 @@ const EquityCurveChart = ({ data, currencySymbol }: { data: any[], currencySymbo
             contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', borderRadius: '8px' }}
             itemStyle={{ color: 'hsl(var(--primary))', fontWeight: 'bold' }}
             formatter={(value) => [`${currencySymbol}${parseFloat(value as string).toFixed(2)}`, 'Equity']}
-            labelFormatter={(label) => `Trade #${label}`}
+            labelFormatter={(label) => `Entry: ${label}`}
           />
           <Area 
             type="monotone" 
@@ -641,7 +642,32 @@ export default function Dashboard() {
     };
   }, [store]);
 
-  const equityData = useMemo(() => {
+  const dailyEquityData = useMemo(() => {
+    const chronTrades = [
+      ...store.sessions.flatMap(s => s.trades),
+      ...(store.activeSession?.trades || [])
+    ].sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
+
+    const daysMap: Record<string, number> = {};
+    
+    chronTrades.forEach(trade => {
+      const dayKey = trade.timestamp.toISOString().split('T')[0];
+      const amount = (trade.type === 'win' ? trade.amount : -trade.amount);
+      daysMap[dayKey] = (daysMap[dayKey] || 0) + amount;
+    });
+
+    let runningBalance = 0;
+    return Object.keys(daysMap).sort().map(day => {
+      runningBalance += daysMap[day];
+      return {
+        name: day,
+        balance: runningBalance,
+        pnl: daysMap[day],
+      };
+    });
+  }, [store]);
+
+  const tradeEquityData = useMemo(() => {
     let balance = 0;
     const chronTrades = [
       ...store.sessions.flatMap(s => s.trades),
@@ -651,7 +677,7 @@ export default function Dashboard() {
     return chronTrades.map((trade, index) => {
       balance += (trade.type === 'win' ? trade.amount : -trade.amount);
       return {
-        name: index + 1,
+        name: trade.timestamp.toLocaleDateString() + ' ' + trade.timestamp.toLocaleTimeString(),
         balance: balance,
       };
     });
@@ -1032,8 +1058,8 @@ export default function Dashboard() {
                       <ArrowLeft className="h-5 w-5" />
                     </Button>
                     <div>
-                      <h2 className="text-2xl md:text-3xl font-headline font-bold text-foreground leading-tight">Trade History</h2>
-                      <p className="text-muted-foreground text-xs md:text-sm">Review all session activity and recorded trades.</p>
+                      <h2 className="text-2xl md:text-3xl font-headline font-bold text-foreground leading-tight">History & Analytics</h2>
+                      <p className="text-muted-foreground text-xs md:text-sm">Daily aggregation and trade-level audit.</p>
                     </div>
                   </div>
                   <Badge variant="secondary" className="px-4 py-1.5 h-auto text-sm w-fit shrink-0">
@@ -1045,11 +1071,11 @@ export default function Dashboard() {
                   <Card className="bg-card border-border overflow-hidden">
                     <CardHeader className="pb-2">
                       <CardTitle className="text-sm font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
-                        <ChartIcon className="h-4 w-4 text-primary" /> Equity Curve
+                        <ChartIcon className="h-4 w-4 text-primary" /> Daily Equity Curve
                       </CardTitle>
                     </CardHeader>
                     <CardContent className="p-4 md:p-6">
-                      <EquityCurveChart data={equityData} currencySymbol={currencySymbol} />
+                      <EquityCurveChart data={dailyEquityData} currencySymbol={currencySymbol} />
                     </CardContent>
                   </Card>
                 )}
@@ -1063,12 +1089,42 @@ export default function Dashboard() {
                       <Button onClick={() => setView('dashboard')}>Return to Dashboard</Button>
                     </Card>
                   ) : (
-                    <Card className="bg-card border-border">
-                      <CardHeader>
-                        <CardTitle className="text-lg text-foreground">Full Audit Log</CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="space-y-4">
+                    <div className="space-y-8">
+                      <div className="space-y-4">
+                        <h3 className="text-sm font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+                          <CalendarDays className="h-4 w-4" /> Daily Equity Summary
+                        </h3>
+                        <div className="grid grid-cols-1 gap-3">
+                          {dailyEquityData.reverse().map((day) => (
+                            <Card key={day.name} className="bg-card border-border">
+                              <CardContent className="p-4 flex items-center justify-between">
+                                <div className="flex flex-col">
+                                  <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-tighter">Date</span>
+                                  <span className="text-sm font-semibold">{day.name}</span>
+                                </div>
+                                <div className="flex items-center gap-8">
+                                  <div className="flex flex-col items-end">
+                                    <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-tighter">Net Change</span>
+                                    <span className={cn("text-sm font-bold", day.pnl >= 0 ? "text-green-500" : "text-red-500")}>
+                                      {day.pnl >= 0 ? '+' : ''}{currencySymbol}{day.pnl.toFixed(2)}
+                                    </span>
+                                  </div>
+                                  <div className="flex flex-col items-end">
+                                    <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-tighter">Closing Balance</span>
+                                    <span className="text-sm font-bold text-foreground">
+                                      {currencySymbol}{day.balance.toFixed(2)}
+                                    </span>
+                                  </div>
+                                </div>
+                              </CardContent>
+                            </Card>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div className="space-y-4">
+                        <h3 className="text-sm font-bold uppercase tracking-widest text-muted-foreground">Full Audit Log</h3>
+                        <div className="space-y-3">
                           {stats.allTrades.map((trade) => (
                             <div key={trade.id} className="flex items-center justify-between p-4 rounded-xl bg-background border border-border/30">
                               <div className="flex items-center gap-4">
@@ -1093,8 +1149,8 @@ export default function Dashboard() {
                             </div>
                           ))}
                         </div>
-                      </CardContent>
-                    </Card>
+                      </div>
+                    </div>
                   )}
                 </div>
               </div>
