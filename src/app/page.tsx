@@ -1059,7 +1059,7 @@ export default function Dashboard() {
                     </Button>
                     <div>
                       <h2 className="text-2xl md:text-3xl font-headline font-bold text-foreground leading-tight">History & Analytics</h2>
-                      <p className="text-muted-foreground text-xs md:text-sm">Daily aggregation and trade-level audit.</p>
+                      <p className="text-muted-foreground text-xs md:text-sm">Full equity tracking based on trade history.</p>
                     </div>
                   </div>
                   <Badge variant="secondary" className="px-4 py-1.5 h-auto text-sm w-fit shrink-0">
@@ -1071,11 +1071,11 @@ export default function Dashboard() {
                   <Card className="bg-card border-border overflow-hidden">
                     <CardHeader className="pb-2">
                       <CardTitle className="text-sm font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
-                        <ChartIcon className="h-4 w-4 text-primary" /> Daily Equity Curve
+                        <ChartIcon className="h-4 w-4 text-primary" /> Equity Curve
                       </CardTitle>
                     </CardHeader>
                     <CardContent className="p-4 md:p-6">
-                      <EquityCurveChart data={dailyEquityData} currencySymbol={currencySymbol} />
+                      <EquityCurveChart data={tradeEquityData} currencySymbol={currencySymbol} />
                     </CardContent>
                   </Card>
                 )}
@@ -1095,7 +1095,7 @@ export default function Dashboard() {
                           <CalendarDays className="h-4 w-4" /> Daily Equity Summary
                         </h3>
                         <div className="grid grid-cols-1 gap-3">
-                          {dailyEquityData.reverse().map((day) => (
+                          {[...dailyEquityData].reverse().map((day) => (
                             <Card key={day.name} className="bg-card border-border">
                               <CardContent className="p-4 flex items-center justify-between">
                                 <div className="flex flex-col">
