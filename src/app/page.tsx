@@ -30,6 +30,7 @@ import {
   Percent,
   Wallet,
   Notebook,
+  AreaChart as ChartIcon,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -62,6 +63,15 @@ import {
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { ModeToggle } from '@/components/mode-toggle';
 import { cn } from '@/lib/utils';
+import {
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+} from 'recharts';
 
 type View = 'dashboard' | 'history' | 'sizer';
 
@@ -156,13 +166,11 @@ const SmartNumericInput = ({
   const [inputValue, setInputValue] = useState(value === 0 ? "" : value.toString());
 
   useEffect(() => {
-    // Sync with store if store changes from outside (reset/recovery)
     setInputValue(value === 0 ? "" : value.toString());
   }, [value]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
-    // Allow empty string or just a decimal point while typing
     if (val === "" || val === ".") {
       setInputValue(val);
       onChange(0);
@@ -333,6 +341,50 @@ const StrategySettings = ({ store, stats }: { store: any, stats: any }) => {
           </AlertDialogContent>
         </AlertDialog>
       </div>
+    </div>
+  );
+};
+
+const EquityCurveChart = ({ data, currencySymbol }: { data: any[], currencySymbol: string }) => {
+  if (data.length === 0) return null;
+
+  return (
+    <div className="h-64 w-full">
+      <ResponsiveContainer width="100%" height="100%">
+        <AreaChart data={data}>
+          <defs>
+            <linearGradient id="colorBalance" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3}/>
+              <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0}/>
+            </linearGradient>
+          </defs>
+          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" opacity={0.5} />
+          <XAxis 
+            dataKey="name" 
+            hide 
+          />
+          <YAxis 
+            tick={{ fontSize: 10 }} 
+            tickFormatter={(value) => `${currencySymbol}${value}`}
+            width={50}
+            stroke="hsl(var(--muted-foreground))"
+          />
+          <Tooltip 
+            contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', borderRadius: '8px' }}
+            itemStyle={{ color: 'hsl(var(--primary))', fontWeight: 'bold' }}
+            formatter={(value) => [`${currencySymbol}${parseFloat(value as string).toFixed(2)}`, 'Equity']}
+            labelFormatter={(label) => `Trade #${label}`}
+          />
+          <Area 
+            type="monotone" 
+            dataKey="balance" 
+            stroke="hsl(var(--primary))" 
+            fillOpacity={1} 
+            fill="url(#colorBalance)" 
+            strokeWidth={2}
+          />
+        </AreaChart>
+      </ResponsiveContainer>
     </div>
   );
 };
@@ -587,6 +639,22 @@ export default function Dashboard() {
       avgWin: wins.length > 0 ? wins.reduce((sum, t) => sum + t.amount, 0) / wins.length : 0,
       avgLoss: losses.length > 0 ? losses.reduce((sum, t) => sum + t.amount, 0) / losses.length : 0,
     };
+  }, [store]);
+
+  const equityData = useMemo(() => {
+    let balance = 0;
+    const chronTrades = [
+      ...store.sessions.flatMap(s => s.trades),
+      ...(store.activeSession?.trades || [])
+    ].sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
+
+    return chronTrades.map((trade, index) => {
+      balance += (trade.type === 'win' ? trade.amount : -trade.amount);
+      return {
+        name: index + 1,
+        balance: balance,
+      };
+    });
   }, [store]);
 
   const handleAddTrade = (type: 'win' | 'loss') => {
@@ -958,7 +1026,7 @@ export default function Dashboard() {
 
             {view === 'history' && (
               <div className="space-y-6 animate-in fade-in duration-500">
-                <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+                <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
                   <div className="flex items-center gap-4">
                     <Button variant="ghost" size="icon" onClick={() => setView('dashboard')}>
                       <ArrowLeft className="h-5 w-5" />
@@ -972,6 +1040,19 @@ export default function Dashboard() {
                     {stats.allTrades.length} Total Trades
                   </Badge>
                 </header>
+
+                {stats.allTrades.length > 0 && (
+                  <Card className="bg-card border-border overflow-hidden">
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-sm font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+                        <ChartIcon className="h-4 w-4 text-primary" /> Equity Curve
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="p-4 md:p-6">
+                      <EquityCurveChart data={equityData} currencySymbol={currencySymbol} />
+                    </CardContent>
+                  </Card>
+                )}
 
                 <div className="grid grid-cols-1 gap-6">
                   {stats.allTrades.length === 0 ? (
