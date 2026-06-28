@@ -167,11 +167,19 @@ const SmartNumericInput = ({
   const [inputValue, setInputValue] = useState(value === 0 ? "" : value.toString());
 
   useEffect(() => {
-    setInputValue(value === 0 ? "" : value.toString());
+    // Only update if the parsed value is different from the current numeric value
+    // This allows typing decimals like "0." without it snapping back
+    const parsedValue = parseFloat(inputValue);
+    if (!isNaN(parsedValue) && parsedValue !== value) {
+      setInputValue(value === 0 ? "" : value.toString());
+    } else if (value === 0 && inputValue !== "" && inputValue !== "0") {
+       setInputValue("");
+    }
   }, [value]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
+    // Allow empty strings or just a dot for natural decimal typing
     if (val === "" || val === ".") {
       setInputValue(val);
       onChange(0);
@@ -390,7 +398,7 @@ const EquityCurveChart = ({ data, currencySymbol }: { data: any[], currencySymbo
   );
 };
 
-const PositionSizer = ({ store }: { store: any }) => {
+const PositionSizer = ({ store, setView }: { store: any, setView: (v: View) => void }) => {
   const [entry, setEntry] = useState('');
   const [stop, setStop] = useState('');
   const [target, setTarget] = useState('');
@@ -434,9 +442,14 @@ const PositionSizer = ({ store }: { store: any }) => {
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
-      <header>
-        <h2 className="text-2xl md:text-3xl font-headline font-bold mb-1 text-foreground">Position Sizer</h2>
-        <p className="text-muted-foreground text-sm">Calculate shares and risk based on stop loss.</p>
+      <header className="flex items-center gap-4 mb-4">
+        <Button variant="ghost" size="icon" onClick={() => setView('dashboard')}>
+          <ArrowLeft className="h-5 w-5" />
+        </Button>
+        <div>
+          <h2 className="text-2xl md:text-3xl font-headline font-bold mb-1 text-foreground">Position Sizer</h2>
+          <p className="text-muted-foreground text-sm">Calculate shares and risk based on stop loss.</p>
+        </div>
       </header>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -1157,7 +1170,7 @@ export default function Dashboard() {
             )}
 
             {view === 'sizer' && (
-              <PositionSizer store={store} />
+              <PositionSizer store={store} setView={setView} />
             )}
           </div>
         </main>
