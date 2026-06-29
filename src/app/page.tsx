@@ -97,7 +97,7 @@ const QuickPercentTool = () => {
 
   return (
     <Card className="bg-card border-border">
-      <CardHeader>
+      <CardHeader className="pb-3">
         <CardTitle className="text-sm font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
           <Percent className="h-4 w-4 text-primary" /> Quick Percent Tool
         </CardTitle>
@@ -137,7 +137,7 @@ const QuickPercentTool = () => {
             <div className="text-2xl font-headline font-bold text-primary">
               {result.toLocaleString(undefined, { maximumFractionDigits: 4 })}
             </div>
-            <p className="text-[10px] text-muted-foreground mt-1">
+            <p className="text-[10px] text-muted-foreground mt-1 text-center">
               {percent}% of {baseNum}
             </p>
           </div>
@@ -167,8 +167,6 @@ const SmartNumericInput = ({
   const [inputValue, setInputValue] = useState(value === 0 ? "" : value.toString());
 
   useEffect(() => {
-    // Only update if the parsed value is different from the current numeric value
-    // This allows typing decimals like "0." without it snapping back
     const parsedValue = parseFloat(inputValue);
     if (!isNaN(parsedValue) && parsedValue !== value) {
       setInputValue(value === 0 ? "" : value.toString());
@@ -179,7 +177,6 @@ const SmartNumericInput = ({
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
-    // Allow empty strings or just a dot for natural decimal typing
     if (val === "" || val === ".") {
       setInputValue(val);
       onChange(0);
@@ -565,8 +562,6 @@ const PositionSizer = ({ store, setView }: { store: any, setView: (v: View) => v
         </Card>
 
         <div className="space-y-6">
-          <QuickPercentTool />
-          
           <Card className="bg-card border-border">
             <CardHeader>
               <CardTitle className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Strategy Note</CardTitle>
@@ -930,70 +925,74 @@ export default function Dashboard() {
                     </CardContent>
                   </Card>
 
-                  <Card className="bg-card border-border">
-                    <CardHeader>
-                      <CardTitle className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Session Performance</CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-6">
-                      <div>
-                        <div className="flex justify-between text-sm mb-2">
-                          <span className="text-muted-foreground">Win Rate</span>
-                          <span className="font-bold text-foreground">{stats.winRate.toFixed(1)}%</span>
-                        </div>
-                        <div className="w-full bg-secondary rounded-full h-2">
-                          <div 
-                            className="bg-primary h-2 rounded-full glow-primary transition-all duration-1000" 
-                            style={{ width: `${stats.winRate}%` }} 
-                          />
-                        </div>
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-1">
-                          <span className="text-[10px] text-muted-foreground uppercase tracking-tight">Net Balance</span>
-                          <div className={cn("text-lg md:text-xl font-headline font-bold", stats.netPnL >= 0 ? "text-green-500" : "text-red-500")}>
-                            {stats.netPnL >= 0 ? '+' : ''}{currencySymbol}{stats.netPnL.toFixed(2)}
+                  <div className="space-y-6">
+                    <Card className="bg-card border-border">
+                      <CardHeader>
+                        <CardTitle className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Session Performance</CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-6">
+                        <div>
+                          <div className="flex justify-between text-sm mb-2">
+                            <span className="text-muted-foreground">Win Rate</span>
+                            <span className="font-bold text-foreground">{stats.winRate.toFixed(1)}%</span>
+                          </div>
+                          <div className="w-full bg-secondary rounded-full h-2">
+                            <div 
+                              className="bg-primary h-2 rounded-full glow-primary transition-all duration-1000" 
+                              style={{ width: `${stats.winRate}%` }} 
+                            />
                           </div>
                         </div>
-                        <div className="space-y-1">
-                          <span className="text-[10px] text-muted-foreground uppercase tracking-tight">Current Drawdown</span>
-                          <div className="text-lg md:text-xl font-headline font-bold text-red-400">
-                            {currencySymbol}{stats.currentDrawdown.toFixed(2)}
+
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="space-y-1">
+                            <span className="text-[10px] text-muted-foreground uppercase tracking-tight">Net Balance</span>
+                            <div className={cn("text-lg md:text-xl font-headline font-bold", stats.netPnL >= 0 ? "text-green-500" : "text-red-500")}>
+                              {stats.netPnL >= 0 ? '+' : ''}{currencySymbol}{stats.netPnL.toFixed(2)}
+                            </div>
+                          </div>
+                          <div className="space-y-1">
+                            <span className="text-[10px] text-muted-foreground uppercase tracking-tight">Current Drawdown</span>
+                            <div className="text-lg md:text-xl font-headline font-bold text-red-400">
+                              {currencySymbol}{stats.currentDrawdown.toFixed(2)}
+                            </div>
                           </div>
                         </div>
-                      </div>
 
-                      <Separator className="bg-border/50" />
+                        <Separator className="bg-border/50" />
 
-                      <div className="flex items-center gap-3">
-                        <div className="flex-1 flex justify-between items-center text-xs p-2 rounded bg-green-500/5 border border-green-500/10">
-                          <span className="text-muted-foreground">Wins</span>
-                          <span className="font-bold text-green-500">{stats.wins.length}</span>
+                        <div className="flex items-center gap-3">
+                          <div className="flex-1 flex justify-between items-center text-xs p-2 rounded bg-green-500/5 border border-green-500/10">
+                            <span className="text-muted-foreground">Wins</span>
+                            <span className="font-bold text-green-500">{stats.wins.length}</span>
+                          </div>
+                          
+                          <div className="flex flex-col items-center justify-center px-1 text-[10px] font-bold text-muted-foreground/50 bg-muted/20 rounded h-8 min-w-8">
+                             <span className="leading-none">Diff</span>
+                             <span className="leading-none">{Math.abs(stats.wins.length - stats.losses.length)}</span>
+                          </div>
+
+                          <div className="flex-1 flex justify-between items-center text-xs p-2 rounded bg-red-500/5 border border-red-500/10">
+                            <span className="text-muted-foreground">Losses</span>
+                            <span className="font-bold text-red-500">{stats.losses.length}</span>
+                          </div>
                         </div>
-                        
-                        <div className="flex flex-col items-center justify-center px-1 text-[10px] font-bold text-muted-foreground/50 bg-muted/20 rounded h-8 min-w-8">
-                           <span className="leading-none">Diff</span>
-                           <span className="leading-none">{Math.abs(stats.wins.length - stats.losses.length)}</span>
-                        </div>
 
-                        <div className="flex-1 flex justify-between items-center text-xs p-2 rounded bg-red-500/5 border border-red-500/10">
-                          <span className="text-muted-foreground">Losses</span>
-                          <span className="font-bold text-red-500">{stats.losses.length}</span>
+                        <div className="space-y-3 pt-2">
+                           <div className="flex justify-between items-center text-sm text-foreground">
+                              <span className="text-muted-foreground flex items-center gap-2"><Plus className="h-3 w-3 text-green-500" /> Avg Win</span>
+                              <span>{currencySymbol}{stats.avgWin.toFixed(2)}</span>
+                           </div>
+                           <div className="flex justify-between items-center text-sm text-foreground">
+                              <span className="text-muted-foreground flex items-center gap-2"><div className="h-[2px] w-3 bg-red-500" /> Avg Loss</span>
+                              <span>{currencySymbol}{stats.avgLoss.toFixed(2)}</span>
+                           </div>
                         </div>
-                      </div>
+                      </CardContent>
+                    </Card>
 
-                      <div className="space-y-3 pt-2">
-                         <div className="flex justify-between items-center text-sm text-foreground">
-                            <span className="text-muted-foreground flex items-center gap-2"><Plus className="h-3 w-3 text-green-500" /> Avg Win</span>
-                            <span>{currencySymbol}{stats.avgWin.toFixed(2)}</span>
-                         </div>
-                         <div className="flex justify-between items-center text-sm text-foreground">
-                            <span className="text-muted-foreground flex items-center gap-2"><div className="h-[2px] w-3 bg-red-500" /> Avg Loss</span>
-                            <span>{currencySymbol}{stats.avgLoss.toFixed(2)}</span>
-                         </div>
-                      </div>
-                    </CardContent>
-                  </Card>
+                    <QuickPercentTool />
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pb-12">
