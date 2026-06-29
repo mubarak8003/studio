@@ -32,6 +32,7 @@ import {
   Notebook,
   CalendarDays,
   AreaChart as ChartIcon,
+  Hash,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -414,7 +415,7 @@ const PositionSizer = ({ store, setView }: { store: any, setView: (v: View) => v
       riskAmount = store.riskAmountFixed || 0;
     }
 
-    if (isNaN(e) || isNaN(s) || e <= 0 || s <= 0 || e === s || riskAmount <= 0) return null;
+    if (isNaN(e) || iNaN(s) || e <= 0 || s <= 0 || e === s || riskAmount <= 0) return null;
 
     const riskPerShare = Math.abs(e - s);
     const shares = Math.floor(riskAmount / riskPerShare);
@@ -927,16 +928,16 @@ export default function Dashboard() {
 
                   <div className="space-y-6">
                     <Card className="bg-card border-border">
-                      <CardHeader>
+                      <CardHeader className="pb-2">
                         <CardTitle className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Session Performance</CardTitle>
                       </CardHeader>
                       <CardContent className="space-y-6">
-                        <div>
-                          <div className="flex justify-between text-sm mb-2">
+                        <div className="space-y-1">
+                          <div className="flex justify-between text-sm mb-1">
                             <span className="text-muted-foreground">Win Rate</span>
                             <span className="font-bold text-foreground">{stats.winRate.toFixed(1)}%</span>
                           </div>
-                          <div className="w-full bg-secondary rounded-full h-2">
+                          <div className="w-full bg-secondary rounded-full h-2 overflow-hidden">
                             <div 
                               className="bg-primary h-2 rounded-full glow-primary transition-all duration-1000" 
                               style={{ width: `${stats.winRate}%` }} 
@@ -946,13 +947,13 @@ export default function Dashboard() {
 
                         <div className="grid grid-cols-2 gap-4">
                           <div className="space-y-1">
-                            <span className="text-[10px] text-muted-foreground uppercase tracking-tight">Net Balance</span>
+                            <span className="text-[10px] text-muted-foreground uppercase tracking-tight font-bold">Net Balance</span>
                             <div className={cn("text-lg md:text-xl font-headline font-bold", stats.netPnL >= 0 ? "text-green-500" : "text-red-500")}>
                               {stats.netPnL >= 0 ? '+' : ''}{currencySymbol}{stats.netPnL.toFixed(2)}
                             </div>
                           </div>
                           <div className="space-y-1">
-                            <span className="text-[10px] text-muted-foreground uppercase tracking-tight">Current Drawdown</span>
+                            <span className="text-[10px] text-muted-foreground uppercase tracking-tight font-bold">Current Drawdown</span>
                             <div className="text-lg md:text-xl font-headline font-bold text-red-400">
                               {currencySymbol}{stats.currentDrawdown.toFixed(2)}
                             </div>
@@ -981,11 +982,16 @@ export default function Dashboard() {
                         <div className="space-y-3 pt-2">
                            <div className="flex justify-between items-center text-sm text-foreground">
                               <span className="text-muted-foreground flex items-center gap-2"><Plus className="h-3 w-3 text-green-500" /> Avg Win</span>
-                              <span>{currencySymbol}{stats.avgWin.toFixed(2)}</span>
+                              <span className="font-mono">{currencySymbol}{stats.avgWin.toFixed(2)}</span>
                            </div>
                            <div className="flex justify-between items-center text-sm text-foreground">
                               <span className="text-muted-foreground flex items-center gap-2"><div className="h-[2px] w-3 bg-red-500" /> Avg Loss</span>
-                              <span>{currencySymbol}{stats.avgLoss.toFixed(2)}</span>
+                              <span className="font-mono">{currencySymbol}{stats.avgLoss.toFixed(2)}</span>
+                           </div>
+                           <Separator className="bg-border/30 border-dashed" />
+                           <div className="flex justify-between items-center text-sm font-bold text-foreground">
+                              <span className="text-muted-foreground flex items-center gap-2"><Hash className="h-3 w-3 text-primary" /> Total Trades</span>
+                              <span className="font-mono text-primary">{stats.allTrades.length}</span>
                            </div>
                         </div>
                       </CardContent>
