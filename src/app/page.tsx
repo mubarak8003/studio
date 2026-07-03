@@ -65,6 +65,7 @@ import {
 } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { ModeToggle } from '@/components/mode-toggle';
+import { AICoachPanel } from '@/components/recoup/ai-coach-panel';
 import { cn } from '@/lib/utils';
 import {
   AreaChart,
@@ -96,7 +97,7 @@ const QuickPercentTool = () => {
   const result = useMemo(() => {
     const b = parseFloat(baseNum);
     const p = parseFloat(percent);
-    if (isNaN(b) || iNaN(p)) return null;
+    if (isNaN(b) || isNaN(p)) return null;
     return (b * p) / 100;
   }, [baseNum, percent]);
 
@@ -530,7 +531,7 @@ const PositionSizer = ({ store, setView }: { store: any, setView: (v: View) => v
       riskAmount = store.riskAmountFixed || 0;
     }
 
-    if (isNaN(e) || iNaN(s) || e <= 0 || s <= 0 || e === s || riskAmount <= 0) return null;
+    if (isNaN(e) || isNaN(s) || e <= 0 || s <= 0 || e === s || riskAmount <= 0) return null;
 
     const riskPerShare = Math.abs(e - s);
     const shares = Math.floor(riskAmount / riskPerShare);
@@ -731,25 +732,26 @@ export default function Dashboard() {
       ? store.manualDrawdown 
       : (hwmDrawdown > 0 ? hwmDrawdown : 0);
     
-    // Recovery Logic with Wallet Tax Compensation
     const walletFactor = 1 - (store.walletDeductionPercent / 100);
     
-    // The actual cash amount needed to recover drawdown per trade
-    const netRecoveryNeededPerTrade = currentDrawdown > 0 
-      ? currentDrawdown / (store.recoveryTargetWins || 1) 
-      : 0;
-      
-    // Grossed up recovery profit to account for future wallet tax
-    const grossRecoveryProfit = walletFactor > 0 
-      ? netRecoveryNeededPerTrade / walletFactor 
-      : netRecoveryNeededPerTrade;
-      
-    // Grossed up base profit to ensure the base win is also protected from tax
-    const grossBaseProfit = walletFactor > 0 
-      ? (store.baseStake * store.riskRewardRatio) / walletFactor 
-      : (store.baseStake * store.riskRewardRatio);
+    let nextStake = store.baseStake;
+    let grossRecoveryProfit = 0;
+    let grossBaseProfit = store.baseStake * store.riskRewardRatio;
 
-    const nextStake = (grossBaseProfit + grossRecoveryProfit) / (store.riskRewardRatio || 1);
+    if (currentDrawdown > 0) {
+      const netRecoveryNeededPerTrade = currentDrawdown / (store.recoveryTargetWins || 1);
+      const totalNetProfitNeeded = (store.baseStake * store.riskRewardRatio) + netRecoveryNeededPerTrade;
+      const totalGrossProfitNeeded = walletFactor > 0 ? totalNetProfitNeeded / walletFactor : totalNetProfitNeeded;
+      
+      nextStake = totalGrossProfitNeeded / (store.riskRewardRatio || 1);
+      grossBaseProfit = (store.baseStake * store.riskRewardRatio) / (walletFactor || 1);
+      grossRecoveryProfit = netRecoveryNeededPerTrade / (walletFactor || 1);
+    } else {
+      nextStake = store.baseStake;
+      grossBaseProfit = store.baseStake * store.riskRewardRatio;
+      grossRecoveryProfit = 0;
+    }
+
     const recoveryStakeAdjustment = nextStake - store.baseStake;
     
     let riskLevel: 'low' | 'medium' | 'high' = 'low';
@@ -1225,22 +1227,32 @@ export default function Dashboard() {
                     </CardContent>
                   </Card>
 
-                  <Card className="bg-card border-border">
-                    <CardHeader>
-                      <CardTitle className="text-lg flex items-center gap-2 text-foreground">
-                        <Notebook className="h-5 w-5 text-primary" /> Trading Notes 📝
-                      </CardTitle>
-                      <CardDescription className="text-xs">Journal your thoughts or strategy reminders.</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <Textarea 
-                        placeholder="Start typing your notes here..."
-                        className="min-h-[256px] bg-background border-border resize-none"
-                        value={store.notes}
-                        onChange={(e) => store.setNotes(e.target.value)}
-                      />
-                    </CardContent>
-                  </Card>
+                  <div className="space-y-6">
+                    <AICoachPanel 
+                      totalCurrentLoss={stats.currentDrawdown}
+                      recoveryTargetWins={store.recoveryTargetWins}
+                      recentWinRatePercentage={stats.winRate}
+                      averageWinAmount={stats.avgWin}
+                      averageLossAmount={stats.avgLoss}
+                    />
+
+                    <Card className="bg-card border-border">
+                      <CardHeader>
+                        <CardTitle className="text-lg flex items-center gap-2 text-foreground">
+                          <Notebook className="h-5 w-5 text-primary" /> Trading Notes 📝
+                        </CardTitle>
+                        <CardDescription className="text-xs">Journal your thoughts or strategy reminders.</CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <Textarea 
+                          placeholder="Start typing your notes here..."
+                          className="min-h-[256px] bg-background border-border resize-none"
+                          value={store.notes}
+                          onChange={(e) => store.setNotes(e.target.value)}
+                        />
+                      </CardContent>
+                    </Card>
+                  </div>
                 </div>
               </div>
             )}
