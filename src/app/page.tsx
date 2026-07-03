@@ -891,6 +891,7 @@ export default function Dashboard() {
   };
 
   const handleStartSession = () => {
+    if (!sessionNameInput.trim()) return;
     store.startSession(sessionNameInput);
     setSessionNameInput('');
     setIsStartSessionDialogOpen(false);
@@ -1104,37 +1105,39 @@ export default function Dashboard() {
                               <PlayCircle className="h-4 w-4" /> Start Session
                             </Button>
                           </DialogTrigger>
-                          <DialogContent className="bg-card border-border sm:max-w-[425px]">
-                            <DialogHeader>
-                              <DialogTitle>Start New Session</DialogTitle>
-                              <DialogDescription>
-                                Give your session a name to track it easily in your history.
-                              </DialogDescription>
-                            </DialogHeader>
-                            <div className="grid gap-4 py-4">
-                              <div className="space-y-2">
-                                <label htmlFor="name" className="text-xs font-medium text-muted-foreground uppercase">Session Name</label>
+                          <DialogContent className="bg-card border-border sm:max-w-[425px] rounded-2xl p-0 overflow-hidden">
+                            <div className="p-8 space-y-8">
+                              <div className="text-center space-y-2">
+                                <DialogTitle className="text-2xl font-bold">Start New Session</DialogTitle>
+                                <DialogDescription className="text-muted-foreground">
+                                  Give your session a name to track it easily in your history.
+                                </DialogDescription>
+                              </div>
+                              
+                              <div className="space-y-3">
+                                <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest px-1">
+                                  SESSION NAME
+                                </label>
                                 <Input 
-                                  id="name" 
                                   placeholder="e.g., Morning Scalping" 
                                   value={sessionNameInput} 
                                   onChange={(e) => setSessionNameInput(e.target.value)}
-                                  className="bg-background border-border"
+                                  className="h-12 bg-background border-border focus-visible:ring-primary focus-visible:border-primary text-base"
                                   onKeyDown={(e) => {
                                     if (e.key === 'Enter') handleStartSession();
                                   }}
+                                  autoFocus
                                 />
                               </div>
-                            </div>
-                            <DialogFooter>
+
                               <Button 
-                                type="submit" 
                                 onClick={handleStartSession}
-                                className="w-full bg-primary hover:bg-primary/90"
+                                className="w-full h-12 bg-primary hover:bg-primary/90 text-white font-bold text-lg rounded-xl shadow-lg glow-primary"
+                                disabled={!sessionNameInput.trim()}
                               >
                                 Go Live
                               </Button>
-                            </DialogFooter>
+                            </div>
                           </DialogContent>
                         </Dialog>
                       </div>

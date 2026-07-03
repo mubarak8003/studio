@@ -82,10 +82,14 @@ export function useRecoupStore() {
       if (saved) {
         try {
           const parsed = JSON.parse(saved);
+          
+          // Cleanup: Filter out any sessions that don't have trades to prevent clutter
+          const cleanHistory = (parsed.sessions || []).filter((s: any) => s.trades && s.trades.length > 0);
+          
           setState({
             ...DEFAULT_STATE,
             ...parsed,
-            sessions: (parsed.sessions || []).map((s: any) => ({
+            sessions: cleanHistory.map((s: any) => ({
               ...s,
               startTime: new Date(s.startTime),
               endTime: s.endTime ? new Date(s.endTime) : undefined,
@@ -131,8 +135,7 @@ export function useRecoupStore() {
         isActive: true,
       };
 
-      // If current session is empty, just replace it. 
-      // If it has trades, move it to history before starting new.
+      // Only archive the previous session if it actually has trades
       let newSessions = prev.sessions;
       if (prev.activeSession && prev.activeSession.trades.length > 0) {
         newSessions = [{ ...prev.activeSession, isActive: false, endTime: new Date() }, ...prev.sessions];
@@ -150,7 +153,7 @@ export function useRecoupStore() {
     setState(prev => {
       if (!prev.activeSession) return prev;
       
-      // Only add to history if it has trades
+      // If it's empty, just discard it to avoid history clutter
       if (prev.activeSession.trades.length === 0) {
         return { ...prev, activeSession: null };
       }
@@ -171,8 +174,7 @@ export function useRecoupStore() {
       
       const updatedSessions = prev.sessions.filter(s => s.id !== sessionId);
       
-      // If current active session is empty, discard it. 
-      // If it has trades, save it to history.
+      // Archive current if it has trades, otherwise discard it
       let newSessionsList = updatedSessions;
       if (prev.activeSession && prev.activeSession.trades.length > 0) {
         newSessionsList = [{ ...prev.activeSession, isActive: false, endTime: new Date() }, ...updatedSessions];
