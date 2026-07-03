@@ -8,6 +8,7 @@ import {
   TrendingDown, 
   Settings2, 
   Plus, 
+  Minus,
   StopCircle, 
   PlayCircle,
   History,
@@ -800,7 +801,15 @@ export default function Dashboard() {
     const wins = chronTrades.filter(t => t.type === 'win');
     const losses = chronTrades.filter(t => t.type === 'loss');
     
-    const netPnL = chronTrades.reduce((acc, t) => acc + (t.type === 'win' ? t.amount : -t.amount), 0);
+    let runningPnL = 0;
+    let peakPnL = 0;
+    chronTrades.forEach(t => {
+      runningPnL += (t.type === 'win' ? t.amount : -t.amount);
+      if (runningPnL > peakPnL) peakPnL = runningPnL;
+    });
+
+    const netPnL = runningPnL;
+    const sessionDrawdown = peakPnL - netPnL;
     const totalTurnover = chronTrades.reduce((acc, t) => acc + t.originalAmount, 0);
 
     return {
@@ -808,8 +817,12 @@ export default function Dashboard() {
       wins,
       losses,
       netPnL,
+      currentDrawdown: sessionDrawdown > 0 ? sessionDrawdown : 0,
       totalTurnover,
+      totalTrades: chronTrades.length,
       winRate: chronTrades.length > 0 ? (wins.length / chronTrades.length) * 100 : 0,
+      avgWin: wins.length > 0 ? wins.reduce((sum, t) => sum + t.amount, 0) / wins.length : 0,
+      avgLoss: losses.length > 0 ? losses.reduce((sum, t) => sum + t.amount, 0) / losses.length : 0,
     };
   }, [store.activeSession]);
 
@@ -887,7 +900,7 @@ export default function Dashboard() {
 
   const TradeLogItem = ({ trade }: { trade: any }) => (
     <div className={cn(
-      "flex items-center justify-between p-3.5 rounded-2xl bg-background border border-border/20 shadow-sm",
+      "flex items-center justify-between p-3.5 rounded-2xl bg-background border border-border/20 shadow-sm transition-colors",
       trade.type === 'win' ? "hover:bg-green-500/[0.02]" : "hover:bg-red-500/[0.02]"
     )}>
       <div className="flex items-center gap-4">
@@ -1269,13 +1282,13 @@ export default function Dashboard() {
                           <div className="space-y-1">
                             <span className="text-[10px] text-muted-foreground uppercase tracking-tight font-bold">Net Balance</span>
                             <div className={cn("text-lg md:text-xl font-headline font-bold", sessionStats.netPnL >= 0 ? "text-green-500" : "text-red-500")}>
-                              {sessionStats.netPnL >= 0 ? '+' : ''}{currencySymbol}{sessionStats.netPnL.toFixed(2)}
+                              {sessionStats.netPnL >= 0 ? '+' : '-'}{currencySymbol}{Math.abs(sessionStats.netPnL).toFixed(2)}
                             </div>
                           </div>
-                          <div className="space-y-1">
-                            <span className="text-[10px] text-muted-foreground uppercase tracking-tight font-bold">Session Vol.</span>
-                            <div className="text-lg md:text-xl font-headline font-bold text-foreground">
-                              {currencySymbol}{sessionStats.totalTurnover.toLocaleString()}
+                          <div className="space-y-1 text-right">
+                            <span className="text-[10px] text-muted-foreground uppercase tracking-tight font-bold">Current Drawdown</span>
+                            <div className="text-lg md:text-xl font-headline font-bold text-red-500">
+                              {currencySymbol}{sessionStats.currentDrawdown.toFixed(2)}
                             </div>
                           </div>
                         </div>
@@ -1283,19 +1296,45 @@ export default function Dashboard() {
                         <Separator className="bg-border/50" />
 
                         <div className="flex items-center gap-3">
-                          <div className="flex-1 flex justify-between items-center text-xs p-2 rounded bg-green-500/5 border border-green-500/10">
-                            <span className="text-muted-foreground">Wins</span>
-                            <span className="font-bold text-green-500">{sessionStats.wins.length}</span>
+                          <div className="flex-1 flex justify-between items-center text-xs p-2 rounded bg-green-500/5 border border-green-500/10 text-green-600 font-bold">
+                            <span>Wins</span>
+                            <span>{sessionStats.wins.length}</span>
                           </div>
                           
-                          <div className="flex flex-col items-center justify-center px-1 text-[10px] font-bold text-muted-foreground/50 bg-muted/20 rounded h-8 min-w-8">
+                          <div className="flex flex-col items-center justify-center px-1 text-[10px] font-bold text-muted-foreground/50">
                              <span className="leading-none">Diff</span>
                              <span className="leading-none">{Math.abs(sessionStats.wins.length - sessionStats.losses.length)}</span>
                           </div>
 
-                          <div className="flex-1 flex justify-between items-center text-xs p-2 rounded bg-red-500/5 border border-red-500/10">
-                            <span className="text-muted-foreground">Losses</span>
-                            <span className="font-bold text-red-500">{sessionStats.losses.length}</span>
+                          <div className="flex-1 flex justify-between items-center text-xs p-2 rounded bg-red-500/5 border border-red-500/10 text-red-600 font-bold">
+                            <span>Losses</span>
+                            <span>{sessionStats.losses.length}</span>
+                          </div>
+                        </div>
+
+                        <div className="space-y-2">
+                          <div className="flex justify-between items-center text-xs">
+                            <div className="flex items-center gap-2 text-green-600 font-medium">
+                              <Plus className="h-3 w-3" /> Avg Win
+                            </div>
+                            <span className="font-mono">{currencySymbol}{sessionStats.avgWin.toFixed(2)}</span>
+                          </div>
+                          <div className="flex justify-between items-center text-xs">
+                            <div className="flex items-center gap-2 text-red-600 font-medium">
+                              <Minus className="h-3 w-3" /> Avg Loss
+                            </div>
+                            <span className="font-mono">{currencySymbol}{sessionStats.avgLoss.toFixed(2)}</span>
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4 pt-2">
+                          <div className="space-y-1">
+                            <span className="text-[10px] text-muted-foreground uppercase font-bold">Total Trades</span>
+                            <div className="text-sm font-bold text-primary">{sessionStats.totalTrades}</div>
+                          </div>
+                          <div className="space-y-1 text-right">
+                            <span className="text-[10px] text-muted-foreground uppercase font-bold">Total Turnover</span>
+                            <div className="text-sm font-bold text-foreground">{currencySymbol}{sessionStats.totalTurnover.toLocaleString()}</div>
                           </div>
                         </div>
                       </CardContent>
@@ -1596,4 +1635,3 @@ export default function Dashboard() {
     </div>
   );
 }
-
