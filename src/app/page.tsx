@@ -733,24 +733,16 @@ export default function Dashboard() {
       : (hwmDrawdown > 0 ? hwmDrawdown : 0);
     
     const walletFactor = 1 - (store.walletDeductionPercent / 100);
+    const safeWalletFactor = walletFactor > 0 ? walletFactor : 1;
     
-    let nextStake = store.baseStake;
-    let grossRecoveryProfit = 0;
-    let grossBaseProfit = store.baseStake * store.riskRewardRatio;
-
-    if (currentDrawdown > 0) {
-      const netRecoveryNeededPerTrade = currentDrawdown / (store.recoveryTargetWins || 1);
-      const totalNetProfitNeeded = (store.baseStake * store.riskRewardRatio) + netRecoveryNeededPerTrade;
-      const totalGrossProfitNeeded = walletFactor > 0 ? totalNetProfitNeeded / walletFactor : totalNetProfitNeeded;
-      
-      nextStake = totalGrossProfitNeeded / (store.riskRewardRatio || 1);
-      grossBaseProfit = (store.baseStake * store.riskRewardRatio) / (walletFactor || 1);
-      grossRecoveryProfit = netRecoveryNeededPerTrade / (walletFactor || 1);
-    } else {
-      nextStake = store.baseStake;
-      grossBaseProfit = store.baseStake * store.riskRewardRatio;
-      grossRecoveryProfit = 0;
-    }
+    // Recovery Logic Reverted to "Always Gross Up" as requested by user
+    const netRecoveryNeededPerTrade = currentDrawdown / (store.recoveryTargetWins || 1);
+    const totalNetProfitNeeded = (store.baseStake * store.riskRewardRatio) + netRecoveryNeededPerTrade;
+    const totalGrossProfitNeeded = totalNetProfitNeeded / safeWalletFactor;
+    
+    const nextStake = totalGrossProfitNeeded / (store.riskRewardRatio || 1);
+    const grossBaseProfit = (store.baseStake * store.riskRewardRatio) / safeWalletFactor;
+    const grossRecoveryProfit = netRecoveryNeededPerTrade / safeWalletFactor;
 
     const recoveryStakeAdjustment = nextStake - store.baseStake;
     
