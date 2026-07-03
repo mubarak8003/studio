@@ -34,7 +34,6 @@ import {
   AreaChart as ChartIcon,
   Hash,
   BarChart3,
-  PiggyBank,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -294,7 +293,7 @@ const StrategySettings = ({ store, stats }: { store: any, stats: any }) => {
       <div className="space-y-4 pt-4 border-t border-border/30">
         <div className="flex justify-between items-center">
           <label className="text-xs font-medium text-muted-foreground flex items-center gap-2">
-            <PiggyBank className="h-3 w-3" /> Wallet Savings (%)
+            <Wallet className="h-3 w-3" /> Wallet Savings (%)
           </label>
           <SmartNumericInput 
             value={store.walletDeductionPercent} 
@@ -531,7 +530,7 @@ const PositionSizer = ({ store, setView }: { store: any, setView: (v: View) => v
       riskAmount = store.riskAmountFixed || 0;
     }
 
-    if (isNaN(e) || isNaN(s) || e <= 0 || s <= 0 || e === s || riskAmount <= 0) return null;
+    if (isNaN(e) || iNaN(s) || e <= 0 || s <= 0 || e === s || riskAmount <= 0) return null;
 
     const riskPerShare = Math.abs(e - s);
     const shares = Math.floor(riskAmount / riskPerShare);
@@ -1060,7 +1059,7 @@ export default function Dashboard() {
                   <div className="space-y-6">
                     <Card className="bg-card border-border overflow-hidden relative">
                       <div className="absolute top-0 right-0 p-4 opacity-10">
-                        <PiggyBank className="h-12 w-12 text-primary" />
+                        <Wallet className="h-12 w-12 text-primary" />
                       </div>
                       <CardHeader className="pb-2">
                         <CardTitle className="text-sm font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
