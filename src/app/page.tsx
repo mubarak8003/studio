@@ -835,6 +835,40 @@ export default function Dashboard() {
     });
   }, [store.activeSession]);
 
+  // Global history stats for charts/summaries
+  const historyEquityData = useMemo(() => {
+    let balance = 0;
+    const chronTrades = [...globalStats.allTrades].sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
+
+    return chronTrades.map((trade, index) => {
+      const open = balance;
+      balance += (trade.type === 'win' ? trade.amount : -trade.amount);
+      const close = balance;
+      return {
+        index: index + 1,
+        name: trade.timestamp.toLocaleDateString(),
+        balance: balance,
+        open,
+        close,
+        high: Math.max(open, close),
+        low: Math.min(open, close),
+        candleHeight: Math.abs(close - open),
+      };
+    });
+  }, [globalStats.allTrades]);
+
+  const dailySummaries = useMemo(() => {
+    const groups: Record<string, { turnover: number, netChange: number, count: number }> = {};
+    globalStats.allTrades.forEach(trade => {
+      const day = trade.timestamp.toLocaleDateString('en-CA'); // YYYY-MM-DD
+      if (!groups[day]) groups[day] = { turnover: 0, netChange: 0, count: 0 };
+      groups[day].turnover += trade.originalAmount;
+      groups[day].netChange += (trade.type === 'win' ? trade.amount : -trade.amount);
+      groups[day].count += 1;
+    });
+    return Object.entries(groups).map(([date, stats]) => ({ date, ...stats })).reverse();
+  }, [globalStats.allTrades]);
+
   const handleAddTrade = (type: 'win' | 'loss') => {
     const amount = parseFloat(tradeAmount);
     if (isNaN(amount) || amount <= 0) return;
@@ -1270,14 +1304,14 @@ export default function Dashboard() {
                                   <div>
                                     <p className="text-sm font-semibold text-foreground">{currencySymbol}{trade.originalAmount.toFixed(2)}</p>
                                     <p className="text-[10px] text-muted-foreground flex items-center gap-1">
-                                      {trade.timestamp.toLocaleTimeString()} 
-                                      {trade.deduction > 0 && <span className="text-primary font-bold">• Wallet: {currencySymbol}{trade.deduction.toFixed(2)}</span>}
+                                      {trade.timestamp.toLocaleDateString()} at {trade.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })} 
+                                      {trade.deduction > 0 && <span className="text-primary font-bold ml-1">Tax: {currencySymbol}{trade.deduction.toFixed(2)}</span>}
                                     </p>
                                   </div>
                                 </div>
                                 <Badge variant="outline" className={cn(
-                                  "text-[10px]",
-                                  trade.type === 'win' ? "text-green-500 border-green-500/30" : "text-red-500 border-red-500/30"
+                                  "text-[10px] font-bold h-6 px-2",
+                                  trade.type === 'win' ? "text-green-500 border-green-500/30 bg-green-500/5" : "text-red-500 border-red-500/30 bg-red-500/5"
                                 )}>
                                   {trade.type.toUpperCase()}
                                 </Badge>
@@ -1355,12 +1389,15 @@ export default function Dashboard() {
                     </Button>
                     <div>
                       <h2 className="text-2xl md:text-3xl font-headline font-bold text-foreground leading-tight">Global History</h2>
-                      <p className="text-muted-foreground text-xs md:text-sm">Consolidated analytics for all your trading sessions.</p>
+                      <p className="text-muted-foreground text-xs md:text-sm">Consolidated analytics for all your trading activity.</p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Badge variant="secondary" className="px-4 py-1.5 h-auto text-sm">
-                      {globalStats.allTrades.length} Trades Total
+                  <div className="flex items-center gap-3">
+                    <Badge variant="outline" className="h-9 px-4 border-border bg-card">
+                      {globalStats.allTrades.length} Trades
+                    </Badge>
+                    <Badge variant="outline" className="h-9 px-4 border-border bg-card">
+                      Turnover: {currencySymbol}{globalStats.totalTurnover.toLocaleString()}
                     </Badge>
                   </div>
                 </header>
@@ -1368,16 +1405,75 @@ export default function Dashboard() {
                 <Tabs defaultValue="trades" className="w-full">
                   <TabsList className="bg-muted/50 p-1 mb-6">
                     <TabsTrigger value="trades" className="text-xs flex items-center gap-2">
-                      <History className="h-3 w-3" /> All Trades
+                      <History className="h-3 w-3" /> Full History
                     </TabsTrigger>
                     <TabsTrigger value="sessions" className="text-xs flex items-center gap-2">
                       <Tags className="h-3 w-3" /> Sessions Log
                     </TabsTrigger>
                   </TabsList>
 
-                  <TabsContent value="trades" className="space-y-6 m-0">
+                  <TabsContent value="trades" className="space-y-8 m-0">
+                    <Card className="bg-card border-border overflow-hidden">
+                      <CardHeader className="pb-2 flex flex-row items-center justify-between">
+                        <div className="space-y-1">
+                          <CardTitle className="text-sm font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+                            <ChartIcon className="h-4 w-4 text-primary" /> STRATEGY ANALYTICS
+                          </CardTitle>
+                        </div>
+                        <Tabs value={chartType} onValueChange={(v) => setChartType(v as any)} className="w-auto">
+                          <TabsList className="h-8 bg-muted/50 p-1">
+                            <TabsTrigger value="line" className="h-6 text-[10px] gap-1 px-2">
+                              <Activity className="h-3 w-3" /> Equity
+                            </TabsTrigger>
+                            <TabsTrigger value="candle" className="h-6 text-[10px] gap-1 px-2">
+                              <BarChart3 className="h-3 w-3" /> Candles
+                            </TabsTrigger>
+                          </TabsList>
+                        </Tabs>
+                      </CardHeader>
+                      <CardContent className="p-4 md:p-6">
+                        {chartType === 'line' ? (
+                          <EquityCurveChart data={historyEquityData} currencySymbol={currencySymbol} />
+                        ) : (
+                          <CandlestickChart data={historyEquityData} currencySymbol={currencySymbol} />
+                        )}
+                      </CardContent>
+                    </Card>
+
                     <div className="space-y-4">
-                      <h3 className="text-sm font-bold uppercase tracking-widest text-muted-foreground">Full Audit Log</h3>
+                      <h3 className="text-sm font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+                         <CalendarDays className="h-4 w-4" /> DAILY EQUITY SUMMARY
+                      </h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {dailySummaries.map((day) => (
+                          <Card key={day.date} className="bg-card border-border">
+                            <CardContent className="p-4 space-y-3">
+                              <div className="grid grid-cols-3 gap-2">
+                                <div className="space-y-1">
+                                  <span className="text-[10px] text-muted-foreground uppercase font-bold">DATE</span>
+                                  <p className="text-xs font-mono font-bold whitespace-nowrap">{day.date}</p>
+                                </div>
+                                <div className="space-y-1 text-center">
+                                  <span className="text-[10px] text-muted-foreground uppercase font-bold">TURNOVER</span>
+                                  <p className="text-xs font-mono font-bold">{currencySymbol}{day.turnover.toLocaleString()}</p>
+                                </div>
+                                <div className="space-y-1 text-right">
+                                  <span className="text-[10px] text-muted-foreground uppercase font-bold">NET CHANGE</span>
+                                  <p className={cn("text-xs font-mono font-bold", day.netChange >= 0 ? "text-green-500" : "text-red-500")}>
+                                    {day.netChange >= 0 ? '+' : ''}{currencySymbol}{day.netChange.toFixed(2)}
+                                  </p>
+                                </div>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="space-y-4">
+                      <h3 className="text-sm font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+                        FULL AUDIT LOG
+                      </h3>
                       <div className="space-y-3">
                         {[...globalStats.allTrades].reverse().map((trade) => (
                           <div key={trade.id} className="flex items-center justify-between p-4 rounded-xl bg-background border border-border/30">
@@ -1388,15 +1484,19 @@ export default function Dashboard() {
                               )}>
                                 {trade.type === 'win' ? <TrendingUp className="h-5 w-5" /> : <TrendingDown className="h-5 w-5" />}
                               </div>
-                              <div>
-                                <p className="text-lg font-bold text-foreground">{currencySymbol}{trade.originalAmount.toFixed(2)}</p>
-                                <p className="text-xs text-muted-foreground">
-                                  {trade.timestamp.toLocaleDateString()} at {trade.timestamp.toLocaleTimeString()}
+                              <div className="space-y-0.5">
+                                <p className="text-lg font-bold text-foreground leading-none">{currencySymbol}{trade.originalAmount.toFixed(2)}</p>
+                                <p className="text-[10px] text-muted-foreground flex items-center gap-2">
+                                  {trade.timestamp.toLocaleDateString()} at {trade.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+                                  {trade.deduction > 0 && (
+                                    <span className="text-primary font-bold">Tax: {currencySymbol}{trade.deduction.toFixed(2)}</span>
+                                  )}
                                 </p>
                               </div>
                             </div>
                             <Badge variant="outline" className={cn(
-                              trade.type === 'win' ? "text-green-500 border-green-500/30" : "text-red-500 border-red-500/30"
+                              "text-[10px] font-bold h-6 px-2",
+                              trade.type === 'win' ? "text-green-500 border-green-500/30 bg-green-500/5" : "text-red-500 border-red-500/30 bg-red-500/5"
                             )}>
                               {trade.type.toUpperCase()}
                             </Badge>
@@ -1414,7 +1514,6 @@ export default function Dashboard() {
                       </Card>
                     ) : (
                       <div className="space-y-3">
-                        {/* Include active session in the log */}
                         {store.activeSession && (
                           <Card className="bg-primary/5 border-primary/20 ring-1 ring-primary/20">
                             <CardContent className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
