@@ -38,7 +38,7 @@ import {
   ArrowLeftRight,
   RotateCcw,
 } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -730,7 +730,8 @@ export default function Dashboard() {
     setMounted(true);
   }, []);
 
-  const stats = useMemo(() => {
+  // Global statistics for Recovery Engine (Drawdown tracking across all sessions)
+  const globalStats = useMemo(() => {
     const chronTrades = [
       ...store.sessions.flatMap(s => s.trades),
       ...(store.activeSession?.trades || [])
@@ -756,7 +757,6 @@ export default function Dashboard() {
     const walletFactor = 1 - (store.walletDeductionPercent / 100);
     const safeWalletFactor = walletFactor > 0 ? walletFactor : 1;
     
-    // Recovery Logic Reverted to "Always Gross Up" as requested by user
     const netRecoveryNeededPerTrade = currentDrawdown / (store.recoveryTargetWins || 1);
     const totalNetProfitNeeded = (store.baseStake * store.riskRewardRatio) + netRecoveryNeededPerTrade;
     const totalGrossProfitNeeded = totalNetProfitNeeded / safeWalletFactor;
@@ -776,15 +776,8 @@ export default function Dashboard() {
 
     const wins = chronTrades.filter(t => t.type === 'win');
     const losses = chronTrades.filter(t => t.type === 'loss');
-    const allTradesDesc = [...chronTrades].reverse();
 
     return {
-      allTrades: allTradesDesc,
-      wins,
-      losses,
-      totalProfit: wins.reduce((sum, t) => sum + t.amount, 0),
-      totalLoss: losses.reduce((sum, t) => sum + t.amount, 0),
-      netPnL,
       currentDrawdown,
       grossRecoveryProfit,
       grossBaseProfit,
@@ -792,48 +785,38 @@ export default function Dashboard() {
       recoveryStakeAdjustment,
       riskLevel,
       totalTurnover,
-      winRate: chronTrades.length > 0 
-        ? (wins.length / chronTrades.length) * 100 
-        : 0,
+      winRate: chronTrades.length > 0 ? (wins.length / chronTrades.length) * 100 : 0,
       avgWin: wins.length > 0 ? wins.reduce((sum, t) => sum + t.amount, 0) / wins.length : 0,
       avgLoss: losses.length > 0 ? losses.reduce((sum, t) => sum + t.amount, 0) / losses.length : 0,
+      allTrades: chronTrades,
     };
   }, [store]);
 
-  const dailyEquityData = useMemo(() => {
-    const chronTrades = [
-      ...store.sessions.flatMap(s => s.trades),
-      ...(store.activeSession?.trades || [])
-    ].sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
-
-    const daysMap: Record<string, { pnl: number, turnover: number }> = {};
+  // Session-specific statistics for Dashboard Display
+  const sessionStats = useMemo(() => {
+    const activeTrades = store.activeSession?.trades || [];
+    const chronTrades = [...activeTrades].sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
     
-    chronTrades.forEach(trade => {
-      const dayKey = trade.timestamp.toISOString().split('T')[0];
-      const amount = (trade.type === 'win' ? trade.amount : -trade.amount);
-      if (!daysMap[dayKey]) daysMap[dayKey] = { pnl: 0, turnover: 0 };
-      daysMap[dayKey].pnl += amount;
-      daysMap[dayKey].turnover += trade.originalAmount;
-    });
+    const wins = chronTrades.filter(t => t.type === 'win');
+    const losses = chronTrades.filter(t => t.type === 'loss');
+    
+    const netPnL = chronTrades.reduce((acc, t) => acc + (t.type === 'win' ? t.amount : -t.amount), 0);
+    const totalTurnover = chronTrades.reduce((acc, t) => acc + t.originalAmount, 0);
 
-    let runningBalance = 0;
-    return Object.keys(daysMap).sort().map(day => {
-      runningBalance += daysMap[day].pnl;
-      return {
-        name: day,
-        balance: runningBalance,
-        pnl: daysMap[day].pnl,
-        turnover: daysMap[day].turnover,
-      };
-    });
-  }, [store]);
+    return {
+      allTrades: [...chronTrades].reverse(),
+      wins,
+      losses,
+      netPnL,
+      totalTurnover,
+      winRate: chronTrades.length > 0 ? (wins.length / chronTrades.length) * 100 : 0,
+    };
+  }, [store.activeSession]);
 
   const tradeEquityData = useMemo(() => {
     let balance = 0;
-    const chronTrades = [
-      ...store.sessions.flatMap(s => s.trades),
-      ...(store.activeSession?.trades || [])
-    ].sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
+    const activeTrades = store.activeSession?.trades || [];
+    const chronTrades = [...activeTrades].sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
 
     return chronTrades.map((trade, index) => {
       const open = balance;
@@ -850,7 +833,7 @@ export default function Dashboard() {
         candleHeight: Math.abs(close - open),
       };
     });
-  }, [store]);
+  }, [store.activeSession]);
 
   const handleAddTrade = (type: 'win' | 'loss') => {
     const amount = parseFloat(tradeAmount);
@@ -912,7 +895,7 @@ export default function Dashboard() {
                         <Settings2 className="h-4 w-4 text-muted-foreground" />
                         <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Strategy Engine</h3>
                       </div>
-                      <StrategySettings store={store} stats={stats} />
+                      <StrategySettings store={store} stats={globalStats} />
                     </div>
                   )}
                 </div>
@@ -955,7 +938,7 @@ export default function Dashboard() {
                   <Settings2 className="h-4 w-4 text-muted-foreground" />
                   <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Strategy Engine</h3>
                 </div>
-                <StrategySettings store={store} stats={stats} />
+                <StrategySettings store={store} stats={globalStats} />
               </div>
             </>
           )}
@@ -1076,18 +1059,18 @@ export default function Dashboard() {
                         <Calculator className="h-5 w-5" /> Recommended Entry
                       </CardTitle>
                       <CardDescription className="text-xs md:text-sm">
-                        Based on target of <b>{currencySymbol}{stats.currentDrawdown.toFixed(2)}</b> in <b>{store.recoveryTargetWins}</b> trades
+                        Based on target of <b>{currencySymbol}{globalStats.currentDrawdown.toFixed(2)}</b> in <b>{store.recoveryTargetWins}</b> trades
                       </CardDescription>
                     </CardHeader>
                     <CardContent>
                       <div className="flex flex-col items-center justify-center py-6 md:py-8 border-b border-border/30 mb-6">
                         <div className="text-6xl md:text-8xl font-headline font-bold text-foreground transition-all duration-300">
-                          {currencySymbol}{stats.nextStake.toFixed(2)}
+                          {currencySymbol}{globalStats.nextStake.toFixed(2)}
                         </div>
                         <p className="text-xs text-muted-foreground mt-2 uppercase tracking-widest font-semibold">Total Trade Amount</p>
                         <div className="mt-4 flex flex-col items-center gap-2">
-                          <Badge variant={stats.currentDrawdown > 0 ? "destructive" : "secondary"}>
-                            {store.useManualDrawdown ? 'Manual Target: ' : 'Recovery Target: '}{currencySymbol}{stats.currentDrawdown.toFixed(2)}
+                          <Badge variant={globalStats.currentDrawdown > 0 ? "destructive" : "secondary"}>
+                            {store.useManualDrawdown ? 'Manual Target: ' : 'Recovery Target: '}{currencySymbol}{globalStats.currentDrawdown.toFixed(2)}
                           </Badge>
                         </div>
                       </div>
@@ -1100,16 +1083,16 @@ export default function Dashboard() {
                            <div className="space-y-2">
                              <div className="flex justify-between items-center text-foreground">
                                <span>Base Profit Target:</span>
-                               <span className="font-mono font-bold">{currencySymbol}{stats.grossBaseProfit.toFixed(2)}</span>
+                               <span className="font-mono font-bold">{currencySymbol}{globalStats.grossBaseProfit.toFixed(2)}</span>
                              </div>
                              <div className="flex justify-between items-center text-red-500">
                                <span>Recovery Component:</span>
-                               <span className="font-mono font-bold">+ {currencySymbol}{stats.grossRecoveryProfit.toFixed(2)}</span>
+                               <span className="font-mono font-bold">+ {currencySymbol}{globalStats.grossRecoveryProfit.toFixed(2)}</span>
                              </div>
                              <Separator className="bg-border/50" />
                              <div className="flex justify-between items-center text-primary font-bold">
                                <span>Total Win Goal:</span>
-                               <span className="font-mono">{currencySymbol}{(stats.grossBaseProfit + stats.grossRecoveryProfit).toFixed(2)}</span>
+                               <span className="font-mono">{currencySymbol}{(globalStats.grossBaseProfit + globalStats.grossRecoveryProfit).toFixed(2)}</span>
                              </div>
                            </div>
                         </div>
@@ -1125,7 +1108,7 @@ export default function Dashboard() {
                              </div>
                              <div className="flex justify-between items-center text-accent font-bold">
                                <span>Recovery Adjustment:</span>
-                               <span className="font-mono">+ {currencySymbol}{stats.recoveryStakeAdjustment.toFixed(2)}</span>
+                               <span className="font-mono">+ {currencySymbol}{globalStats.recoveryStakeAdjustment.toFixed(2)}</span>
                              </div>
                              <div className="text-[10px] text-muted-foreground italic mt-2">
                                Calculation: (Target / {store.riskRewardRatio} RR)
@@ -1204,12 +1187,12 @@ export default function Dashboard() {
                         <div className="space-y-1">
                           <div className="flex justify-between text-sm mb-1">
                             <span className="text-muted-foreground">Win Rate</span>
-                            <span className="font-bold text-foreground">{stats.winRate.toFixed(1)}%</span>
+                            <span className="font-bold text-foreground">{sessionStats.winRate.toFixed(1)}%</span>
                           </div>
                           <div className="w-full bg-secondary rounded-full h-2 overflow-hidden">
                             <div 
                               className="bg-primary h-2 rounded-full glow-primary transition-all duration-1000" 
-                              style={{ width: `${stats.winRate}%` }} 
+                              style={{ width: `${sessionStats.winRate}%` }} 
                             />
                           </div>
                         </div>
@@ -1217,14 +1200,14 @@ export default function Dashboard() {
                         <div className="grid grid-cols-2 gap-4">
                           <div className="space-y-1">
                             <span className="text-[10px] text-muted-foreground uppercase tracking-tight font-bold">Net Balance</span>
-                            <div className={cn("text-lg md:text-xl font-headline font-bold", stats.netPnL >= 0 ? "text-green-500" : "text-red-500")}>
-                              {stats.netPnL >= 0 ? '+' : ''}{currencySymbol}{stats.netPnL.toFixed(2)}
+                            <div className={cn("text-lg md:text-xl font-headline font-bold", sessionStats.netPnL >= 0 ? "text-green-500" : "text-red-500")}>
+                              {sessionStats.netPnL >= 0 ? '+' : ''}{currencySymbol}{sessionStats.netPnL.toFixed(2)}
                             </div>
                           </div>
                           <div className="space-y-1">
-                            <span className="text-[10px] text-muted-foreground uppercase tracking-tight font-bold">Current Drawdown</span>
-                            <div className="text-lg md:text-xl font-headline font-bold text-red-400">
-                              {currencySymbol}{stats.currentDrawdown.toFixed(2)}
+                            <span className="text-[10px] text-muted-foreground uppercase tracking-tight font-bold">Session Vol.</span>
+                            <div className="text-lg md:text-xl font-headline font-bold text-foreground">
+                              {currencySymbol}{sessionStats.totalTurnover.toLocaleString()}
                             </div>
                           </div>
                         </div>
@@ -1234,40 +1217,18 @@ export default function Dashboard() {
                         <div className="flex items-center gap-3">
                           <div className="flex-1 flex justify-between items-center text-xs p-2 rounded bg-green-500/5 border border-green-500/10">
                             <span className="text-muted-foreground">Wins</span>
-                            <span className="font-bold text-green-500">{stats.wins.length}</span>
+                            <span className="font-bold text-green-500">{sessionStats.wins.length}</span>
                           </div>
                           
                           <div className="flex flex-col items-center justify-center px-1 text-[10px] font-bold text-muted-foreground/50 bg-muted/20 rounded h-8 min-w-8">
                              <span className="leading-none">Diff</span>
-                             <span className="leading-none">{Math.abs(stats.wins.length - stats.losses.length)}</span>
+                             <span className="leading-none">{Math.abs(sessionStats.wins.length - sessionStats.losses.length)}</span>
                           </div>
 
                           <div className="flex-1 flex justify-between items-center text-xs p-2 rounded bg-red-500/5 border border-red-500/10">
                             <span className="text-muted-foreground">Losses</span>
-                            <span className="font-bold text-red-500">{stats.losses.length}</span>
+                            <span className="font-bold text-red-500">{sessionStats.losses.length}</span>
                           </div>
-                        </div>
-
-                        <div className="space-y-3 pt-2">
-                           <div className="flex justify-between items-center text-sm text-foreground">
-                              <span className="text-muted-foreground flex items-center gap-2"><Plus className="h-3 w-3 text-green-500" /> Avg Win</span>
-                              <span className="font-mono">{currencySymbol}{stats.avgWin.toFixed(2)}</span>
-                           </div>
-                           <div className="flex justify-between items-center text-sm text-foreground">
-                              <span className="text-muted-foreground flex items-center gap-2"><div className="h-[2px] w-3 bg-red-500" /> Avg Loss</span>
-                              <span className="font-mono">{currencySymbol}{stats.avgLoss.toFixed(2)}</span>
-                           </div>
-                           <Separator className="bg-border/30 border-dashed" />
-                           <div className="grid grid-cols-2 gap-2">
-                             <div className="flex flex-col gap-1">
-                               <span className="text-[10px] text-muted-foreground uppercase font-bold">Total Trades</span>
-                               <span className="font-mono text-sm text-primary font-bold">{stats.allTrades.length}</span>
-                             </div>
-                             <div className="flex flex-col gap-1 items-end">
-                               <span className="text-[10px] text-muted-foreground uppercase font-bold">Total Turnover</span>
-                               <span className="font-mono text-sm text-foreground font-bold">{currencySymbol}{stats.totalTurnover.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
-                             </div>
-                           </div>
                         </div>
                       </CardContent>
                     </Card>
@@ -1277,62 +1238,91 @@ export default function Dashboard() {
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pb-12">
-                  <Card className="bg-card/50 border-border">
-                    <CardHeader className="flex flex-row items-center justify-between">
-                      <div>
-                        <CardTitle className="text-lg text-foreground">Trade Log</CardTitle>
-                        <CardDescription className="text-xs">Recent entries</CardDescription>
-                      </div>
-                      <Button variant="outline" size="sm" onClick={() => setView('history')} className="text-xs bg-primary/10 text-primary border-primary/30 hover:bg-primary/20">
-                        View All <ChevronRight className="h-4 w-4 ml-1" />
-                      </Button>
-                    </CardHeader>
-                    <CardContent>
-                      <ScrollArea className="h-64">
-                        <div className="space-y-3">
-                          {stats.allTrades.length === 0 && (
-                            <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
-                              <Activity className="h-8 w-8 mb-2 opacity-20" />
-                              <p className="text-sm">Waiting for first trade...</p>
-                            </div>
-                          )}
-                          {stats.allTrades.slice(0, 10).map((trade) => (
-                            <div key={trade.id} className="flex items-center justify-between p-3 rounded-lg bg-background border border-border/30">
-                              <div className="flex items-center gap-3">
-                                <div className={cn(
-                                  "p-2 rounded-md",
-                                  trade.type === 'win' ? "bg-green-500/10 text-green-500" : "bg-red-500/10 text-red-500"
-                                )}>
-                                  {trade.type === 'win' ? <TrendingUp className="h-4 w-4" /> : <TrendingDown className="h-4 w-4" />}
-                                </div>
-                                <div>
-                                  <p className="text-sm font-semibold text-foreground">{currencySymbol}{trade.originalAmount.toFixed(2)}</p>
-                                  <p className="text-[10px] text-muted-foreground flex items-center gap-1">
-                                    {trade.timestamp.toLocaleTimeString()} 
-                                    {trade.deduction > 0 && <span className="text-primary font-bold">• Wallet: {currencySymbol}{trade.deduction.toFixed(2)}</span>}
-                                  </p>
-                                </div>
-                              </div>
-                              <Badge variant="outline" className={cn(
-                                "text-[10px]",
-                                trade.type === 'win' ? "text-green-500 border-green-500/30" : "text-red-500 border-red-500/30"
-                              )}>
-                                {trade.type.toUpperCase()}
-                              </Badge>
-                            </div>
-                          ))}
+                  <div className="space-y-6">
+                    <Card className="bg-card/50 border-border">
+                      <CardHeader className="flex flex-row items-center justify-between">
+                        <div>
+                          <CardTitle className="text-lg text-foreground">Session Trade Log</CardTitle>
+                          <CardDescription className="text-xs">Entries for current session</CardDescription>
                         </div>
-                      </ScrollArea>
-                    </CardContent>
-                  </Card>
+                        <Button variant="outline" size="sm" onClick={() => setView('history')} className="text-xs bg-primary/10 text-primary border-primary/30 hover:bg-primary/20">
+                          Full History <ChevronRight className="h-4 w-4 ml-1" />
+                        </Button>
+                      </CardHeader>
+                      <CardContent>
+                        <ScrollArea className="h-[400px]">
+                          <div className="space-y-3">
+                            {sessionStats.allTrades.length === 0 && (
+                              <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+                                <Activity className="h-8 w-8 mb-2 opacity-20" />
+                                <p className="text-sm">Waiting for first trade in session...</p>
+                              </div>
+                            )}
+                            {sessionStats.allTrades.map((trade) => (
+                              <div key={trade.id} className="flex items-center justify-between p-3 rounded-lg bg-background border border-border/30">
+                                <div className="flex items-center gap-3">
+                                  <div className={cn(
+                                    "p-2 rounded-md",
+                                    trade.type === 'win' ? "bg-green-500/10 text-green-500" : "bg-red-500/10 text-red-500"
+                                  )}>
+                                    {trade.type === 'win' ? <TrendingUp className="h-4 w-4" /> : <TrendingDown className="h-4 w-4" />}
+                                  </div>
+                                  <div>
+                                    <p className="text-sm font-semibold text-foreground">{currencySymbol}{trade.originalAmount.toFixed(2)}</p>
+                                    <p className="text-[10px] text-muted-foreground flex items-center gap-1">
+                                      {trade.timestamp.toLocaleTimeString()} 
+                                      {trade.deduction > 0 && <span className="text-primary font-bold">• Wallet: {currencySymbol}{trade.deduction.toFixed(2)}</span>}
+                                    </p>
+                                  </div>
+                                </div>
+                                <Badge variant="outline" className={cn(
+                                  "text-[10px]",
+                                  trade.type === 'win' ? "text-green-500 border-green-500/30" : "text-red-500 border-red-500/30"
+                                )}>
+                                  {trade.type.toUpperCase()}
+                                </Badge>
+                              </div>
+                            ))}
+                          </div>
+                        </ScrollArea>
+                      </CardContent>
+                    </Card>
+
+                    <Card className="bg-card border-border overflow-hidden">
+                      <CardHeader className="pb-2 flex flex-row items-center justify-between">
+                        <div className="space-y-1">
+                          <CardTitle className="text-sm font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+                            <ChartIcon className="h-4 w-4 text-primary" /> Session Charts
+                          </CardTitle>
+                        </div>
+                        <Tabs value={chartType} onValueChange={(v) => setChartType(v as any)} className="w-auto">
+                          <TabsList className="h-8 bg-muted/50 p-1">
+                            <TabsTrigger value="line" className="h-6 text-[10px] gap-1 px-2">
+                              <Activity className="h-3 w-3" /> Equity
+                            </TabsTrigger>
+                            <TabsTrigger value="candle" className="h-6 text-[10px] gap-1 px-2">
+                              <BarChart3 className="h-3 w-3" /> Candles
+                            </TabsTrigger>
+                          </TabsList>
+                        </Tabs>
+                      </CardHeader>
+                      <CardContent className="p-4 md:p-6">
+                        {chartType === 'line' ? (
+                          <EquityCurveChart data={tradeEquityData} currencySymbol={currencySymbol} />
+                        ) : (
+                          <CandlestickChart data={tradeEquityData} currencySymbol={currencySymbol} />
+                        )}
+                      </CardContent>
+                    </Card>
+                  </div>
 
                   <div className="space-y-6">
                     <AICoachPanel 
-                      totalCurrentLoss={stats.currentDrawdown}
+                      totalCurrentLoss={globalStats.currentDrawdown}
                       recoveryTargetWins={store.recoveryTargetWins}
-                      recentWinRatePercentage={stats.winRate}
-                      averageWinAmount={stats.avgWin}
-                      averageLossAmount={stats.avgLoss}
+                      recentWinRatePercentage={globalStats.winRate}
+                      averageWinAmount={globalStats.avgWin}
+                      averageLossAmount={globalStats.avgLoss}
                     />
 
                     <Card className="bg-card border-border">
@@ -1364,16 +1354,13 @@ export default function Dashboard() {
                       <ArrowLeft className="h-5 w-5" />
                     </Button>
                     <div>
-                      <h2 className="text-2xl md:text-3xl font-headline font-bold text-foreground leading-tight">History & Analytics</h2>
-                      <p className="text-muted-foreground text-xs md:text-sm">Full performance visualization and audit logs.</p>
+                      <h2 className="text-2xl md:text-3xl font-headline font-bold text-foreground leading-tight">Global History</h2>
+                      <p className="text-muted-foreground text-xs md:text-sm">Consolidated analytics for all your trading sessions.</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
                     <Badge variant="secondary" className="px-4 py-1.5 h-auto text-sm">
-                      {stats.allTrades.length} Trades
-                    </Badge>
-                    <Badge variant="outline" className="px-4 py-1.5 h-auto text-sm border-primary/30">
-                      Turnover: {currencySymbol}{stats.totalTurnover.toLocaleString()}
+                      {globalStats.allTrades.length} Trades Total
                     </Badge>
                   </div>
                 </header>
@@ -1381,7 +1368,7 @@ export default function Dashboard() {
                 <Tabs defaultValue="trades" className="w-full">
                   <TabsList className="bg-muted/50 p-1 mb-6">
                     <TabsTrigger value="trades" className="text-xs flex items-center gap-2">
-                      <History className="h-3 w-3" /> Individual Trades
+                      <History className="h-3 w-3" /> All Trades
                     </TabsTrigger>
                     <TabsTrigger value="sessions" className="text-xs flex items-center gap-2">
                       <Tags className="h-3 w-3" /> Sessions Log
@@ -1389,140 +1376,94 @@ export default function Dashboard() {
                   </TabsList>
 
                   <TabsContent value="trades" className="space-y-6 m-0">
-                    {stats.allTrades.length > 0 && (
-                      <Card className="bg-card border-border overflow-hidden">
-                        <CardHeader className="pb-2 flex flex-row items-center justify-between">
-                          <div className="space-y-1">
-                            <CardTitle className="text-sm font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
-                              <ChartIcon className="h-4 w-4 text-primary" /> Strategy Analytics
-                            </CardTitle>
-                          </div>
-                          <Tabs value={chartType} onValueChange={(v) => setChartType(v as any)} className="w-auto">
-                            <TabsList className="h-8 bg-muted/50 p-1">
-                              <TabsTrigger value="line" className="h-6 text-[10px] gap-1 px-2">
-                                <Activity className="h-3 w-3" /> Equity
-                              </TabsTrigger>
-                              <TabsTrigger value="candle" className="h-6 text-[10px] gap-1 px-2">
-                                <BarChart3 className="h-3 w-3" /> Candles
-                              </TabsTrigger>
-                            </TabsList>
-                          </Tabs>
-                        </CardHeader>
-                        <CardContent className="p-4 md:p-6">
-                          {chartType === 'line' ? (
-                            <EquityCurveChart data={tradeEquityData} currencySymbol={currencySymbol} />
-                          ) : (
-                            <CandlestickChart data={tradeEquityData} currencySymbol={currencySymbol} />
-                          )}
-                        </CardContent>
-                      </Card>
-                    )}
-
-                    <div className="grid grid-cols-1 gap-6">
-                      {stats.allTrades.length === 0 ? (
-                        <Card className="border-dashed border-2 flex flex-col items-center justify-center py-20 bg-background/50 border-border/50">
-                          <History className="h-12 w-12 text-muted-foreground mb-4 opacity-20" />
-                          <h3 className="text-lg font-semibold text-foreground">No history yet</h3>
-                          <p className="text-muted-foreground text-sm mb-6">Your recorded trades will appear here.</p>
-                          <Button onClick={() => setView('dashboard')}>Return to Dashboard</Button>
-                        </Card>
-                      ) : (
-                        <div className="space-y-8">
-                          <div className="space-y-4">
-                            <h3 className="text-sm font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
-                              <CalendarDays className="h-4 w-4" /> Daily Equity Summary
-                            </h3>
-                            <div className="grid grid-cols-1 gap-3">
-                              {[...dailyEquityData].reverse().map((day) => (
-                                <Card key={day.name} className="bg-card border-border">
-                                  <CardContent className="p-4 flex items-center justify-between">
-                                    <div className="flex flex-col">
-                                      <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-tighter">Date</span>
-                                      <span className="text-sm font-semibold">{day.name}</span>
-                                    </div>
-                                    <div className="flex items-center gap-8">
-                                      <div className="flex flex-col items-end">
-                                        <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-tighter">Turnover</span>
-                                        <span className="text-sm font-bold text-foreground">
-                                          {currencySymbol}{day.turnover.toLocaleString()}
-                                        </span>
-                                      </div>
-                                      <div className="flex flex-col items-end">
-                                        <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-tighter">Net Change</span>
-                                        <span className={cn("text-sm font-bold", day.pnl >= 0 ? "text-green-500" : "text-red-500")}>
-                                          {day.pnl >= 0 ? '+' : ''}{currencySymbol}{day.pnl.toFixed(2)}
-                                        </span>
-                                      </div>
-                                      <div className="flex flex-col items-end hidden sm:flex">
-                                        <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-tighter">Closing Balance</span>
-                                        <span className="text-sm font-bold text-foreground">
-                                          {currencySymbol}{day.balance.toFixed(2)}
-                                        </span>
-                                      </div>
-                                    </div>
-                                  </CardContent>
-                                </Card>
-                              ))}
+                    <div className="space-y-4">
+                      <h3 className="text-sm font-bold uppercase tracking-widest text-muted-foreground">Full Audit Log</h3>
+                      <div className="space-y-3">
+                        {[...globalStats.allTrades].reverse().map((trade) => (
+                          <div key={trade.id} className="flex items-center justify-between p-4 rounded-xl bg-background border border-border/30">
+                            <div className="flex items-center gap-4">
+                              <div className={cn(
+                                "p-3 rounded-xl",
+                                trade.type === 'win' ? "bg-green-500/10 text-green-500" : "bg-red-500/10 text-red-500"
+                              )}>
+                                {trade.type === 'win' ? <TrendingUp className="h-5 w-5" /> : <TrendingDown className="h-5 w-5" />}
+                              </div>
+                              <div>
+                                <p className="text-lg font-bold text-foreground">{currencySymbol}{trade.originalAmount.toFixed(2)}</p>
+                                <p className="text-xs text-muted-foreground">
+                                  {trade.timestamp.toLocaleDateString()} at {trade.timestamp.toLocaleTimeString()}
+                                </p>
+                              </div>
                             </div>
+                            <Badge variant="outline" className={cn(
+                              trade.type === 'win' ? "text-green-500 border-green-500/30" : "text-red-500 border-red-500/30"
+                            )}>
+                              {trade.type.toUpperCase()}
+                            </Badge>
                           </div>
-
-                          <div className="space-y-4">
-                            <h3 className="text-sm font-bold uppercase tracking-widest text-muted-foreground">Full Audit Log</h3>
-                            <div className="space-y-3">
-                              {stats.allTrades.map((trade) => (
-                                <div key={trade.id} className="flex items-center justify-between p-4 rounded-xl bg-background border border-border/30">
-                                  <div className="flex items-center gap-4">
-                                    <div className={cn(
-                                      "p-3 rounded-xl",
-                                      trade.type === 'win' ? "bg-green-500/10 text-green-500" : "bg-red-500/10 text-red-500"
-                                    )}>
-                                      {trade.type === 'win' ? <TrendingUp className="h-5 w-5" /> : <TrendingDown className="h-5 w-5" />}
-                                    </div>
-                                    <div>
-                                      <p className="text-lg font-bold text-foreground">{currencySymbol}{trade.originalAmount.toFixed(2)}</p>
-                                      <p className="text-xs text-muted-foreground">
-                                        {trade.timestamp.toLocaleDateString()} at {trade.timestamp.toLocaleTimeString()}
-                                        {trade.deduction > 0 && <span className="ml-2 text-primary font-bold">Tax: {currencySymbol}{trade.deduction.toFixed(2)}</span>}
-                                      </p>
-                                    </div>
-                                  </div>
-                                  <Badge variant="outline" className={cn(
-                                    trade.type === 'win' ? "text-green-500 border-green-500/30" : "text-red-500 border-red-500/30"
-                                  )}>
-                                    {trade.type.toUpperCase()}
-                                  </Badge>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        </div>
-                      )}
+                        ))}
+                      </div>
                     </div>
                   </TabsContent>
 
                   <TabsContent value="sessions" className="space-y-4 m-0">
-                    {store.sessions.length === 0 ? (
+                    {store.sessions.length === 0 && !store.activeSession ? (
                       <Card className="border-dashed border-2 flex flex-col items-center justify-center py-20 bg-background/50 border-border/50">
                         <Tags className="h-12 w-12 text-muted-foreground mb-4 opacity-20" />
                         <h3 className="text-lg font-semibold text-foreground">No sessions recorded</h3>
-                        <p className="text-muted-foreground text-sm">Your named sessions will appear here.</p>
                       </Card>
                     ) : (
                       <div className="space-y-3">
+                        {/* Include active session in the log */}
+                        {store.activeSession && (
+                          <Card className="bg-primary/5 border-primary/20 ring-1 ring-primary/20">
+                            <CardContent className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                              <div className="flex items-center gap-3">
+                                <div className="p-2 bg-primary/20 rounded-lg text-primary">
+                                  <Activity className="h-5 w-5" />
+                                </div>
+                                <div>
+                                  <h4 className="font-bold text-foreground flex items-center gap-2">
+                                    {store.activeSession.name || 'Unnamed Session'}
+                                    <Badge variant="default" className="text-[8px] h-4 bg-primary px-1">ACTIVE</Badge>
+                                  </h4>
+                                  <p className="text-[10px] text-muted-foreground">
+                                    Started: {store.activeSession.startTime.toLocaleTimeString()}
+                                  </p>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-6 justify-between sm:justify-end">
+                                 <div className="text-left sm:text-right">
+                                    <p className="text-[10px] text-muted-foreground uppercase font-bold">Performance</p>
+                                    <div className={cn("text-lg font-headline font-bold", store.activeSession.trades.reduce((acc, t) => acc + (t.type === 'win' ? t.amount : -t.amount), 0) >= 0 ? "text-green-500" : "text-red-500")}>
+                                      {currencySymbol}{store.activeSession.trades.reduce((acc, t) => acc + (t.type === 'win' ? t.amount : -t.amount), 0).toFixed(2)}
+                                    </div>
+                                 </div>
+                                 <Button 
+                                  variant="secondary" 
+                                  size="sm" 
+                                  className="h-8"
+                                  onClick={() => setView('dashboard')}
+                                >
+                                  Go to Live
+                                </Button>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        )}
                         {store.sessions.map((session) => {
                           const sessionPnL = session.trades.reduce((acc, t) => acc + (t.type === 'win' ? t.amount : -t.amount), 0);
                           return (
                             <Card key={session.id} className="bg-card border-border">
                               <CardContent className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                                 <div className="flex items-center gap-3">
-                                  <div className="p-2 bg-primary/10 rounded-lg text-primary">
+                                  <div className="p-2 bg-muted rounded-lg text-muted-foreground">
                                     <Activity className="h-5 w-5" />
                                   </div>
                                   <div>
                                     <h4 className="font-bold text-foreground">{session.name || 'Unnamed Session'}</h4>
                                     <p className="text-[10px] text-muted-foreground">
                                       {session.startTime.toLocaleDateString()} at {session.startTime.toLocaleTimeString()}
-                                      {session.endTime && ` — ${session.endTime.toLocaleTimeString()}`}
                                     </p>
                                   </div>
                                 </div>
