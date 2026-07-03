@@ -885,6 +885,40 @@ export default function Dashboard() {
 
   const currencySymbol = CURRENCY_SYMBOLS[store.currency as CurrencyCode];
 
+  const TradeLogItem = ({ trade }: { trade: any }) => (
+    <div className={cn(
+      "flex items-center justify-between p-3.5 rounded-2xl bg-background border border-border/20 shadow-sm",
+      trade.type === 'win' ? "hover:bg-green-500/[0.02]" : "hover:bg-red-500/[0.02]"
+    )}>
+      <div className="flex items-center gap-4">
+        <div className={cn(
+          "h-12 w-12 rounded-2xl flex items-center justify-center",
+          trade.type === 'win' ? "bg-green-500/10 text-green-500" : "bg-red-500/10 text-red-500"
+        )}>
+          {trade.type === 'win' ? <TrendingUp className="h-5 w-5" /> : <TrendingDown className="h-5 w-5" />}
+        </div>
+        <div className="space-y-0.5">
+          <p className="text-base font-bold text-foreground">{currencySymbol}{trade.originalAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+          <div className="flex items-center text-[11px] text-muted-foreground font-medium">
+            <span>{trade.timestamp.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', second: '2-digit', hour12: true })}</span>
+            {trade.deduction > 0 && (
+              <span className="text-primary font-bold flex items-center">
+                <span className="mx-1.5 opacity-50">•</span>
+                Wallet: {currencySymbol}{trade.deduction.toFixed(2)}
+              </span>
+            )}
+          </div>
+        </div>
+      </div>
+      <Badge variant="outline" className={cn(
+        "text-[10px] font-bold h-6 px-3 rounded-full border-none uppercase tracking-wider",
+        trade.type === 'win' ? "text-green-600 bg-green-500/10" : "text-red-600 bg-red-500/10"
+      )}>
+        {trade.type}
+      </Badge>
+    </div>
+  );
+
   return (
     <div className="flex flex-col min-h-svh overflow-x-hidden">
       <header className="md:hidden sticky top-0 flex items-center justify-between p-4 border-b border-border bg-card/80 backdrop-blur-md z-40">
@@ -1276,15 +1310,15 @@ export default function Dashboard() {
                     <Card className="bg-card/50 border-border">
                       <CardHeader className="flex flex-row items-center justify-between">
                         <div>
-                          <CardTitle className="text-lg text-foreground">Session Trade Log</CardTitle>
-                          <CardDescription className="text-xs">Entries for current session</CardDescription>
+                          <CardTitle className="text-lg text-foreground">Trade Log</CardTitle>
+                          <CardDescription className="text-xs">Recent entries</CardDescription>
                         </div>
-                        <Button variant="outline" size="sm" onClick={() => setView('history')} className="text-xs bg-primary/10 text-primary border-primary/30 hover:bg-primary/20">
-                          Full History <ChevronRight className="h-4 w-4 ml-1" />
+                        <Button variant="outline" size="sm" onClick={() => setView('history')} className="text-xs bg-primary/10 text-primary border-primary/30 hover:bg-primary/20 rounded-xl px-4">
+                          View All <ChevronRight className="h-4 w-4 ml-1" />
                         </Button>
                       </CardHeader>
                       <CardContent>
-                        <ScrollArea className="h-[400px]">
+                        <ScrollArea className="h-[400px] pr-2">
                           <div className="space-y-3">
                             {sessionStats.allTrades.length === 0 && (
                               <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
@@ -1293,29 +1327,7 @@ export default function Dashboard() {
                               </div>
                             )}
                             {sessionStats.allTrades.map((trade) => (
-                              <div key={trade.id} className="flex items-center justify-between p-3 rounded-lg bg-background border border-border/30">
-                                <div className="flex items-center gap-3">
-                                  <div className={cn(
-                                    "p-2 rounded-md",
-                                    trade.type === 'win' ? "bg-green-500/10 text-green-500" : "bg-red-500/10 text-red-500"
-                                  )}>
-                                    {trade.type === 'win' ? <TrendingUp className="h-4 w-4" /> : <TrendingDown className="h-4 w-4" />}
-                                  </div>
-                                  <div>
-                                    <p className="text-sm font-semibold text-foreground">{currencySymbol}{trade.originalAmount.toFixed(2)}</p>
-                                    <p className="text-[10px] text-muted-foreground flex items-center gap-1">
-                                      {trade.timestamp.toLocaleDateString()} at {trade.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })} 
-                                      {trade.deduction > 0 && <span className="text-primary font-bold ml-1">Tax: {currencySymbol}{trade.deduction.toFixed(2)}</span>}
-                                    </p>
-                                  </div>
-                                </div>
-                                <Badge variant="outline" className={cn(
-                                  "text-[10px] font-bold h-6 px-2",
-                                  trade.type === 'win' ? "text-green-500 border-green-500/30 bg-green-500/5" : "text-red-500 border-red-500/30 bg-red-500/5"
-                                )}>
-                                  {trade.type.toUpperCase()}
-                                </Badge>
-                              </div>
+                              <TradeLogItem key={trade.id} trade={trade} />
                             ))}
                           </div>
                         </ScrollArea>
@@ -1476,31 +1488,7 @@ export default function Dashboard() {
                       </h3>
                       <div className="space-y-3">
                         {[...globalStats.allTrades].reverse().map((trade) => (
-                          <div key={trade.id} className="flex items-center justify-between p-4 rounded-xl bg-background border border-border/30">
-                            <div className="flex items-center gap-4">
-                              <div className={cn(
-                                "p-3 rounded-xl",
-                                trade.type === 'win' ? "bg-green-500/10 text-green-500" : "bg-red-500/10 text-red-500"
-                              )}>
-                                {trade.type === 'win' ? <TrendingUp className="h-5 w-5" /> : <TrendingDown className="h-5 w-5" />}
-                              </div>
-                              <div className="space-y-0.5">
-                                <p className="text-lg font-bold text-foreground leading-none">{currencySymbol}{trade.originalAmount.toFixed(2)}</p>
-                                <p className="text-[10px] text-muted-foreground flex items-center gap-2">
-                                  {trade.timestamp.toLocaleDateString()} at {trade.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
-                                  {trade.deduction > 0 && (
-                                    <span className="text-primary font-bold">Tax: {currencySymbol}{trade.deduction.toFixed(2)}</span>
-                                  )}
-                                </p>
-                              </div>
-                            </div>
-                            <Badge variant="outline" className={cn(
-                              "text-[10px] font-bold h-6 px-2",
-                              trade.type === 'win' ? "text-green-500 border-green-500/30 bg-green-500/5" : "text-red-500 border-red-500/30 bg-red-500/5"
-                            )}>
-                              {trade.type.toUpperCase()}
-                            </Badge>
-                          </div>
+                          <TradeLogItem key={trade.id} trade={trade} />
                         ))}
                       </div>
                     </div>
@@ -1608,3 +1596,4 @@ export default function Dashboard() {
     </div>
   );
 }
+
