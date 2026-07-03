@@ -160,6 +160,14 @@ export function useRecoupStore() {
     });
   };
 
+  const deleteSession = (sessionId: string) => {
+    setState(prev => ({
+      ...prev,
+      sessions: prev.sessions.filter(s => s.id !== sessionId),
+      activeSession: prev.activeSession?.id === sessionId ? null : prev.activeSession
+    }));
+  };
+
   const addTrade = (type: 'win' | 'loss', inputAmount: number) => {
     if (!state.activeSession) return;
     
@@ -298,6 +306,7 @@ export function useRecoupStore() {
     startSession,
     stopSession,
     resumeSession,
+    deleteSession,
     addTrade,
     setRecoveryTargetWins,
     setBaseStake,

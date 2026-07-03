@@ -1057,13 +1057,23 @@ export default function Dashboard() {
                                 {store.sessions.map((s) => (
                                   <DropdownMenuItem 
                                     key={s.id} 
-                                    onClick={() => store.resumeSession(s.id)}
-                                    className="cursor-pointer"
+                                    className="flex items-center justify-between group cursor-pointer"
                                   >
-                                    <div className="flex flex-col">
+                                    <div className="flex flex-col flex-1" onClick={() => store.resumeSession(s.id)}>
                                       <span className="font-medium">{s.name}</span>
                                       <span className="text-[10px] text-muted-foreground">{s.startTime.toLocaleDateString()}</span>
                                     </div>
+                                    <Button 
+                                      variant="ghost" 
+                                      size="icon" 
+                                      className="h-6 w-6 text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        store.deleteSession(s.id);
+                                      }}
+                                    >
+                                      <Trash2 className="h-3 w-3" />
+                                    </Button>
                                   </DropdownMenuItem>
                                 ))}
                               </ScrollArea>
@@ -1601,17 +1611,27 @@ export default function Dashboard() {
                                       </div>
                                    </div>
                                    <div className="flex flex-col gap-2">
-                                      <Button 
-                                        variant="outline" 
-                                        size="sm" 
-                                        className="gap-2 h-8 text-xs"
-                                        onClick={() => {
-                                          store.resumeSession(session.id);
-                                          setView('dashboard');
-                                        }}
-                                      >
-                                        <RotateCcw className="h-3 w-3" /> Resume
-                                      </Button>
+                                      <div className="flex items-center gap-2">
+                                        <Button 
+                                          variant="outline" 
+                                          size="sm" 
+                                          className="gap-2 h-8 text-xs flex-1"
+                                          onClick={() => {
+                                            store.resumeSession(session.id);
+                                            setView('dashboard');
+                                          }}
+                                        >
+                                          <RotateCcw className="h-3 w-3" /> Resume
+                                        </Button>
+                                        <Button 
+                                          variant="ghost" 
+                                          size="icon" 
+                                          className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                                          onClick={() => store.deleteSession(session.id)}
+                                        >
+                                          <Trash2 className="h-3 w-3" />
+                                        </Button>
+                                      </div>
                                       <p className="text-[10px] text-muted-foreground text-right">{session.trades.length} Trades</p>
                                    </div>
                                 </div>
