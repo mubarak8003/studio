@@ -122,24 +122,46 @@ export function useRecoupStore() {
   }, [state, isHydrated]);
 
   const startSession = (name?: string) => {
-    const newSession: Session = {
-      id: crypto.randomUUID(),
-      name: name || `Session ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`,
-      startTime: new Date(),
-      trades: [],
-      isActive: true,
-    };
-    setState(prev => ({ ...prev, activeSession: newSession }));
+    setState(prev => {
+      const newSession: Session = {
+        id: crypto.randomUUID(),
+        name: name || `Session ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`,
+        startTime: new Date(),
+        trades: [],
+        isActive: true,
+      };
+
+      // If current session is empty, just replace it. 
+      // If it has trades, move it to history before starting new.
+      let newSessions = prev.sessions;
+      if (prev.activeSession && prev.activeSession.trades.length > 0) {
+        newSessions = [{ ...prev.activeSession, isActive: false, endTime: new Date() }, ...prev.sessions];
+      }
+
+      return {
+        ...prev,
+        activeSession: newSession,
+        sessions: newSessions
+      };
+    });
   };
 
   const stopSession = () => {
-    if (!state.activeSession) return;
-    const finishedSession = { ...state.activeSession, endTime: new Date(), isActive: false };
-    setState(prev => ({
-      ...prev,
-      sessions: [finishedSession, ...prev.sessions],
-      activeSession: null
-    }));
+    setState(prev => {
+      if (!prev.activeSession) return prev;
+      
+      // Only add to history if it has trades
+      if (prev.activeSession.trades.length === 0) {
+        return { ...prev, activeSession: null };
+      }
+
+      const finishedSession = { ...prev.activeSession, endTime: new Date(), isActive: false };
+      return {
+        ...prev,
+        sessions: [finishedSession, ...prev.sessions],
+        activeSession: null
+      };
+    });
   };
 
   const resumeSession = (sessionId: string) => {
@@ -148,9 +170,13 @@ export function useRecoupStore() {
       if (!sessionToResume) return prev;
       
       const updatedSessions = prev.sessions.filter(s => s.id !== sessionId);
-      const newSessionsList = prev.activeSession 
-        ? [{ ...prev.activeSession, isActive: false, endTime: new Date() }, ...updatedSessions] 
-        : updatedSessions;
+      
+      // If current active session is empty, discard it. 
+      // If it has trades, save it to history.
+      let newSessionsList = updatedSessions;
+      if (prev.activeSession && prev.activeSession.trades.length > 0) {
+        newSessionsList = [{ ...prev.activeSession, isActive: false, endTime: new Date() }, ...updatedSessions];
+      }
         
       return {
         ...prev,
@@ -184,7 +210,6 @@ export function useRecoupStore() {
         timestamp: new Date(),
       };
 
-      // Logic for Recovery Target decrement:
       const chronTrades = [
         ...prev.sessions.flatMap(s => s.trades),
         ...(prev.activeSession?.trades || [])
@@ -204,7 +229,6 @@ export function useRecoupStore() {
       let nextRecoveryTarget = prev.recoveryTargetWins;
       let nextManualDrawdown = prev.manualDrawdown;
 
-      // Decrease recovery count if winning while in a drawdown
       if (type === 'win' && isActuallyInDrawdown && prev.recoveryTargetWins > 0) {
         nextRecoveryTarget = prev.recoveryTargetWins - 1;
       }
@@ -281,7 +305,6 @@ export function useRecoupStore() {
   const resetAllData = () => {
     setState(prev => ({
       ...DEFAULT_STATE,
-      // PRESERVE NOTES and essential config
       baseStake: prev.baseStake,
       currency: prev.currency,
       riskRewardRatio: prev.riskRewardRatio,

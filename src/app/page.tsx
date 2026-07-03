@@ -723,6 +723,7 @@ export default function Dashboard() {
   const store = useRecoupStore();
   const [tradeAmount, setTradeAmount] = useState<string>('');
   const [sessionNameInput, setSessionNameInput] = useState<string>('');
+  const [isStartSessionDialogOpen, setIsStartSessionDialogOpen] = useState(false);
   const [view, setView] = useState<View>('dashboard');
   const [chartType, setChartType] = useState<'line' | 'candle'>('line');
   const [mounted, setMounted] = useState(false);
@@ -892,6 +893,7 @@ export default function Dashboard() {
   const handleStartSession = () => {
     store.startSession(sessionNameInput);
     setSessionNameInput('');
+    setIsStartSessionDialogOpen(false);
   };
 
   if (!mounted) return null;
@@ -1096,7 +1098,7 @@ export default function Dashboard() {
                             <History className="h-4 w-4" /> History
                           </Button>
                         )}
-                        <Dialog>
+                        <Dialog open={isStartSessionDialogOpen} onOpenChange={setIsStartSessionDialogOpen}>
                           <DialogTrigger asChild>
                             <Button variant="default" className="flex-1 md:flex-none gap-2 bg-primary hover:bg-primary/90 glow-primary h-10">
                               <PlayCircle className="h-4 w-4" /> Start Session
