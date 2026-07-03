@@ -33,12 +33,13 @@ import {
   CalendarDays,
   AreaChart as ChartIcon,
   Hash,
+  BarChart3,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Slider } from '@/components/ui/slider';
 import { Switch } from '@/components/ui/switch';
@@ -73,6 +74,9 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
+  BarChart,
+  Bar,
+  Cell,
 } from 'recharts';
 
 type View = 'dashboard' | 'history' | 'sizer';
@@ -355,44 +359,118 @@ const StrategySettings = ({ store, stats }: { store: any, stats: any }) => {
 const EquityCurveChart = ({ data, currencySymbol }: { data: any[], currencySymbol: string }) => {
   if (data.length === 0) return null;
 
+  const chartWidth = Math.max(100, (data.length / 40) * 100);
+
   return (
-    <div className="h-64 w-full">
-      <ResponsiveContainer width="100%" height="100%">
-        <AreaChart data={data}>
-          <defs>
-            <linearGradient id="colorBalance" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3}/>
-              <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0}/>
-            </linearGradient>
-          </defs>
-          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" opacity={0.5} />
-          <XAxis 
-            dataKey="name" 
-            hide 
-          />
-          <YAxis 
-            tick={{ fontSize: 10 }} 
-            tickFormatter={(value) => `${currencySymbol}${value}`}
-            width={50}
-            stroke="hsl(var(--muted-foreground))"
-          />
-          <Tooltip 
-            contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', borderRadius: '8px' }}
-            itemStyle={{ color: 'hsl(var(--primary))', fontWeight: 'bold' }}
-            formatter={(value) => [`${currencySymbol}${parseFloat(value as string).toFixed(2)}`, 'Equity']}
-            labelFormatter={(label) => `Entry: ${label}`}
-          />
-          <Area 
-            type="monotone" 
-            dataKey="balance" 
-            stroke="hsl(var(--primary))" 
-            fillOpacity={1} 
-            fill="url(#colorBalance)" 
-            strokeWidth={2}
-          />
-        </AreaChart>
-      </ResponsiveContainer>
-    </div>
+    <ScrollArea className="w-full">
+      <div style={{ width: `${chartWidth}%`, minWidth: '100%' }}>
+        <div className="h-64 w-full">
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart data={data}>
+              <defs>
+                <linearGradient id="colorBalance" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3}/>
+                  <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0}/>
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" opacity={0.5} />
+              <XAxis dataKey="name" hide />
+              <YAxis 
+                tick={{ fontSize: 10 }} 
+                tickFormatter={(value) => `${currencySymbol}${value}`}
+                width={50}
+                stroke="hsl(var(--muted-foreground))"
+              />
+              <Tooltip 
+                contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', borderRadius: '8px' }}
+                itemStyle={{ color: 'hsl(var(--primary))', fontWeight: 'bold' }}
+                formatter={(value) => [`${currencySymbol}${parseFloat(value as string).toFixed(2)}`, 'Equity']}
+              />
+              <Area 
+                type="monotone" 
+                dataKey="balance" 
+                stroke="hsl(var(--primary))" 
+                fillOpacity={1} 
+                fill="url(#colorBalance)" 
+                strokeWidth={2}
+              />
+            </AreaChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+      <ScrollBar orientation="horizontal" />
+    </ScrollArea>
+  );
+};
+
+const CandlestickChart = ({ data, currencySymbol }: { data: any[], currencySymbol: string }) => {
+  if (data.length === 0) return null;
+
+  const chartWidth = Math.max(100, (data.length / 40) * 100);
+
+  return (
+    <ScrollArea className="w-full">
+      <div style={{ width: `${chartWidth}%`, minWidth: '100%' }}>
+        <div className="h-64 w-full">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={data}>
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" opacity={0.5} />
+              <XAxis dataKey="index" hide />
+              <YAxis 
+                domain={['auto', 'auto']}
+                tick={{ fontSize: 10 }} 
+                tickFormatter={(value) => `${currencySymbol}${value}`}
+                width={50}
+                stroke="hsl(var(--muted-foreground))"
+              />
+              <Tooltip 
+                content={({ active, payload }) => {
+                  if (active && payload && payload.length) {
+                    const d = payload[0].payload;
+                    return (
+                      <div className="bg-card border border-border p-3 rounded-lg shadow-xl text-[10px]">
+                        <p className="font-bold mb-1 uppercase text-muted-foreground">Trade #{d.index}</p>
+                        <p className={cn("font-bold text-sm mb-2", d.close >= d.open ? "text-green-500" : "text-red-500")}>
+                          {d.close >= d.open ? 'WIN' : 'LOSS'}
+                        </p>
+                        <div className="grid grid-cols-2 gap-x-4 gap-y-1 font-mono">
+                          <span className="text-muted-foreground">O:</span>
+                          <span>{currencySymbol}{d.open.toFixed(2)}</span>
+                          <span className="text-muted-foreground">H:</span>
+                          <span>{currencySymbol}{d.high.toFixed(2)}</span>
+                          <span className="text-muted-foreground">L:</span>
+                          <span>{currencySymbol}{d.low.toFixed(2)}</span>
+                          <span className="text-muted-foreground">C:</span>
+                          <span>{currencySymbol}{d.close.toFixed(2)}</span>
+                        </div>
+                      </div>
+                    );
+                  }
+                  return null;
+                }}
+              />
+              <Bar dataKey="candleHeight" shape={(props: any) => {
+                const { x, y, width, height, open, close } = props;
+                const fill = close >= open ? "hsl(var(--primary))" : "hsl(var(--destructive))";
+                return (
+                  <g>
+                    {/* Wick */}
+                    <line x1={x + width / 2} y1={y} x2={x + width / 2} y2={y + height} stroke={fill} strokeWidth={1} />
+                    {/* Body */}
+                    <rect x={x} y={y} width={width} height={Math.max(2, height)} fill={fill} rx={1} />
+                  </g>
+                );
+              }}>
+                {data.map((entry, index) => (
+                  <Cell key={`cell-${index}`} />
+                ))}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+      <ScrollBar orientation="horizontal" />
+    </ScrollArea>
   );
 };
 
@@ -415,7 +493,7 @@ const PositionSizer = ({ store, setView }: { store: any, setView: (v: View) => v
       riskAmount = store.riskAmountFixed || 0;
     }
 
-    if (isNaN(e) || iNaN(s) || e <= 0 || s <= 0 || e === s || riskAmount <= 0) return null;
+    if (isNaN(e) || isNaN(s) || e <= 0 || s <= 0 || e === s || riskAmount <= 0) return null;
 
     const riskPerShare = Math.abs(e - s);
     const shares = Math.floor(riskAmount / riskPerShare);
@@ -586,6 +664,7 @@ export default function Dashboard() {
   const store = useRecoupStore();
   const [tradeAmount, setTradeAmount] = useState<string>('');
   const [view, setView] = useState<View>('dashboard');
+  const [chartType, setChartType] = useState<'line' | 'candle'>('line');
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -600,9 +679,11 @@ export default function Dashboard() {
     
     let runningPnL = 0;
     let peakPnL = 0;
+    let totalTurnover = 0;
     
     chronTrades.forEach(t => {
       runningPnL += (t.type === 'win' ? t.amount : -t.amount);
+      totalTurnover += t.amount;
       if (runningPnL > peakPnL) peakPnL = runningPnL;
     });
 
@@ -643,6 +724,7 @@ export default function Dashboard() {
       nextStake,
       recoveryStakeAdjustment,
       riskLevel,
+      totalTurnover,
       winRate: chronTrades.length > 0 
         ? (wins.length / chronTrades.length) * 100 
         : 0,
@@ -657,21 +739,24 @@ export default function Dashboard() {
       ...(store.activeSession?.trades || [])
     ].sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
 
-    const daysMap: Record<string, number> = {};
+    const daysMap: Record<string, { pnl: number, turnover: number }> = {};
     
     chronTrades.forEach(trade => {
       const dayKey = trade.timestamp.toISOString().split('T')[0];
       const amount = (trade.type === 'win' ? trade.amount : -trade.amount);
-      daysMap[dayKey] = (daysMap[dayKey] || 0) + amount;
+      if (!daysMap[dayKey]) daysMap[dayKey] = { pnl: 0, turnover: 0 };
+      daysMap[dayKey].pnl += amount;
+      daysMap[dayKey].turnover += trade.amount;
     });
 
     let runningBalance = 0;
     return Object.keys(daysMap).sort().map(day => {
-      runningBalance += daysMap[day];
+      runningBalance += daysMap[day].pnl;
       return {
         name: day,
         balance: runningBalance,
-        pnl: daysMap[day],
+        pnl: daysMap[day].pnl,
+        turnover: daysMap[day].turnover,
       };
     });
   }, [store]);
@@ -684,10 +769,18 @@ export default function Dashboard() {
     ].sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
 
     return chronTrades.map((trade, index) => {
+      const open = balance;
       balance += (trade.type === 'win' ? trade.amount : -trade.amount);
+      const close = balance;
       return {
+        index: index + 1,
         name: trade.timestamp.toLocaleDateString() + ' ' + trade.timestamp.toLocaleTimeString(),
         balance: balance,
+        open,
+        close,
+        high: Math.max(open, close),
+        low: Math.min(open, close),
+        candleHeight: Math.abs(close - open),
       };
     });
   }, [store]);
@@ -989,9 +1082,15 @@ export default function Dashboard() {
                               <span className="font-mono">{currencySymbol}{stats.avgLoss.toFixed(2)}</span>
                            </div>
                            <Separator className="bg-border/30 border-dashed" />
-                           <div className="flex justify-between items-center text-sm font-bold text-foreground">
-                              <span className="text-muted-foreground flex items-center gap-2"><Hash className="h-3 w-3 text-primary" /> Total Trades</span>
-                              <span className="font-mono text-primary">{stats.allTrades.length}</span>
+                           <div className="grid grid-cols-2 gap-2">
+                             <div className="flex flex-col gap-1">
+                               <span className="text-[10px] text-muted-foreground uppercase font-bold">Total Trades</span>
+                               <span className="font-mono text-sm text-primary font-bold">{stats.allTrades.length}</span>
+                             </div>
+                             <div className="flex flex-col gap-1 items-end">
+                               <span className="text-[10px] text-muted-foreground uppercase font-bold">Total Turnover</span>
+                               <span className="font-mono text-sm text-foreground font-bold">{currencySymbol}{stats.totalTurnover.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                             </div>
                            </div>
                         </div>
                       </CardContent>
@@ -1077,23 +1176,44 @@ export default function Dashboard() {
                     </Button>
                     <div>
                       <h2 className="text-2xl md:text-3xl font-headline font-bold text-foreground leading-tight">History & Analytics</h2>
-                      <p className="text-muted-foreground text-xs md:text-sm">Full equity tracking based on trade history.</p>
+                      <p className="text-muted-foreground text-xs md:text-sm">Full performance visualization and audit logs.</p>
                     </div>
                   </div>
-                  <Badge variant="secondary" className="px-4 py-1.5 h-auto text-sm w-fit shrink-0">
-                    {stats.allTrades.length} Total Trades
-                  </Badge>
+                  <div className="flex items-center gap-2">
+                    <Badge variant="secondary" className="px-4 py-1.5 h-auto text-sm">
+                      {stats.allTrades.length} Trades
+                    </Badge>
+                    <Badge variant="outline" className="px-4 py-1.5 h-auto text-sm border-primary/30">
+                      Turnover: {currencySymbol}{stats.totalTurnover.toLocaleString()}
+                    </Badge>
+                  </div>
                 </header>
 
                 {stats.allTrades.length > 0 && (
                   <Card className="bg-card border-border overflow-hidden">
-                    <CardHeader className="pb-2">
-                      <CardTitle className="text-sm font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
-                        <ChartIcon className="h-4 w-4 text-primary" /> Equity Curve
-                      </CardTitle>
+                    <CardHeader className="pb-2 flex flex-row items-center justify-between">
+                      <div className="space-y-1">
+                        <CardTitle className="text-sm font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+                          <ChartIcon className="h-4 w-4 text-primary" /> Strategy Analytics
+                        </CardTitle>
+                      </div>
+                      <Tabs value={chartType} onValueChange={(v) => setChartType(v as any)} className="w-auto">
+                        <TabsList className="h-8 bg-muted/50 p-1">
+                          <TabsTrigger value="line" className="h-6 text-[10px] gap-1 px-2">
+                            <Activity className="h-3 w-3" /> Equity
+                          </TabsTrigger>
+                          <TabsTrigger value="candle" className="h-6 text-[10px] gap-1 px-2">
+                            <BarChart3 className="h-3 w-3" /> Candles
+                          </TabsTrigger>
+                        </TabsList>
+                      </Tabs>
                     </CardHeader>
                     <CardContent className="p-4 md:p-6">
-                      <EquityCurveChart data={tradeEquityData} currencySymbol={currencySymbol} />
+                      {chartType === 'line' ? (
+                        <EquityCurveChart data={tradeEquityData} currencySymbol={currencySymbol} />
+                      ) : (
+                        <CandlestickChart data={tradeEquityData} currencySymbol={currencySymbol} />
+                      )}
                     </CardContent>
                   </Card>
                 )}
@@ -1122,12 +1242,18 @@ export default function Dashboard() {
                                 </div>
                                 <div className="flex items-center gap-8">
                                   <div className="flex flex-col items-end">
+                                    <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-tighter">Turnover</span>
+                                    <span className="text-sm font-bold text-foreground">
+                                      {currencySymbol}{day.turnover.toLocaleString()}
+                                    </span>
+                                  </div>
+                                  <div className="flex flex-col items-end">
                                     <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-tighter">Net Change</span>
                                     <span className={cn("text-sm font-bold", day.pnl >= 0 ? "text-green-500" : "text-red-500")}>
                                       {day.pnl >= 0 ? '+' : ''}{currencySymbol}{day.pnl.toFixed(2)}
                                     </span>
                                   </div>
-                                  <div className="flex flex-col items-end">
+                                  <div className="flex flex-col items-end hidden sm:flex">
                                     <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-tighter">Closing Balance</span>
                                     <span className="text-sm font-bold text-foreground">
                                       {currencySymbol}{day.balance.toFixed(2)}
