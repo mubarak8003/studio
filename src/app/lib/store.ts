@@ -14,6 +14,7 @@ export type Trade = {
 
 export type Session = {
   id: string;
+  name?: string;
   startTime: Date;
   endTime?: Date;
   trades: Trade[];
@@ -77,7 +78,7 @@ export function useRecoupStore() {
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('recouppro_state_v10');
+      const saved = localStorage.getItem('recouppro_state_v11');
       if (saved) {
         try {
           const parsed = JSON.parse(saved);
@@ -116,13 +117,14 @@ export function useRecoupStore() {
 
   useEffect(() => {
     if (isHydrated) {
-      localStorage.setItem('recouppro_state_v10', JSON.stringify(state));
+      localStorage.setItem('recouppro_state_v11', JSON.stringify(state));
     }
   }, [state, isHydrated]);
 
-  const startSession = () => {
+  const startSession = (name?: string) => {
     const newSession: Session = {
       id: crypto.randomUUID(),
+      name: name || `Session ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`,
       startTime: new Date(),
       trades: [],
       isActive: true,

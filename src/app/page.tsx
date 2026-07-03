@@ -34,6 +34,7 @@ import {
   AreaChart as ChartIcon,
   Hash,
   BarChart3,
+  Tags,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -63,6 +64,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { ModeToggle } from '@/components/mode-toggle';
 import { AICoachPanel } from '@/components/recoup/ai-coach-panel';
@@ -701,6 +711,7 @@ const PositionSizer = ({ store, setView }: { store: any, setView: (v: View) => v
 export default function Dashboard() {
   const store = useRecoupStore();
   const [tradeAmount, setTradeAmount] = useState<string>('');
+  const [sessionNameInput, setSessionNameInput] = useState<string>('');
   const [view, setView] = useState<View>('dashboard');
   const [chartType, setChartType] = useState<'line' | 'candle'>('line');
   const [mounted, setMounted] = useState(false);
@@ -838,6 +849,11 @@ export default function Dashboard() {
     setTradeAmount('');
   };
 
+  const handleStartSession = () => {
+    store.startSession(sessionNameInput);
+    setSessionNameInput('');
+  };
+
   if (!mounted) return null;
 
   const currencySymbol = CURRENCY_SYMBOLS[store.currency as CurrencyCode];
@@ -948,13 +964,54 @@ export default function Dashboard() {
                   </div>
                   <div className="flex items-center gap-3 w-full md:w-auto">
                     {store.activeSession ? (
-                      <Button variant="destructive" className="flex-1 md:flex-none gap-2" onClick={store.stopSession}>
-                        <StopCircle className="h-4 w-4" /> Stop Session
-                      </Button>
+                      <div className="flex items-center gap-3 w-full md:w-auto">
+                        <Badge variant="outline" className="h-10 px-4 border-primary/20 bg-primary/5 text-primary hidden md:flex items-center gap-2">
+                           <Activity className="h-4 w-4" /> {store.activeSession.name}
+                        </Badge>
+                        <Button variant="destructive" className="flex-1 md:flex-none gap-2 h-10" onClick={store.stopSession}>
+                          <StopCircle className="h-4 w-4" /> Stop Session
+                        </Button>
+                      </div>
                     ) : (
-                      <Button variant="default" className="flex-1 md:flex-none gap-2 bg-primary hover:bg-primary/90 glow-primary" onClick={store.startSession}>
-                        <PlayCircle className="h-4 w-4" /> Start Session
-                      </Button>
+                      <Dialog>
+                        <DialogTrigger asChild>
+                          <Button variant="default" className="flex-1 md:flex-none gap-2 bg-primary hover:bg-primary/90 glow-primary h-10">
+                            <PlayCircle className="h-4 w-4" /> Start Session
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent className="bg-card border-border sm:max-w-[425px]">
+                          <DialogHeader>
+                            <DialogTitle>Start New Session</DialogTitle>
+                            <DialogDescription>
+                              Give your session a name to track it easily in your history.
+                            </DialogDescription>
+                          </DialogHeader>
+                          <div className="grid gap-4 py-4">
+                            <div className="space-y-2">
+                              <label htmlFor="name" className="text-xs font-medium text-muted-foreground uppercase">Session Name</label>
+                              <Input 
+                                id="name" 
+                                placeholder="e.g., Morning Scalping" 
+                                value={sessionNameInput} 
+                                onChange={(e) => setSessionNameInput(e.target.value)}
+                                className="bg-background border-border"
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter') handleStartSession();
+                                }}
+                              />
+                            </div>
+                          </div>
+                          <DialogFooter>
+                            <Button 
+                              type="submit" 
+                              onClick={handleStartSession}
+                              className="w-full bg-primary hover:bg-primary/90"
+                            >
+                              Go Live
+                            </Button>
+                          </DialogFooter>
+                        </DialogContent>
+                      </Dialog>
                     )}
                   </div>
                 </header>
@@ -1271,115 +1328,174 @@ export default function Dashboard() {
                   </div>
                 </header>
 
-                {stats.allTrades.length > 0 && (
-                  <Card className="bg-card border-border overflow-hidden">
-                    <CardHeader className="pb-2 flex flex-row items-center justify-between">
-                      <div className="space-y-1">
-                        <CardTitle className="text-sm font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
-                          <ChartIcon className="h-4 w-4 text-primary" /> Strategy Analytics
-                        </CardTitle>
-                      </div>
-                      <Tabs value={chartType} onValueChange={(v) => setChartType(v as any)} className="w-auto">
-                        <TabsList className="h-8 bg-muted/50 p-1">
-                          <TabsTrigger value="line" className="h-6 text-[10px] gap-1 px-2">
-                            <Activity className="h-3 w-3" /> Equity
-                          </TabsTrigger>
-                          <TabsTrigger value="candle" className="h-6 text-[10px] gap-1 px-2">
-                            <BarChart3 className="h-3 w-3" /> Candles
-                          </TabsTrigger>
-                        </TabsList>
-                      </Tabs>
-                    </CardHeader>
-                    <CardContent className="p-4 md:p-6">
-                      {chartType === 'line' ? (
-                        <EquityCurveChart data={tradeEquityData} currencySymbol={currencySymbol} />
-                      ) : (
-                        <CandlestickChart data={tradeEquityData} currencySymbol={currencySymbol} />
-                      )}
-                    </CardContent>
-                  </Card>
-                )}
+                <Tabs defaultValue="trades" className="w-full">
+                  <TabsList className="bg-muted/50 p-1 mb-6">
+                    <TabsTrigger value="trades" className="text-xs flex items-center gap-2">
+                      <History className="h-3 w-3" /> Individual Trades
+                    </TabsTrigger>
+                    <TabsTrigger value="sessions" className="text-xs flex items-center gap-2">
+                      <Tags className="h-3 w-3" /> Sessions Log
+                    </TabsTrigger>
+                  </TabsList>
 
-                <div className="grid grid-cols-1 gap-6">
-                  {stats.allTrades.length === 0 ? (
-                    <Card className="border-dashed border-2 flex flex-col items-center justify-center py-20 bg-background/50 border-border/50">
-                      <History className="h-12 w-12 text-muted-foreground mb-4 opacity-20" />
-                      <h3 className="text-lg font-semibold text-foreground">No history yet</h3>
-                      <p className="text-muted-foreground text-sm mb-6">Your recorded trades will appear here.</p>
-                      <Button onClick={() => setView('dashboard')}>Return to Dashboard</Button>
-                    </Card>
-                  ) : (
-                    <div className="space-y-8">
-                      <div className="space-y-4">
-                        <h3 className="text-sm font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
-                          <CalendarDays className="h-4 w-4" /> Daily Equity Summary
-                        </h3>
-                        <div className="grid grid-cols-1 gap-3">
-                          {[...dailyEquityData].reverse().map((day) => (
-                            <Card key={day.name} className="bg-card border-border">
-                              <CardContent className="p-4 flex items-center justify-between">
-                                <div className="flex flex-col">
-                                  <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-tighter">Date</span>
-                                  <span className="text-sm font-semibold">{day.name}</span>
+                  <TabsContent value="trades" className="space-y-6 m-0">
+                    {stats.allTrades.length > 0 && (
+                      <Card className="bg-card border-border overflow-hidden">
+                        <CardHeader className="pb-2 flex flex-row items-center justify-between">
+                          <div className="space-y-1">
+                            <CardTitle className="text-sm font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+                              <ChartIcon className="h-4 w-4 text-primary" /> Strategy Analytics
+                            </CardTitle>
+                          </div>
+                          <Tabs value={chartType} onValueChange={(v) => setChartType(v as any)} className="w-auto">
+                            <TabsList className="h-8 bg-muted/50 p-1">
+                              <TabsTrigger value="line" className="h-6 text-[10px] gap-1 px-2">
+                                <Activity className="h-3 w-3" /> Equity
+                              </TabsTrigger>
+                              <TabsTrigger value="candle" className="h-6 text-[10px] gap-1 px-2">
+                                <BarChart3 className="h-3 w-3" /> Candles
+                              </TabsTrigger>
+                            </TabsList>
+                          </Tabs>
+                        </CardHeader>
+                        <CardContent className="p-4 md:p-6">
+                          {chartType === 'line' ? (
+                            <EquityCurveChart data={tradeEquityData} currencySymbol={currencySymbol} />
+                          ) : (
+                            <CandlestickChart data={tradeEquityData} currencySymbol={currencySymbol} />
+                          )}
+                        </CardContent>
+                      </Card>
+                    )}
+
+                    <div className="grid grid-cols-1 gap-6">
+                      {stats.allTrades.length === 0 ? (
+                        <Card className="border-dashed border-2 flex flex-col items-center justify-center py-20 bg-background/50 border-border/50">
+                          <History className="h-12 w-12 text-muted-foreground mb-4 opacity-20" />
+                          <h3 className="text-lg font-semibold text-foreground">No history yet</h3>
+                          <p className="text-muted-foreground text-sm mb-6">Your recorded trades will appear here.</p>
+                          <Button onClick={() => setView('dashboard')}>Return to Dashboard</Button>
+                        </Card>
+                      ) : (
+                        <div className="space-y-8">
+                          <div className="space-y-4">
+                            <h3 className="text-sm font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+                              <CalendarDays className="h-4 w-4" /> Daily Equity Summary
+                            </h3>
+                            <div className="grid grid-cols-1 gap-3">
+                              {[...dailyEquityData].reverse().map((day) => (
+                                <Card key={day.name} className="bg-card border-border">
+                                  <CardContent className="p-4 flex items-center justify-between">
+                                    <div className="flex flex-col">
+                                      <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-tighter">Date</span>
+                                      <span className="text-sm font-semibold">{day.name}</span>
+                                    </div>
+                                    <div className="flex items-center gap-8">
+                                      <div className="flex flex-col items-end">
+                                        <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-tighter">Turnover</span>
+                                        <span className="text-sm font-bold text-foreground">
+                                          {currencySymbol}{day.turnover.toLocaleString()}
+                                        </span>
+                                      </div>
+                                      <div className="flex flex-col items-end">
+                                        <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-tighter">Net Change</span>
+                                        <span className={cn("text-sm font-bold", day.pnl >= 0 ? "text-green-500" : "text-red-500")}>
+                                          {day.pnl >= 0 ? '+' : ''}{currencySymbol}{day.pnl.toFixed(2)}
+                                        </span>
+                                      </div>
+                                      <div className="flex flex-col items-end hidden sm:flex">
+                                        <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-tighter">Closing Balance</span>
+                                        <span className="text-sm font-bold text-foreground">
+                                          {currencySymbol}{day.balance.toFixed(2)}
+                                        </span>
+                                      </div>
+                                    </div>
+                                  </CardContent>
+                                </Card>
+                              ))}
+                            </div>
+                          </div>
+
+                          <div className="space-y-4">
+                            <h3 className="text-sm font-bold uppercase tracking-widest text-muted-foreground">Full Audit Log</h3>
+                            <div className="space-y-3">
+                              {stats.allTrades.map((trade) => (
+                                <div key={trade.id} className="flex items-center justify-between p-4 rounded-xl bg-background border border-border/30">
+                                  <div className="flex items-center gap-4">
+                                    <div className={cn(
+                                      "p-3 rounded-xl",
+                                      trade.type === 'win' ? "bg-green-500/10 text-green-500" : "bg-red-500/10 text-red-500"
+                                    )}>
+                                      {trade.type === 'win' ? <TrendingUp className="h-5 w-5" /> : <TrendingDown className="h-5 w-5" />}
+                                    </div>
+                                    <div>
+                                      <p className="text-lg font-bold text-foreground">{currencySymbol}{trade.originalAmount.toFixed(2)}</p>
+                                      <p className="text-xs text-muted-foreground">
+                                        {trade.timestamp.toLocaleDateString()} at {trade.timestamp.toLocaleTimeString()}
+                                        {trade.deduction > 0 && <span className="ml-2 text-primary font-bold">Tax: {currencySymbol}{trade.deduction.toFixed(2)}</span>}
+                                      </p>
+                                    </div>
+                                  </div>
+                                  <Badge variant="outline" className={cn(
+                                    trade.type === 'win' ? "text-green-500 border-green-500/30" : "text-red-500 border-red-500/30"
+                                  )}>
+                                    {trade.type.toUpperCase()}
+                                  </Badge>
                                 </div>
-                                <div className="flex items-center gap-8">
-                                  <div className="flex flex-col items-end">
-                                    <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-tighter">Turnover</span>
-                                    <span className="text-sm font-bold text-foreground">
-                                      {currencySymbol}{day.turnover.toLocaleString()}
-                                    </span>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </TabsContent>
+
+                  <TabsContent value="sessions" className="space-y-4 m-0">
+                    {store.sessions.length === 0 ? (
+                      <Card className="border-dashed border-2 flex flex-col items-center justify-center py-20 bg-background/50 border-border/50">
+                        <Tags className="h-12 w-12 text-muted-foreground mb-4 opacity-20" />
+                        <h3 className="text-lg font-semibold text-foreground">No sessions recorded</h3>
+                        <p className="text-muted-foreground text-sm">Your named sessions will appear here.</p>
+                      </Card>
+                    ) : (
+                      <div className="space-y-3">
+                        {store.sessions.map((session) => {
+                          const sessionPnL = session.trades.reduce((acc, t) => acc + (t.type === 'win' ? t.amount : -t.amount), 0);
+                          return (
+                            <Card key={session.id} className="bg-card border-border">
+                              <CardContent className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                                <div className="flex items-center gap-3">
+                                  <div className="p-2 bg-primary/10 rounded-lg text-primary">
+                                    <Activity className="h-5 w-5" />
                                   </div>
-                                  <div className="flex flex-col items-end">
-                                    <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-tighter">Net Change</span>
-                                    <span className={cn("text-sm font-bold", day.pnl >= 0 ? "text-green-500" : "text-red-500")}>
-                                      {day.pnl >= 0 ? '+' : ''}{currencySymbol}{day.pnl.toFixed(2)}
-                                    </span>
+                                  <div>
+                                    <h4 className="font-bold text-foreground">{session.name || 'Unnamed Session'}</h4>
+                                    <p className="text-[10px] text-muted-foreground">
+                                      {session.startTime.toLocaleDateString()} at {session.startTime.toLocaleTimeString()}
+                                      {session.endTime && ` — ${session.endTime.toLocaleTimeString()}`}
+                                    </p>
                                   </div>
-                                  <div className="flex flex-col items-end hidden sm:flex">
-                                    <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-tighter">Closing Balance</span>
-                                    <span className="text-sm font-bold text-foreground">
-                                      {currencySymbol}{day.balance.toFixed(2)}
-                                    </span>
-                                  </div>
+                                </div>
+                                <div className="flex items-center gap-6 justify-between sm:justify-end">
+                                   <div className="text-left sm:text-right">
+                                      <p className="text-[10px] text-muted-foreground uppercase font-bold">Performance</p>
+                                      <div className={cn("text-lg font-headline font-bold", sessionPnL >= 0 ? "text-green-500" : "text-red-500")}>
+                                        {sessionPnL >= 0 ? '+' : ''}{currencySymbol}{sessionPnL.toFixed(2)}
+                                      </div>
+                                   </div>
+                                   <div className="text-right">
+                                      <p className="text-[10px] text-muted-foreground uppercase font-bold">Volume</p>
+                                      <p className="text-sm font-bold text-foreground">{session.trades.length} Trades</p>
+                                   </div>
                                 </div>
                               </CardContent>
                             </Card>
-                          ))}
-                        </div>
+                          );
+                        })}
                       </div>
-
-                      <div className="space-y-4">
-                        <h3 className="text-sm font-bold uppercase tracking-widest text-muted-foreground">Full Audit Log</h3>
-                        <div className="space-y-3">
-                          {stats.allTrades.map((trade) => (
-                            <div key={trade.id} className="flex items-center justify-between p-4 rounded-xl bg-background border border-border/30">
-                              <div className="flex items-center gap-4">
-                                <div className={cn(
-                                  "p-3 rounded-xl",
-                                  trade.type === 'win' ? "bg-green-500/10 text-green-500" : "bg-red-500/10 text-red-500"
-                                )}>
-                                  {trade.type === 'win' ? <TrendingUp className="h-5 w-5" /> : <TrendingDown className="h-5 w-5" />}
-                                </div>
-                                <div>
-                                  <p className="text-lg font-bold text-foreground">{currencySymbol}{trade.originalAmount.toFixed(2)}</p>
-                                  <p className="text-xs text-muted-foreground">
-                                    {trade.timestamp.toLocaleDateString()} at {trade.timestamp.toLocaleTimeString()}
-                                    {trade.deduction > 0 && <span className="ml-2 text-primary font-bold">Tax: {currencySymbol}{trade.deduction.toFixed(2)}</span>}
-                                  </p>
-                                </div>
-                              </div>
-                              <Badge variant="outline" className={cn(
-                                trade.type === 'win' ? "text-green-500 border-green-500/30" : "text-red-500 border-red-500/30"
-                              )}>
-                                {trade.type.toUpperCase()}
-                              </Badge>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
+                    )}
+                  </TabsContent>
+                </Tabs>
               </div>
             )}
 
