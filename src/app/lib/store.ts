@@ -142,6 +142,24 @@ export function useRecoupStore() {
     }));
   };
 
+  const resumeSession = (sessionId: string) => {
+    setState(prev => {
+      const sessionToResume = prev.sessions.find(s => s.id === sessionId);
+      if (!sessionToResume) return prev;
+      
+      const updatedSessions = prev.sessions.filter(s => s.id !== sessionId);
+      const newSessionsList = prev.activeSession 
+        ? [{ ...prev.activeSession, isActive: false, endTime: new Date() }, ...updatedSessions] 
+        : updatedSessions;
+        
+      return {
+        ...prev,
+        activeSession: { ...sessionToResume, isActive: true, endTime: undefined },
+        sessions: newSessionsList
+      };
+    });
+  };
+
   const addTrade = (type: 'win' | 'loss', inputAmount: number) => {
     if (!state.activeSession) return;
     
@@ -279,6 +297,7 @@ export function useRecoupStore() {
     isHydrated,
     startSession,
     stopSession,
+    resumeSession,
     addTrade,
     setRecoveryTargetWins,
     setBaseStake,

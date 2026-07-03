@@ -35,6 +35,8 @@ import {
   Hash,
   BarChart3,
   Tags,
+  ArrowLeftRight,
+  RotateCcw,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -73,6 +75,14 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { ModeToggle } from '@/components/mode-toggle';
 import { AICoachPanel } from '@/components/recoup/ai-coach-panel';
@@ -968,50 +978,90 @@ export default function Dashboard() {
                         <Badge variant="outline" className="h-10 px-4 border-primary/20 bg-primary/5 text-primary hidden md:flex items-center gap-2">
                            <Activity className="h-4 w-4" /> {store.activeSession.name}
                         </Badge>
+                        
+                        {store.sessions.length > 0 && (
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="outline" className="gap-2 h-10 border-primary/20 hover:bg-primary/5">
+                                <ArrowLeftRight className="h-4 w-4" /> Switch
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent className="w-56 bg-card border-border">
+                              <DropdownMenuLabel>Switch Session</DropdownMenuLabel>
+                              <DropdownMenuSeparator />
+                              <ScrollArea className="h-48">
+                                {store.sessions.map((s) => (
+                                  <DropdownMenuItem 
+                                    key={s.id} 
+                                    onClick={() => store.resumeSession(s.id)}
+                                    className="cursor-pointer"
+                                  >
+                                    <div className="flex flex-col">
+                                      <span className="font-medium">{s.name}</span>
+                                      <span className="text-[10px] text-muted-foreground">{s.startTime.toLocaleDateString()}</span>
+                                    </div>
+                                  </DropdownMenuItem>
+                                ))}
+                              </ScrollArea>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        )}
+
                         <Button variant="destructive" className="flex-1 md:flex-none gap-2 h-10" onClick={store.stopSession}>
                           <StopCircle className="h-4 w-4" /> Stop Session
                         </Button>
                       </div>
                     ) : (
-                      <Dialog>
-                        <DialogTrigger asChild>
-                          <Button variant="default" className="flex-1 md:flex-none gap-2 bg-primary hover:bg-primary/90 glow-primary h-10">
-                            <PlayCircle className="h-4 w-4" /> Start Session
+                      <div className="flex items-center gap-2 w-full md:w-auto">
+                        {store.sessions.length > 0 && (
+                          <Button 
+                            variant="outline" 
+                            className="flex-1 md:flex-none h-10 gap-2"
+                            onClick={() => setView('history')}
+                          >
+                            <History className="h-4 w-4" /> History
                           </Button>
-                        </DialogTrigger>
-                        <DialogContent className="bg-card border-border sm:max-w-[425px]">
-                          <DialogHeader>
-                            <DialogTitle>Start New Session</DialogTitle>
-                            <DialogDescription>
-                              Give your session a name to track it easily in your history.
-                            </DialogDescription>
-                          </DialogHeader>
-                          <div className="grid gap-4 py-4">
-                            <div className="space-y-2">
-                              <label htmlFor="name" className="text-xs font-medium text-muted-foreground uppercase">Session Name</label>
-                              <Input 
-                                id="name" 
-                                placeholder="e.g., Morning Scalping" 
-                                value={sessionNameInput} 
-                                onChange={(e) => setSessionNameInput(e.target.value)}
-                                className="bg-background border-border"
-                                onKeyDown={(e) => {
-                                  if (e.key === 'Enter') handleStartSession();
-                                }}
-                              />
-                            </div>
-                          </div>
-                          <DialogFooter>
-                            <Button 
-                              type="submit" 
-                              onClick={handleStartSession}
-                              className="w-full bg-primary hover:bg-primary/90"
-                            >
-                              Go Live
+                        )}
+                        <Dialog>
+                          <DialogTrigger asChild>
+                            <Button variant="default" className="flex-1 md:flex-none gap-2 bg-primary hover:bg-primary/90 glow-primary h-10">
+                              <PlayCircle className="h-4 w-4" /> Start Session
                             </Button>
-                          </DialogFooter>
-                        </DialogContent>
-                      </Dialog>
+                          </DialogTrigger>
+                          <DialogContent className="bg-card border-border sm:max-w-[425px]">
+                            <DialogHeader>
+                              <DialogTitle>Start New Session</DialogTitle>
+                              <DialogDescription>
+                                Give your session a name to track it easily in your history.
+                              </DialogDescription>
+                            </DialogHeader>
+                            <div className="grid gap-4 py-4">
+                              <div className="space-y-2">
+                                <label htmlFor="name" className="text-xs font-medium text-muted-foreground uppercase">Session Name</label>
+                                <Input 
+                                  id="name" 
+                                  placeholder="e.g., Morning Scalping" 
+                                  value={sessionNameInput} 
+                                  onChange={(e) => setSessionNameInput(e.target.value)}
+                                  className="bg-background border-border"
+                                  onKeyDown={(e) => {
+                                    if (e.key === 'Enter') handleStartSession();
+                                  }}
+                                />
+                              </div>
+                            </div>
+                            <DialogFooter>
+                              <Button 
+                                type="submit" 
+                                onClick={handleStartSession}
+                                className="w-full bg-primary hover:bg-primary/90"
+                              >
+                                Go Live
+                              </Button>
+                            </DialogFooter>
+                          </DialogContent>
+                        </Dialog>
+                      </div>
                     )}
                   </div>
                 </header>
@@ -1483,9 +1533,19 @@ export default function Dashboard() {
                                         {sessionPnL >= 0 ? '+' : ''}{currencySymbol}{sessionPnL.toFixed(2)}
                                       </div>
                                    </div>
-                                   <div className="text-right">
-                                      <p className="text-[10px] text-muted-foreground uppercase font-bold">Volume</p>
-                                      <p className="text-sm font-bold text-foreground">{session.trades.length} Trades</p>
+                                   <div className="flex flex-col gap-2">
+                                      <Button 
+                                        variant="outline" 
+                                        size="sm" 
+                                        className="gap-2 h-8 text-xs"
+                                        onClick={() => {
+                                          store.resumeSession(session.id);
+                                          setView('dashboard');
+                                        }}
+                                      >
+                                        <RotateCcw className="h-3 w-3" /> Resume
+                                      </Button>
+                                      <p className="text-[10px] text-muted-foreground text-right">{session.trades.length} Trades</p>
                                    </div>
                                 </div>
                               </CardContent>
