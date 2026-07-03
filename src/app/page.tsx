@@ -96,7 +96,7 @@ const QuickPercentTool = () => {
   const result = useMemo(() => {
     const b = parseFloat(baseNum);
     const p = parseFloat(percent);
-    if (isNaN(b) || isNaN(p)) return null;
+    if (isNaN(b) || iNaN(p)) return null;
     return (b * p) / 100;
   }, [baseNum, percent]);
 
@@ -304,7 +304,7 @@ const StrategySettings = ({ store, stats }: { store: any, stats: any }) => {
         <Slider 
           value={[store.walletDeductionPercent]} 
           min={0} 
-          max={10} 
+          max={20} 
           step={0.1}
           onValueChange={([val]) => store.setWalletDeductionPercent(val)}
         />
@@ -731,12 +731,26 @@ export default function Dashboard() {
       ? store.manualDrawdown 
       : (hwmDrawdown > 0 ? hwmDrawdown : 0);
     
-    const requiredProfitPerTrade = currentDrawdown > 0 
+    // Recovery Logic with Wallet Tax Compensation
+    const walletFactor = 1 - (store.walletDeductionPercent / 100);
+    
+    // The actual cash amount needed to recover drawdown per trade
+    const netRecoveryNeededPerTrade = currentDrawdown > 0 
       ? currentDrawdown / (store.recoveryTargetWins || 1) 
       : 0;
       
-    const recoveryStakeAdjustment = requiredProfitPerTrade / (store.riskRewardRatio || 1);
-    const nextStake = store.baseStake + recoveryStakeAdjustment;
+    // Grossed up recovery profit to account for future wallet tax
+    const grossRecoveryProfit = walletFactor > 0 
+      ? netRecoveryNeededPerTrade / walletFactor 
+      : netRecoveryNeededPerTrade;
+      
+    // Grossed up base profit to ensure the base win is also protected from tax
+    const grossBaseProfit = walletFactor > 0 
+      ? (store.baseStake * store.riskRewardRatio) / walletFactor 
+      : (store.baseStake * store.riskRewardRatio);
+
+    const nextStake = (grossBaseProfit + grossRecoveryProfit) / (store.riskRewardRatio || 1);
+    const recoveryStakeAdjustment = nextStake - store.baseStake;
     
     let riskLevel: 'low' | 'medium' | 'high' = 'low';
     if (currentDrawdown > 0) {
@@ -757,7 +771,8 @@ export default function Dashboard() {
       totalLoss: losses.reduce((sum, t) => sum + t.amount, 0),
       netPnL,
       currentDrawdown,
-      requiredProfitPerTrade,
+      grossRecoveryProfit,
+      grossBaseProfit,
       nextStake,
       recoveryStakeAdjustment,
       riskLevel,
@@ -984,16 +999,16 @@ export default function Dashboard() {
                            <div className="space-y-2">
                              <div className="flex justify-between items-center text-foreground">
                                <span>Base Profit Target:</span>
-                               <span className="font-mono font-bold">{currencySymbol}{(store.baseStake * store.riskRewardRatio).toFixed(2)}</span>
+                               <span className="font-mono font-bold">{currencySymbol}{stats.grossBaseProfit.toFixed(2)}</span>
                              </div>
                              <div className="flex justify-between items-center text-red-500">
                                <span>Recovery Component:</span>
-                               <span className="font-mono font-bold">+ {currencySymbol}{stats.requiredProfitPerTrade.toFixed(2)}</span>
+                               <span className="font-mono font-bold">+ {currencySymbol}{stats.grossRecoveryProfit.toFixed(2)}</span>
                              </div>
                              <Separator className="bg-border/50" />
                              <div className="flex justify-between items-center text-primary font-bold">
                                <span>Total Win Goal:</span>
-                               <span className="font-mono">{currencySymbol}{( (store.baseStake * store.riskRewardRatio) + stats.requiredProfitPerTrade ).toFixed(2)}</span>
+                               <span className="font-mono">{currencySymbol}{(stats.grossBaseProfit + stats.grossRecoveryProfit).toFixed(2)}</span>
                              </div>
                            </div>
                         </div>
