@@ -6,7 +6,9 @@ import { useState, useEffect } from 'react';
 export type Trade = {
   id: string;
   type: 'win' | 'loss';
-  amount: number;
+  amount: number; // The NET amount after deduction (used for P&L)
+  originalAmount: number; // The amount the user actually entered
+  deduction: number; // The amount moved to the wallet
   timestamp: Date;
 };
 
@@ -35,6 +37,9 @@ export type AppState = {
   riskAmountFixed: number;
   riskType: 'percentage' | 'amount';
   notes: string;
+  // Wallet System
+  walletBalance: number;
+  walletDeductionPercent: number;
 };
 
 const DEFAULT_STATE: AppState = {
@@ -50,7 +55,9 @@ const DEFAULT_STATE: AppState = {
   riskPerTradePercent: 1,
   riskAmountFixed: 1000,
   riskType: 'percentage',
-  notes: ''
+  notes: '',
+  walletBalance: 0,
+  walletDeductionPercent: 0,
 };
 
 export const CURRENCY_SYMBOLS: Record<CurrencyCode, string> = {
@@ -70,7 +77,7 @@ export function useRecoupStore() {
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('recouppro_state_v9');
+      const saved = localStorage.getItem('recouppro_state_v10');
       if (saved) {
         try {
           const parsed = JSON.parse(saved);
@@ -81,12 +88,22 @@ export function useRecoupStore() {
               ...s,
               startTime: new Date(s.startTime),
               endTime: s.endTime ? new Date(s.endTime) : undefined,
-              trades: (s.trades || []).map((t: any) => ({ ...t, timestamp: new Date(t.timestamp) }))
+              trades: (s.trades || []).map((t: any) => ({ 
+                ...t, 
+                timestamp: new Date(t.timestamp),
+                originalAmount: t.originalAmount ?? t.amount,
+                deduction: t.deduction ?? 0
+              }))
             })),
             activeSession: parsed.activeSession ? {
                ...parsed.activeSession,
                startTime: new Date(parsed.activeSession.startTime),
-               trades: (parsed.activeSession.trades || []).map((t: any) => ({ ...t, timestamp: new Date(t.timestamp) }))
+               trades: (parsed.activeSession.trades || []).map((t: any) => ({ 
+                 ...t, 
+                 timestamp: new Date(t.timestamp),
+                 originalAmount: t.originalAmount ?? t.amount,
+                 deduction: t.deduction ?? 0
+               }))
             } : null,
           });
         } catch (e) {
@@ -99,7 +116,7 @@ export function useRecoupStore() {
 
   useEffect(() => {
     if (isHydrated) {
-      localStorage.setItem('recouppro_state_v9', JSON.stringify(state));
+      localStorage.setItem('recouppro_state_v10', JSON.stringify(state));
     }
   }, [state, isHydrated]);
 
@@ -123,19 +140,23 @@ export function useRecoupStore() {
     }));
   };
 
-  const addTrade = (type: 'win' | 'loss', amount: number) => {
+  const addTrade = (type: 'win' | 'loss', inputAmount: number) => {
     if (!state.activeSession) return;
     
-    const newTrade: Trade = {
-      id: crypto.randomUUID(),
-      type,
-      amount,
-      timestamp: new Date(),
-    };
-
     setState(prev => {
+      const deduction = inputAmount * (prev.walletDeductionPercent / 100);
+      const netAmount = type === 'win' ? inputAmount - deduction : inputAmount + deduction;
+
+      const newTrade: Trade = {
+        id: crypto.randomUUID(),
+        type,
+        amount: netAmount,
+        originalAmount: inputAmount,
+        deduction,
+        timestamp: new Date(),
+      };
+
       // Logic for Recovery Target decrement:
-      // We calculate if we WERE in a drawdown before this trade
       const chronTrades = [
         ...prev.sessions.flatMap(s => s.trades),
         ...(prev.activeSession?.trades || [])
@@ -150,7 +171,7 @@ export function useRecoupStore() {
 
       const isActuallyInDrawdown = prev.useManualDrawdown 
         ? prev.manualDrawdown > 0 
-        : (peakPnL - runningPnL > 0);
+        : (peakPnL - (runningPnL + (type === 'win' ? netAmount : -netAmount)) > 0);
 
       let nextRecoveryTarget = prev.recoveryTargetWins;
       let nextManualDrawdown = prev.manualDrawdown;
@@ -162,9 +183,9 @@ export function useRecoupStore() {
 
       if (prev.useManualDrawdown) {
         if (type === 'win') {
-          nextManualDrawdown = Math.max(0, prev.manualDrawdown - amount);
+          nextManualDrawdown = Math.max(0, prev.manualDrawdown - netAmount);
         } else {
-          nextManualDrawdown = prev.manualDrawdown + amount;
+          nextManualDrawdown = prev.manualDrawdown + netAmount;
         }
       }
 
@@ -172,6 +193,7 @@ export function useRecoupStore() {
         ...prev,
         recoveryTargetWins: nextRecoveryTarget,
         manualDrawdown: nextManualDrawdown,
+        walletBalance: prev.walletBalance + deduction,
         activeSession: prev.activeSession ? {
           ...prev.activeSession,
           trades: [...prev.activeSession.trades, newTrade]
@@ -224,6 +246,10 @@ export function useRecoupStore() {
     setState(prev => ({ ...prev, notes: n }));
   };
 
+  const setWalletDeductionPercent = (n: number) => {
+    setState(prev => ({ ...prev, walletDeductionPercent: n }));
+  };
+
   const resetAllData = () => {
     setState(prev => ({
       ...DEFAULT_STATE,
@@ -238,9 +264,11 @@ export function useRecoupStore() {
       riskAmountFixed: prev.riskAmountFixed,
       riskType: prev.riskType,
       notes: prev.notes, 
+      walletDeductionPercent: prev.walletDeductionPercent,
       sessions: [],
       activeSession: null,
       manualDrawdown: 0,
+      walletBalance: 0,
     }));
   };
 
@@ -261,6 +289,7 @@ export function useRecoupStore() {
     setRiskAmountFixed,
     setRiskType,
     setNotes,
+    setWalletDeductionPercent,
     resetAllData
   };
 }

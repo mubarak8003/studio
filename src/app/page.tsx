@@ -34,6 +34,7 @@ import {
   AreaChart as ChartIcon,
   Hash,
   BarChart3,
+  PiggyBank,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -290,6 +291,29 @@ const StrategySettings = ({ store, stats }: { store: any, stats: any }) => {
         )}
       </div>
 
+      <div className="space-y-4 pt-4 border-t border-border/30">
+        <div className="flex justify-between items-center">
+          <label className="text-xs font-medium text-muted-foreground flex items-center gap-2">
+            <PiggyBank className="h-3 w-3" /> Wallet Savings (%)
+          </label>
+          <SmartNumericInput 
+            value={store.walletDeductionPercent} 
+            onChange={store.setWalletDeductionPercent}
+            className="w-16 h-7 text-xs bg-background text-right"
+          />
+        </div>
+        <Slider 
+          value={[store.walletDeductionPercent]} 
+          min={0} 
+          max={10} 
+          step={0.1}
+          onValueChange={([val]) => store.setWalletDeductionPercent(val)}
+        />
+        <p className="text-[10px] text-muted-foreground leading-tight italic">
+          Portion of every trade saved into the strategy wallet. This amount is automatically recovered in the next trades.
+        </p>
+      </div>
+
       <div className="space-y-3">
         <div className="flex justify-between items-center">
           <label className="text-xs font-medium text-muted-foreground flex items-center gap-2">
@@ -340,7 +364,7 @@ const StrategySettings = ({ store, stats }: { store: any, stats: any }) => {
             <AlertDialogHeader>
               <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
               <AlertDialogDescription>
-                This will permanently delete all your sessions and trade history. Your strategy notes 📝 will NOT be deleted.
+                This will permanently delete all your sessions, trade history, and wallet savings. Your strategy notes 📝 will NOT be deleted.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
@@ -697,7 +721,7 @@ export default function Dashboard() {
     
     chronTrades.forEach(t => {
       runningPnL += (t.type === 'win' ? t.amount : -t.amount);
-      totalTurnover += t.amount;
+      totalTurnover += t.originalAmount;
       if (runningPnL > peakPnL) peakPnL = runningPnL;
     });
 
@@ -760,7 +784,7 @@ export default function Dashboard() {
       const amount = (trade.type === 'win' ? trade.amount : -trade.amount);
       if (!daysMap[dayKey]) daysMap[dayKey] = { pnl: 0, turnover: 0 };
       daysMap[dayKey].pnl += amount;
-      daysMap[dayKey].turnover += trade.amount;
+      daysMap[dayKey].turnover += trade.originalAmount;
     });
 
     let runningBalance = 0;
@@ -1034,6 +1058,29 @@ export default function Dashboard() {
                   </Card>
 
                   <div className="space-y-6">
+                    <Card className="bg-card border-border overflow-hidden relative">
+                      <div className="absolute top-0 right-0 p-4 opacity-10">
+                        <PiggyBank className="h-12 w-12 text-primary" />
+                      </div>
+                      <CardHeader className="pb-2">
+                        <CardTitle className="text-sm font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+                          <Wallet className="h-4 w-4" /> Strategy Wallet
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="text-3xl font-headline font-bold text-primary mb-1">
+                          {currencySymbol}{store.walletBalance.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                        </div>
+                        <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">Total Savings Secured</p>
+                        <div className="mt-4 pt-4 border-t border-border/30">
+                          <div className="flex justify-between items-center text-xs">
+                             <span className="text-muted-foreground">Automatic Deduction:</span>
+                             <span className="font-bold text-foreground">{store.walletDeductionPercent}%</span>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+
                     <Card className="bg-card border-border">
                       <CardHeader className="pb-2">
                         <CardTitle className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Session Performance</CardTitle>
@@ -1144,8 +1191,11 @@ export default function Dashboard() {
                                   {trade.type === 'win' ? <TrendingUp className="h-4 w-4" /> : <TrendingDown className="h-4 w-4" />}
                                 </div>
                                 <div>
-                                  <p className="text-sm font-semibold text-foreground">{currencySymbol}{trade.amount.toFixed(2)}</p>
-                                  <p className="text-[10px] text-muted-foreground">{trade.timestamp.toLocaleTimeString()}</p>
+                                  <p className="text-sm font-semibold text-foreground">{currencySymbol}{trade.originalAmount.toFixed(2)}</p>
+                                  <p className="text-[10px] text-muted-foreground flex items-center gap-1">
+                                    {trade.timestamp.toLocaleTimeString()} 
+                                    {trade.deduction > 0 && <span className="text-primary font-bold">• Wallet: {currencySymbol}{trade.deduction.toFixed(2)}</span>}
+                                  </p>
                                 </div>
                               </div>
                               <Badge variant="outline" className={cn(
@@ -1293,9 +1343,10 @@ export default function Dashboard() {
                                   {trade.type === 'win' ? <TrendingUp className="h-5 w-5" /> : <TrendingDown className="h-5 w-5" />}
                                 </div>
                                 <div>
-                                  <p className="text-lg font-bold text-foreground">{currencySymbol}{trade.amount.toFixed(2)}</p>
+                                  <p className="text-lg font-bold text-foreground">{currencySymbol}{trade.originalAmount.toFixed(2)}</p>
                                   <p className="text-xs text-muted-foreground">
                                     {trade.timestamp.toLocaleDateString()} at {trade.timestamp.toLocaleTimeString()}
+                                    {trade.deduction > 0 && <span className="ml-2 text-primary font-bold">Tax: {currencySymbol}{trade.deduction.toFixed(2)}</span>}
                                   </p>
                                 </div>
                               </div>
