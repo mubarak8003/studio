@@ -1,7 +1,7 @@
 
 "use client"
 
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { useRecoupStore, CURRENCY_SYMBOLS, CurrencyCode } from './lib/store';
 import { 
   TrendingUp, 
@@ -357,12 +357,20 @@ const StrategySettings = ({ store, stats }: { store: any, stats: any }) => {
 };
 
 const EquityCurveChart = ({ data, currencySymbol }: { data: any[], currencySymbol: string }) => {
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollLeft = scrollRef.current.scrollWidth;
+    }
+  }, [data]);
+
   if (data.length === 0) return null;
 
   const chartWidth = Math.max(100, (data.length / 40) * 100);
 
   return (
-    <ScrollArea className="w-full">
+    <div ref={scrollRef} className="w-full overflow-x-auto pb-4 scroll-smooth">
       <div style={{ width: `${chartWidth}%`, minWidth: '100%' }}>
         <div className="h-64 w-full">
           <ResponsiveContainer width="100%" height="100%">
@@ -398,18 +406,25 @@ const EquityCurveChart = ({ data, currencySymbol }: { data: any[], currencySymbo
           </ResponsiveContainer>
         </div>
       </div>
-      <ScrollBar orientation="horizontal" />
-    </ScrollArea>
+    </div>
   );
 };
 
 const CandlestickChart = ({ data, currencySymbol }: { data: any[], currencySymbol: string }) => {
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollLeft = scrollRef.current.scrollWidth;
+    }
+  }, [data]);
+
   if (data.length === 0) return null;
 
   const chartWidth = Math.max(100, (data.length / 40) * 100);
 
   return (
-    <ScrollArea className="w-full">
+    <div ref={scrollRef} className="w-full overflow-x-auto pb-4 scroll-smooth">
       <div style={{ width: `${chartWidth}%`, minWidth: '100%' }}>
         <div className="h-64 w-full">
           <ResponsiveContainer width="100%" height="100%">
@@ -469,8 +484,7 @@ const CandlestickChart = ({ data, currencySymbol }: { data: any[], currencySymbo
           </ResponsiveContainer>
         </div>
       </div>
-      <ScrollBar orientation="horizontal" />
-    </ScrollArea>
+    </div>
   );
 };
 
