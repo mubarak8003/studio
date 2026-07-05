@@ -19,6 +19,13 @@ export type Session = {
   endTime?: Date;
   trades: Trade[];
   isActive: boolean;
+  // Session-specific strategy settings
+  recoveryTargetWins: number;
+  baseStake: number;
+  riskRewardRatio: number;
+  manualDrawdown: number;
+  useManualDrawdown: boolean;
+  walletDeductionPercent: number;
 };
 
 export type CurrencyCode = 'USD' | 'INR' | 'EUR' | 'GBP' | 'AED' | 'SAR' | 'PKR' | 'BDT';
@@ -26,6 +33,7 @@ export type CurrencyCode = 'USD' | 'INR' | 'EUR' | 'GBP' | 'AED' | 'SAR' | 'PKR'
 export type AppState = {
   sessions: Session[];
   activeSession: Session | null;
+  // Global defaults for NEW sessions
   recoveryTargetWins: number;
   baseStake: number;
   riskRewardRatio: number;
@@ -78,7 +86,7 @@ export function useRecoupStore() {
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('recouppro_state_v11');
+      const saved = localStorage.getItem('recouppro_state_v12');
       if (saved) {
         try {
           const parsed = JSON.parse(saved);
@@ -121,7 +129,7 @@ export function useRecoupStore() {
 
   useEffect(() => {
     if (isHydrated) {
-      localStorage.setItem('recouppro_state_v11', JSON.stringify(state));
+      localStorage.setItem('recouppro_state_v12', JSON.stringify(state));
     }
   }, [state, isHydrated]);
 
@@ -133,9 +141,15 @@ export function useRecoupStore() {
         startTime: new Date(),
         trades: [],
         isActive: true,
+        // Copy current global defaults into the session
+        recoveryTargetWins: prev.recoveryTargetWins,
+        baseStake: prev.baseStake,
+        riskRewardRatio: prev.riskRewardRatio,
+        manualDrawdown: prev.manualDrawdown,
+        useManualDrawdown: prev.useManualDrawdown,
+        walletDeductionPercent: prev.walletDeductionPercent,
       };
 
-      // Only archive the previous session if it actually has trades
       let newSessions = prev.sessions;
       if (prev.activeSession && prev.activeSession.trades.length > 0) {
         newSessions = [{ ...prev.activeSession, isActive: false, endTime: new Date() }, ...prev.sessions];
@@ -152,12 +166,9 @@ export function useRecoupStore() {
   const stopSession = () => {
     setState(prev => {
       if (!prev.activeSession) return prev;
-      
-      // If it's empty, just discard it to avoid history clutter
       if (prev.activeSession.trades.length === 0) {
         return { ...prev, activeSession: null };
       }
-
       const finishedSession = { ...prev.activeSession, endTime: new Date(), isActive: false };
       return {
         ...prev,
@@ -173,8 +184,6 @@ export function useRecoupStore() {
       if (!sessionToResume) return prev;
       
       const updatedSessions = prev.sessions.filter(s => s.id !== sessionId);
-      
-      // Archive current if it has trades, otherwise discard it
       let newSessionsList = updatedSessions;
       if (prev.activeSession && prev.activeSession.trades.length > 0) {
         newSessionsList = [{ ...prev.activeSession, isActive: false, endTime: new Date() }, ...updatedSessions];
@@ -200,7 +209,10 @@ export function useRecoupStore() {
     if (!state.activeSession) return;
     
     setState(prev => {
-      const deduction = inputAmount * (prev.walletDeductionPercent / 100);
+      if (!prev.activeSession) return prev;
+      
+      const currentSession = prev.activeSession;
+      const deduction = inputAmount * (currentSession.walletDeductionPercent / 100);
       const netAmount = type === 'win' ? inputAmount - deduction : inputAmount + deduction;
 
       const newTrade: Trade = {
@@ -212,68 +224,100 @@ export function useRecoupStore() {
         timestamp: new Date(),
       };
 
-      const chronTrades = [
-        ...prev.sessions.flatMap(s => s.trades),
-        ...(prev.activeSession?.trades || [])
-      ].sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
+      const tradesAfterAdd = [...currentSession.trades, newTrade];
       
       let runningPnL = 0;
       let peakPnL = 0;
-      chronTrades.forEach(t => {
+      tradesAfterAdd.forEach(t => {
         runningPnL += (t.type === 'win' ? t.amount : -t.amount);
         if (runningPnL > peakPnL) peakPnL = runningPnL;
       });
 
-      const isActuallyInDrawdown = prev.useManualDrawdown 
-        ? prev.manualDrawdown > 0 
-        : (peakPnL - (runningPnL + (type === 'win' ? netAmount : -netAmount)) > 0);
+      const isActuallyInDrawdown = currentSession.useManualDrawdown 
+        ? currentSession.manualDrawdown > 0 
+        : (peakPnL - runningPnL > 0);
 
-      let nextRecoveryTarget = prev.recoveryTargetWins;
-      let nextManualDrawdown = prev.manualDrawdown;
+      let nextRecoveryTarget = currentSession.recoveryTargetWins;
+      let nextManualDrawdown = currentSession.manualDrawdown;
 
-      if (type === 'win' && isActuallyInDrawdown && prev.recoveryTargetWins > 0) {
-        nextRecoveryTarget = prev.recoveryTargetWins - 1;
+      if (type === 'win' && isActuallyInDrawdown && currentSession.recoveryTargetWins > 0) {
+        nextRecoveryTarget = currentSession.recoveryTargetWins - 1;
       }
 
-      if (prev.useManualDrawdown) {
+      if (currentSession.useManualDrawdown) {
         if (type === 'win') {
-          nextManualDrawdown = Math.max(0, prev.manualDrawdown - netAmount);
+          nextManualDrawdown = Math.max(0, currentSession.manualDrawdown - netAmount);
         } else {
-          nextManualDrawdown = prev.manualDrawdown + netAmount;
+          nextManualDrawdown = currentSession.manualDrawdown + netAmount;
         }
       }
 
       return {
         ...prev,
-        recoveryTargetWins: nextRecoveryTarget,
-        manualDrawdown: nextManualDrawdown,
         walletBalance: prev.walletBalance + deduction,
-        activeSession: prev.activeSession ? {
-          ...prev.activeSession,
-          trades: [...prev.activeSession.trades, newTrade]
-        } : null
+        activeSession: {
+          ...currentSession,
+          trades: tradesAfterAdd,
+          recoveryTargetWins: nextRecoveryTarget,
+          manualDrawdown: nextManualDrawdown,
+        }
       };
     });
   };
 
+  // Setters now update active session if it exists, otherwise they update the template
   const setRecoveryTargetWins = (n: number) => {
-    setState(prev => ({ ...prev, recoveryTargetWins: n }));
+    setState(prev => {
+      if (prev.activeSession) {
+        return { ...prev, activeSession: { ...prev.activeSession, recoveryTargetWins: n } };
+      }
+      return { ...prev, recoveryTargetWins: n };
+    });
   };
 
   const setBaseStake = (n: number) => {
-    setState(prev => ({ ...prev, baseStake: n }));
+    setState(prev => {
+      if (prev.activeSession) {
+        return { ...prev, activeSession: { ...prev.activeSession, baseStake: n } };
+      }
+      return { ...prev, baseStake: n };
+    });
   };
 
   const setRiskRewardRatio = (n: number) => {
-    setState(prev => ({ ...prev, riskRewardRatio: n }));
+    setState(prev => {
+      if (prev.activeSession) {
+        return { ...prev, activeSession: { ...prev.activeSession, riskRewardRatio: n } };
+      }
+      return { ...prev, riskRewardRatio: n };
+    });
   };
 
   const setManualDrawdown = (n: number) => {
-    setState(prev => ({ ...prev, manualDrawdown: n }));
+    setState(prev => {
+      if (prev.activeSession) {
+        return { ...prev, activeSession: { ...prev.activeSession, manualDrawdown: n } };
+      }
+      return { ...prev, manualDrawdown: n };
+    });
   };
 
   const setUseManualDrawdown = (b: boolean) => {
-    setState(prev => ({ ...prev, useManualDrawdown: b }));
+    setState(prev => {
+      if (prev.activeSession) {
+        return { ...prev, activeSession: { ...prev.activeSession, useManualDrawdown: b } };
+      }
+      return { ...prev, useManualDrawdown: b };
+    });
+  };
+
+  const setWalletDeductionPercent = (n: number) => {
+    setState(prev => {
+      if (prev.activeSession) {
+        return { ...prev, activeSession: { ...prev.activeSession, walletDeductionPercent: n } };
+      }
+      return { ...prev, walletDeductionPercent: n };
+    });
   };
 
   const setCurrency = (c: CurrencyCode) => {
@@ -298,10 +342,6 @@ export function useRecoupStore() {
 
   const setNotes = (n: string) => {
     setState(prev => ({ ...prev, notes: n }));
-  };
-
-  const setWalletDeductionPercent = (n: number) => {
-    setState(prev => ({ ...prev, walletDeductionPercent: n }));
   };
 
   const resetAllData = () => {

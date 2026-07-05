@@ -232,6 +232,9 @@ const SmartNumericInput = ({
 
 const StrategySettings = ({ store, stats }: { store: any, stats: any }) => {
   const currencySymbol = CURRENCY_SYMBOLS[store.currency as CurrencyCode];
+  
+  // Use active session settings if available, otherwise global defaults
+  const settings = store.activeSession || store;
 
   return (
     <div className="space-y-6 pb-20 md:pb-0">
@@ -259,7 +262,7 @@ const StrategySettings = ({ store, stats }: { store: any, stats: any }) => {
       <div className="space-y-3">
         <label className="text-xs font-medium text-muted-foreground">Base Stake ({currencySymbol})</label>
         <SmartNumericInput 
-          value={store.baseStake} 
+          value={settings.baseStake} 
           onChange={store.setBaseStake}
           className="bg-background border-border"
         />
@@ -272,7 +275,7 @@ const StrategySettings = ({ store, stats }: { store: any, stats: any }) => {
           </label>
           <div className="flex items-center gap-1">
             <SmartNumericInput 
-              value={store.riskRewardRatio} 
+              value={settings.riskRewardRatio} 
               onChange={store.setRiskRewardRatio}
               className="w-20 h-7 text-xs bg-background text-right"
             />
@@ -280,7 +283,7 @@ const StrategySettings = ({ store, stats }: { store: any, stats: any }) => {
           </div>
         </div>
         <Slider 
-          value={[store.riskRewardRatio]} 
+          value={[settings.riskRewardRatio]} 
           min={0.1} 
           max={5} 
           step={0.01}
@@ -294,16 +297,16 @@ const StrategySettings = ({ store, stats }: { store: any, stats: any }) => {
             <PenLine className="h-3 w-3" /> Manual Recovery
           </label>
           <Switch 
-            checked={store.useManualDrawdown} 
+            checked={settings.useManualDrawdown} 
             onCheckedChange={store.setUseManualDrawdown} 
           />
         </div>
         
-        {store.useManualDrawdown && (
+        {settings.useManualDrawdown && (
           <div className="space-y-2">
             <label className="text-[10px] text-muted-foreground uppercase">Loss to Recover ({currencySymbol})</label>
             <SmartNumericInput 
-              value={store.manualDrawdown} 
+              value={settings.manualDrawdown} 
               onChange={store.setManualDrawdown}
               placeholder="Enter amount..."
               className="bg-background border-border h-8 text-xs"
@@ -318,13 +321,13 @@ const StrategySettings = ({ store, stats }: { store: any, stats: any }) => {
             <Wallet className="h-3 w-3" /> Wallet Savings (%)
           </label>
           <SmartNumericInput 
-            value={store.walletDeductionPercent} 
+            value={settings.walletDeductionPercent} 
             onChange={store.setWalletDeductionPercent}
             className="w-16 h-7 text-xs bg-background text-right"
           />
         </div>
         <Slider 
-          value={[store.walletDeductionPercent]} 
+          value={[settings.walletDeductionPercent]} 
           min={0} 
           max={20} 
           step={0.1}
@@ -341,13 +344,13 @@ const StrategySettings = ({ store, stats }: { store: any, stats: any }) => {
             <Target className="h-3 w-3" /> Recovery Trades
           </label>
           <SmartNumericInput 
-            value={store.recoveryTargetWins} 
+            value={settings.recoveryTargetWins} 
             onChange={store.setRecoveryTargetWins}
             className="w-16 h-7 text-xs bg-background text-right"
           />
         </div>
         <Slider 
-          value={[store.recoveryTargetWins]} 
+          value={[settings.recoveryTargetWins]} 
           min={1} 
           max={30} 
           step={1}
@@ -732,46 +735,46 @@ export default function Dashboard() {
     setMounted(true);
   }, []);
 
-  // Global statistics for Recovery Engine (Drawdown tracking across all sessions)
-  const globalStats = useMemo(() => {
-    const chronTrades = [
-      ...store.sessions.flatMap(s => s.trades),
-      ...(store.activeSession?.trades || [])
-    ].sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
+  // Performance stats based on the ACTIVE SESSION or templates if no session is active
+  const activeSessionStats = useMemo(() => {
+    const s = store.activeSession;
+    const trades = s?.trades || [];
+    const chronTrades = [...trades].sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
     
+    // Recovery stats for THIS session only
     let runningPnL = 0;
     let peakPnL = 0;
-    let totalTurnover = 0;
-    
     chronTrades.forEach(t => {
       runningPnL += (t.type === 'win' ? t.amount : -t.amount);
-      totalTurnover += t.originalAmount;
       if (runningPnL > peakPnL) peakPnL = runningPnL;
     });
 
     const netPnL = runningPnL;
-    const hwmDrawdown = peakPnL - netPnL;
+    const sessionDrawdown = peakPnL - netPnL;
     
-    const currentDrawdown = store.useManualDrawdown 
-      ? store.manualDrawdown 
-      : (hwmDrawdown > 0 ? hwmDrawdown : 0);
+    // Use session-specific settings or global defaults
+    const currentDrawdown = s 
+      ? (s.useManualDrawdown ? s.manualDrawdown : (sessionDrawdown > 0 ? sessionDrawdown : 0))
+      : (store.useManualDrawdown ? store.manualDrawdown : 0);
     
-    const walletFactor = 1 - (store.walletDeductionPercent / 100);
+    const settings = s || store;
+    
+    const walletFactor = 1 - (settings.walletDeductionPercent / 100);
     const safeWalletFactor = walletFactor > 0 ? walletFactor : 1;
     
-    const netRecoveryNeededPerTrade = currentDrawdown / (store.recoveryTargetWins || 1);
-    const totalNetProfitNeeded = (store.baseStake * store.riskRewardRatio) + netRecoveryNeededPerTrade;
+    const netRecoveryNeededPerTrade = currentDrawdown / (settings.recoveryTargetWins || 1);
+    const totalNetProfitNeeded = (settings.baseStake * settings.riskRewardRatio) + netRecoveryNeededPerTrade;
     const totalGrossProfitNeeded = totalNetProfitNeeded / safeWalletFactor;
     
-    const nextStake = totalGrossProfitNeeded / (store.riskRewardRatio || 1);
-    const grossBaseProfit = (store.baseStake * store.riskRewardRatio) / safeWalletFactor;
+    const nextStake = totalGrossProfitNeeded / (settings.riskRewardRatio || 1);
+    const grossBaseProfit = (settings.baseStake * settings.riskRewardRatio) / safeWalletFactor;
     const grossRecoveryProfit = netRecoveryNeededPerTrade / safeWalletFactor;
 
-    const recoveryStakeAdjustment = nextStake - store.baseStake;
+    const recoveryStakeAdjustment = nextStake - settings.baseStake;
     
     let riskLevel: 'low' | 'medium' | 'high' = 'low';
     if (currentDrawdown > 0) {
-      const recoveryRatio = recoveryStakeAdjustment / store.baseStake;
+      const recoveryRatio = recoveryStakeAdjustment / settings.baseStake;
       if (recoveryRatio > 2) riskLevel = 'high';
       else if (recoveryRatio > 0.5) riskLevel = 'medium';
     }
@@ -786,75 +789,26 @@ export default function Dashboard() {
       nextStake,
       recoveryStakeAdjustment,
       riskLevel,
-      totalTurnover,
-      winRate: chronTrades.length > 0 ? (wins.length / chronTrades.length) * 100 : 0,
-      avgWin: wins.length > 0 ? wins.reduce((sum, t) => sum + t.amount, 0) / wins.length : 0,
-      avgLoss: losses.length > 0 ? losses.reduce((sum, t) => sum + t.amount, 0) / losses.length : 0,
-      allTrades: chronTrades,
-    };
-  }, [store]);
-
-  // Session-specific statistics for Dashboard Display
-  const sessionStats = useMemo(() => {
-    const activeTrades = store.activeSession?.trades || [];
-    const chronTrades = [...activeTrades].sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
-    
-    const wins = chronTrades.filter(t => t.type === 'win');
-    const losses = chronTrades.filter(t => t.type === 'loss');
-    
-    let runningPnL = 0;
-    let peakPnL = 0;
-    chronTrades.forEach(t => {
-      runningPnL += (t.type === 'win' ? t.amount : -t.amount);
-      if (runningPnL > peakPnL) peakPnL = runningPnL;
-    });
-
-    const netPnL = runningPnL;
-    const sessionDrawdown = peakPnL - netPnL;
-    const totalTurnover = chronTrades.reduce((acc, t) => acc + t.originalAmount, 0);
-
-    return {
-      allTrades: [...chronTrades].reverse(),
-      wins,
-      losses,
       netPnL,
-      currentDrawdown: sessionDrawdown > 0 ? sessionDrawdown : 0,
-      totalTurnover,
       totalTrades: chronTrades.length,
       winRate: chronTrades.length > 0 ? (wins.length / chronTrades.length) * 100 : 0,
       avgWin: wins.length > 0 ? wins.reduce((sum, t) => sum + t.amount, 0) / wins.length : 0,
       avgLoss: losses.length > 0 ? losses.reduce((sum, t) => sum + t.amount, 0) / losses.length : 0,
+      allTrades: [...chronTrades].reverse(),
+      wins,
+      losses,
     };
-  }, [store.activeSession]);
+  }, [store]);
 
-  const tradeEquityData = useMemo(() => {
+  // Global history stats for History Tab only
+  const globalHistoryStats = useMemo(() => {
+    const chronTrades = [...store.sessions.flatMap(s => s.trades), ...(store.activeSession?.trades || [])]
+      .sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
+    
+    let totalTurnover = chronTrades.reduce((acc, t) => acc + t.originalAmount, 0);
+    
     let balance = 0;
-    const activeTrades = store.activeSession?.trades || [];
-    const chronTrades = [...activeTrades].sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
-
-    return chronTrades.map((trade, index) => {
-      const open = balance;
-      balance += (trade.type === 'win' ? trade.amount : -trade.amount);
-      const close = balance;
-      return {
-        index: index + 1,
-        name: trade.timestamp.toLocaleDateString() + ' ' + trade.timestamp.toLocaleTimeString(),
-        balance: balance,
-        open,
-        close,
-        high: Math.max(open, close),
-        low: Math.min(open, close),
-        candleHeight: Math.abs(close - open),
-      };
-    });
-  }, [store.activeSession]);
-
-  // Global history stats for charts/summaries
-  const historyEquityData = useMemo(() => {
-    let balance = 0;
-    const chronTrades = [...globalStats.allTrades].sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
-
-    return chronTrades.map((trade, index) => {
+    const equityData = chronTrades.map((trade, index) => {
       const open = balance;
       balance += (trade.type === 'win' ? trade.amount : -trade.amount);
       const close = balance;
@@ -869,19 +823,47 @@ export default function Dashboard() {
         candleHeight: Math.abs(close - open),
       };
     });
-  }, [globalStats.allTrades]);
+
+    return {
+      allTrades: chronTrades,
+      totalTurnover,
+      equityData,
+    };
+  }, [store]);
+
+  const activeSessionEquityData = useMemo(() => {
+    let balance = 0;
+    const trades = store.activeSession?.trades || [];
+    const chronTrades = [...trades].sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
+
+    return chronTrades.map((trade, index) => {
+      const open = balance;
+      balance += (trade.type === 'win' ? trade.amount : -trade.amount);
+      const close = balance;
+      return {
+        index: index + 1,
+        name: trade.timestamp.toLocaleTimeString(),
+        balance: balance,
+        open,
+        close,
+        high: Math.max(open, close),
+        low: Math.min(open, close),
+        candleHeight: Math.abs(close - open),
+      };
+    });
+  }, [store.activeSession]);
 
   const dailySummaries = useMemo(() => {
     const groups: Record<string, { turnover: number, netChange: number, count: number }> = {};
-    globalStats.allTrades.forEach(trade => {
-      const day = trade.timestamp.toLocaleDateString('en-CA'); // YYYY-MM-DD
+    globalHistoryStats.allTrades.forEach(trade => {
+      const day = trade.timestamp.toLocaleDateString('en-CA');
       if (!groups[day]) groups[day] = { turnover: 0, netChange: 0, count: 0 };
       groups[day].turnover += trade.originalAmount;
       groups[day].netChange += (trade.type === 'win' ? trade.amount : -trade.amount);
       groups[day].count += 1;
     });
     return Object.entries(groups).map(([date, stats]) => ({ date, ...stats })).reverse();
-  }, [globalStats.allTrades]);
+  }, [globalHistoryStats.allTrades]);
 
   const handleAddTrade = (type: 'win' | 'loss') => {
     const amount = parseFloat(tradeAmount);
@@ -900,6 +882,7 @@ export default function Dashboard() {
   if (!mounted) return null;
 
   const currencySymbol = CURRENCY_SYMBOLS[store.currency as CurrencyCode];
+  const activeSettings = store.activeSession || store;
 
   const TradeLogItem = ({ trade }: { trade: any }) => (
     <div className={cn(
@@ -979,7 +962,7 @@ export default function Dashboard() {
                         <Settings2 className="h-4 w-4 text-muted-foreground" />
                         <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Strategy Engine</h3>
                       </div>
-                      <StrategySettings store={store} stats={globalStats} />
+                      <StrategySettings store={store} stats={activeSessionStats} />
                     </div>
                   )}
                 </div>
@@ -1022,7 +1005,7 @@ export default function Dashboard() {
                   <Settings2 className="h-4 w-4 text-muted-foreground" />
                   <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Strategy Engine</h3>
                 </div>
-                <StrategySettings store={store} stats={globalStats} />
+                <StrategySettings store={store} stats={activeSessionStats} />
               </div>
             </>
           )}
@@ -1108,7 +1091,7 @@ export default function Dashboard() {
                           <DialogContent className="bg-card border-border sm:max-w-[425px] rounded-2xl p-0 overflow-hidden">
                             <div className="p-8 space-y-8">
                               <div className="text-center space-y-2">
-                                <DialogTitle className="text-2xl font-bold">Start New Session</DialogTitle>
+                                <DialogTitle className="text-2xl font-bold uppercase tracking-tight">Start New Session</DialogTitle>
                                 <DialogDescription className="text-muted-foreground">
                                   Give your session a name to track it easily in your history.
                                 </DialogDescription>
@@ -1155,19 +1138,21 @@ export default function Dashboard() {
                         <Calculator className="h-5 w-5" /> Recommended Entry
                       </CardTitle>
                       <CardDescription className="text-xs md:text-sm">
-                        Based on target of <b>{currencySymbol}{globalStats.currentDrawdown.toFixed(2)}</b> in <b>{store.recoveryTargetWins}</b> trades
+                        Based on target of <b>{currencySymbol}{activeSessionStats.currentDrawdown.toFixed(2)}</b> in <b>{activeSettings.recoveryTargetWins}</b> trades
                       </CardDescription>
                     </CardHeader>
                     <CardContent>
                       <div className="flex flex-col items-center justify-center py-6 md:py-8 border-b border-border/30 mb-6">
                         <div className="text-6xl md:text-8xl font-headline font-bold text-foreground transition-all duration-300">
-                          {currencySymbol}{globalStats.nextStake.toFixed(2)}
+                          {currencySymbol}{activeSessionStats.nextStake.toFixed(2)}
                         </div>
                         <p className="text-xs text-muted-foreground mt-2 uppercase tracking-widest font-semibold">Total Trade Amount</p>
                         <div className="mt-4 flex flex-col items-center gap-2">
-                          <Badge variant={globalStats.currentDrawdown > 0 ? "destructive" : "secondary"}>
-                            {store.useManualDrawdown ? 'Manual Target: ' : 'Recovery Target: '}{currencySymbol}{globalStats.currentDrawdown.toFixed(2)}
-                          </Badge>
+                          {activeSessionStats.currentDrawdown > 0 && (
+                            <div className="bg-red-500 text-white px-4 py-1.5 rounded-full text-xs font-bold shadow-md animate-in fade-in zoom-in">
+                              {activeSettings.useManualDrawdown ? 'Manual Target: ' : 'Recovery Target: '}{currencySymbol}{activeSessionStats.currentDrawdown.toFixed(2)}
+                            </div>
+                          )}
                         </div>
                       </div>
 
@@ -1179,16 +1164,16 @@ export default function Dashboard() {
                            <div className="space-y-2">
                              <div className="flex justify-between items-center text-foreground">
                                <span>Base Profit Target:</span>
-                               <span className="font-mono font-bold">{currencySymbol}{globalStats.grossBaseProfit.toFixed(2)}</span>
+                               <span className="font-mono font-bold">{currencySymbol}{activeSessionStats.grossBaseProfit.toFixed(2)}</span>
                              </div>
                              <div className="flex justify-between items-center text-red-500">
                                <span>Recovery Component:</span>
-                               <span className="font-mono font-bold">+ {currencySymbol}{globalStats.grossRecoveryProfit.toFixed(2)}</span>
+                               <span className="font-mono font-bold">+ {currencySymbol}{activeSessionStats.grossRecoveryProfit.toFixed(2)}</span>
                              </div>
                              <Separator className="bg-border/50" />
                              <div className="flex justify-between items-center text-primary font-bold">
                                <span>Total Win Goal:</span>
-                               <span className="font-mono">{currencySymbol}{(globalStats.grossBaseProfit + globalStats.grossRecoveryProfit).toFixed(2)}</span>
+                               <span className="font-mono">{currencySymbol}{(activeSessionStats.grossBaseProfit + activeSessionStats.grossRecoveryProfit).toFixed(2)}</span>
                              </div>
                            </div>
                         </div>
@@ -1200,14 +1185,14 @@ export default function Dashboard() {
                            <div className="space-y-2">
                              <div className="flex justify-between items-center text-foreground">
                                <span>Base Investment:</span>
-                               <span className="font-mono">{currencySymbol}{store.baseStake.toFixed(2)}</span>
+                               <span className="font-mono">{currencySymbol}{activeSettings.baseStake.toFixed(2)}</span>
                              </div>
                              <div className="flex justify-between items-center text-accent font-bold">
                                <span>Recovery Adjustment:</span>
-                               <span className="font-mono">+ {currencySymbol}{globalStats.recoveryStakeAdjustment.toFixed(2)}</span>
+                               <span className="font-mono">+ {currencySymbol}{activeSessionStats.recoveryStakeAdjustment.toFixed(2)}</span>
                              </div>
                              <div className="text-[10px] text-muted-foreground italic mt-2">
-                               Calculation: (Target / {store.riskRewardRatio} RR)
+                               Calculation: (Target / {activeSettings.riskRewardRatio} RR)
                              </div>
                            </div>
                         </div>
@@ -1269,7 +1254,7 @@ export default function Dashboard() {
                         <div className="mt-4 pt-4 border-t border-border/30">
                           <div className="flex justify-between items-center text-xs">
                              <span className="text-muted-foreground">Automatic Deduction:</span>
-                             <span className="font-bold text-foreground">{store.walletDeductionPercent}%</span>
+                             <span className="font-bold text-foreground">{activeSettings.walletDeductionPercent}%</span>
                           </div>
                         </div>
                       </CardContent>
@@ -1283,12 +1268,12 @@ export default function Dashboard() {
                         <div className="space-y-1">
                           <div className="flex justify-between text-sm mb-1">
                             <span className="text-muted-foreground">Win Rate</span>
-                            <span className="font-bold text-foreground">{sessionStats.winRate.toFixed(1)}%</span>
+                            <span className="font-bold text-foreground">{activeSessionStats.winRate.toFixed(1)}%</span>
                           </div>
                           <div className="w-full bg-secondary rounded-full h-2 overflow-hidden">
                             <div 
                               className="bg-primary h-2 rounded-full glow-primary transition-all duration-1000" 
-                              style={{ width: `${sessionStats.winRate}%` }} 
+                              style={{ width: `${activeSessionStats.winRate}%` }} 
                             />
                           </div>
                         </div>
@@ -1296,14 +1281,14 @@ export default function Dashboard() {
                         <div className="grid grid-cols-2 gap-4">
                           <div className="space-y-1">
                             <span className="text-[10px] text-muted-foreground uppercase tracking-tight font-bold">Net Balance</span>
-                            <div className={cn("text-lg md:text-xl font-headline font-bold", sessionStats.netPnL >= 0 ? "text-green-500" : "text-red-500")}>
-                              {sessionStats.netPnL >= 0 ? '+' : '-'}{currencySymbol}{Math.abs(sessionStats.netPnL).toFixed(2)}
+                            <div className={cn("text-lg md:text-xl font-headline font-bold", activeSessionStats.netPnL >= 0 ? "text-green-500" : "text-red-500")}>
+                              {activeSessionStats.netPnL >= 0 ? '+' : '-'}{currencySymbol}{Math.abs(activeSessionStats.netPnL).toFixed(2)}
                             </div>
                           </div>
                           <div className="space-y-1 text-right">
                             <span className="text-[10px] text-muted-foreground uppercase tracking-tight font-bold">Current Drawdown</span>
                             <div className="text-lg md:text-xl font-headline font-bold text-red-500">
-                              {currencySymbol}{sessionStats.currentDrawdown.toFixed(2)}
+                              {currencySymbol}{activeSessionStats.currentDrawdown.toFixed(2)}
                             </div>
                           </div>
                         </div>
@@ -1313,17 +1298,17 @@ export default function Dashboard() {
                         <div className="flex items-center gap-3">
                           <div className="flex-1 flex justify-between items-center text-xs p-2 rounded bg-green-500/5 border border-green-500/10 text-green-600 font-bold">
                             <span>Wins</span>
-                            <span>{sessionStats.wins.length}</span>
+                            <span>{activeSessionStats.wins.length}</span>
                           </div>
                           
                           <div className="flex flex-col items-center justify-center px-1 text-[10px] font-bold text-muted-foreground/50">
                              <span className="leading-none">Diff</span>
-                             <span className="leading-none">{Math.abs(sessionStats.wins.length - sessionStats.losses.length)}</span>
+                             <span className="leading-none">{Math.abs(activeSessionStats.wins.length - activeSessionStats.losses.length)}</span>
                           </div>
 
                           <div className="flex-1 flex justify-between items-center text-xs p-2 rounded bg-red-500/5 border border-red-500/10 text-red-600 font-bold">
                             <span>Losses</span>
-                            <span>{sessionStats.losses.length}</span>
+                            <span>{activeSessionStats.losses.length}</span>
                           </div>
                         </div>
 
@@ -1332,24 +1317,24 @@ export default function Dashboard() {
                             <div className="flex items-center gap-2 text-green-600 font-medium">
                               <Plus className="h-3 w-3" /> Avg Win
                             </div>
-                            <span className="font-mono">{currencySymbol}{sessionStats.avgWin.toFixed(2)}</span>
+                            <span className="font-mono">{currencySymbol}{activeSessionStats.avgWin.toFixed(2)}</span>
                           </div>
                           <div className="flex justify-between items-center text-xs">
                             <div className="flex items-center gap-2 text-red-600 font-medium">
                               <Minus className="h-3 w-3" /> Avg Loss
                             </div>
-                            <span className="font-mono">{currencySymbol}{sessionStats.avgLoss.toFixed(2)}</span>
+                            <span className="font-mono">{currencySymbol}{activeSessionStats.avgLoss.toFixed(2)}</span>
                           </div>
                         </div>
 
                         <div className="grid grid-cols-2 gap-4 pt-2">
                           <div className="space-y-1">
                             <span className="text-[10px] text-muted-foreground uppercase font-bold">Total Trades</span>
-                            <div className="text-sm font-bold text-primary">{sessionStats.totalTrades}</div>
+                            <div className="text-sm font-bold text-primary">{activeSessionStats.totalTrades}</div>
                           </div>
                           <div className="space-y-1 text-right">
-                            <span className="text-[10px] text-muted-foreground uppercase font-bold">Total Turnover</span>
-                            <div className="text-sm font-bold text-foreground">{currencySymbol}{sessionStats.totalTurnover.toLocaleString()}</div>
+                            <span className="text-[10px] text-muted-foreground uppercase font-bold">Session P/L</span>
+                            <div className="text-sm font-bold text-foreground">{currencySymbol}{activeSessionStats.netPnL.toLocaleString()}</div>
                           </div>
                         </div>
                       </CardContent>
@@ -1365,7 +1350,7 @@ export default function Dashboard() {
                       <CardHeader className="flex flex-row items-center justify-between">
                         <div>
                           <CardTitle className="text-lg text-foreground">Trade Log</CardTitle>
-                          <CardDescription className="text-xs">Recent entries</CardDescription>
+                          <CardDescription className="text-xs">Session entries</CardDescription>
                         </div>
                         <Button variant="outline" size="sm" onClick={() => setView('history')} className="text-xs bg-primary/10 text-primary border-primary/30 hover:bg-primary/20 rounded-xl px-4">
                           View All <ChevronRight className="h-4 w-4 ml-1" />
@@ -1374,13 +1359,13 @@ export default function Dashboard() {
                       <CardContent>
                         <ScrollArea className="h-[400px] pr-2">
                           <div className="space-y-3">
-                            {sessionStats.allTrades.length === 0 && (
+                            {activeSessionStats.allTrades.length === 0 && (
                               <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
                                 <Activity className="h-8 w-8 mb-2 opacity-20" />
                                 <p className="text-sm">Waiting for first trade in session...</p>
                               </div>
                             )}
-                            {sessionStats.allTrades.map((trade) => (
+                            {activeSessionStats.allTrades.map((trade) => (
                               <TradeLogItem key={trade.id} trade={trade} />
                             ))}
                           </div>
@@ -1408,9 +1393,9 @@ export default function Dashboard() {
                       </CardHeader>
                       <CardContent className="p-4 md:p-6">
                         {chartType === 'line' ? (
-                          <EquityCurveChart data={tradeEquityData} currencySymbol={currencySymbol} />
+                          <EquityCurveChart data={activeSessionEquityData} currencySymbol={currencySymbol} />
                         ) : (
-                          <CandlestickChart data={tradeEquityData} currencySymbol={currencySymbol} />
+                          <CandlestickChart data={activeSessionEquityData} currencySymbol={currencySymbol} />
                         )}
                       </CardContent>
                     </Card>
@@ -1418,11 +1403,11 @@ export default function Dashboard() {
 
                   <div className="space-y-6">
                     <AICoachPanel 
-                      totalCurrentLoss={globalStats.currentDrawdown}
-                      recoveryTargetWins={store.recoveryTargetWins}
-                      recentWinRatePercentage={globalStats.winRate}
-                      averageWinAmount={globalStats.avgWin}
-                      averageLossAmount={globalStats.avgLoss}
+                      totalCurrentLoss={activeSessionStats.currentDrawdown}
+                      recoveryTargetWins={activeSettings.recoveryTargetWins}
+                      recentWinRatePercentage={activeSessionStats.winRate}
+                      averageWinAmount={activeSessionStats.avgWin}
+                      averageLossAmount={activeSessionStats.avgLoss}
                     />
 
                     <Card className="bg-card border-border">
@@ -1460,10 +1445,10 @@ export default function Dashboard() {
                   </div>
                   <div className="flex items-center gap-3">
                     <Badge variant="outline" className="h-9 px-4 border-border bg-card">
-                      {globalStats.allTrades.length} Trades
+                      {globalHistoryStats.allTrades.length} Trades
                     </Badge>
                     <Badge variant="outline" className="h-9 px-4 border-border bg-card">
-                      Turnover: {currencySymbol}{globalStats.totalTurnover.toLocaleString()}
+                      Turnover: {currencySymbol}{globalHistoryStats.totalTurnover.toLocaleString()}
                     </Badge>
                   </div>
                 </header>
@@ -1499,9 +1484,9 @@ export default function Dashboard() {
                       </CardHeader>
                       <CardContent className="p-4 md:p-6">
                         {chartType === 'line' ? (
-                          <EquityCurveChart data={historyEquityData} currencySymbol={currencySymbol} />
+                          <EquityCurveChart data={globalHistoryStats.equityData} currencySymbol={currencySymbol} />
                         ) : (
-                          <CandlestickChart data={historyEquityData} currencySymbol={currencySymbol} />
+                          <CandlestickChart data={globalHistoryStats.equityData} currencySymbol={currencySymbol} />
                         )}
                       </CardContent>
                     </Card>
@@ -1541,7 +1526,7 @@ export default function Dashboard() {
                         FULL AUDIT LOG
                       </h3>
                       <div className="space-y-3">
-                        {[...globalStats.allTrades].reverse().map((trade) => (
+                        {[...globalHistoryStats.allTrades].reverse().map((trade) => (
                           <TradeLogItem key={trade.id} trade={trade} />
                         ))}
                       </div>
