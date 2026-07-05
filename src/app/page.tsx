@@ -86,7 +86,6 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { ModeToggle } from '@/components/mode-toggle';
-import { AICoachPanel } from '@/components/recoup/ai-coach-panel';
 import { cn } from '@/lib/utils';
 import {
   AreaChart,
@@ -1405,14 +1404,6 @@ export default function Dashboard() {
                   </div>
 
                   <div className="space-y-6">
-                    <AICoachPanel 
-                      totalCurrentLoss={activeSessionStats.currentDrawdown}
-                      recoveryTargetWins={activeSettings.recoveryTargetWins}
-                      recentWinRatePercentage={activeSessionStats.winRate}
-                      averageWinAmount={activeSessionStats.avgWin}
-                      averageLossAmount={activeSessionStats.avgLoss}
-                    />
-
                     <Card className="bg-card border-border">
                       <CardHeader>
                         <CardTitle className="text-lg flex items-center gap-2 text-foreground">
