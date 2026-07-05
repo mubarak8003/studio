@@ -744,9 +744,11 @@ export default function Dashboard() {
     // Recovery stats for THIS session only
     let runningPnL = 0;
     let peakPnL = 0;
+    let sessionTurnover = 0;
     chronTrades.forEach(t => {
       runningPnL += (t.type === 'win' ? t.amount : -t.amount);
       if (runningPnL > peakPnL) peakPnL = runningPnL;
+      sessionTurnover += t.originalAmount;
     });
 
     const netPnL = runningPnL;
@@ -790,6 +792,7 @@ export default function Dashboard() {
       recoveryStakeAdjustment,
       riskLevel,
       netPnL,
+      sessionTurnover,
       totalTrades: chronTrades.length,
       winRate: chronTrades.length > 0 ? (wins.length / chronTrades.length) * 100 : 0,
       avgWin: wins.length > 0 ? wins.reduce((sum, t) => sum + t.amount, 0) / wins.length : 0,
@@ -1333,8 +1336,8 @@ export default function Dashboard() {
                             <div className="text-sm font-bold text-primary">{activeSessionStats.totalTrades}</div>
                           </div>
                           <div className="space-y-1 text-right">
-                            <span className="text-[10px] text-muted-foreground uppercase font-bold">Session P/L</span>
-                            <div className="text-sm font-bold text-foreground">{currencySymbol}{activeSessionStats.netPnL.toLocaleString()}</div>
+                            <span className="text-[10px] text-muted-foreground uppercase font-bold">Turnover</span>
+                            <div className="text-sm font-bold text-foreground">{currencySymbol}{activeSessionStats.sessionTurnover.toLocaleString()}</div>
                           </div>
                         </div>
                       </CardContent>
