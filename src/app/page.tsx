@@ -232,7 +232,6 @@ const SmartNumericInput = ({
 const StrategySettings = ({ store, stats }: { store: any, stats: any }) => {
   const currencySymbol = CURRENCY_SYMBOLS[store.currency as CurrencyCode];
   
-  // Use active session settings if available, otherwise global defaults
   const settings = store.activeSession || store;
 
   return (
@@ -516,9 +515,7 @@ const CandlestickChart = ({ data, currencySymbol }: { data: any[], currencySymbo
                 const fill = close >= open ? "hsl(var(--primary))" : "hsl(var(--destructive))";
                 return (
                   <g>
-                    {/* Wick */}
                     <line x1={x + width / 2} y1={y} x2={x + width / 2} y2={y + height} stroke={fill} strokeWidth={1} />
-                    {/* Body */}
                     <rect x={x} y={y} width={width} height={Math.max(2, height)} fill={fill} rx={1} />
                   </g>
                 );
@@ -734,13 +731,11 @@ export default function Dashboard() {
     setMounted(true);
   }, []);
 
-  // Performance stats based on the ACTIVE SESSION or templates if no session is active
   const activeSessionStats = useMemo(() => {
     const s = store.activeSession;
     const trades = s?.trades || [];
     const chronTrades = [...trades].sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
     
-    // Recovery stats for THIS session only
     let runningPnL = 0;
     let peakPnL = 0;
     let sessionTurnover = 0;
@@ -753,7 +748,6 @@ export default function Dashboard() {
     const netPnL = runningPnL;
     const sessionDrawdown = peakPnL - netPnL;
     
-    // Use session-specific settings or global defaults
     const currentDrawdown = s 
       ? (s.useManualDrawdown ? s.manualDrawdown : (sessionDrawdown > 0 ? sessionDrawdown : 0))
       : (store.useManualDrawdown ? store.manualDrawdown : 0);
@@ -802,7 +796,6 @@ export default function Dashboard() {
     };
   }, [store]);
 
-  // Global history stats for History Tab only
   const globalHistoryStats = useMemo(() => {
     const chronTrades = [...store.sessions.flatMap(s => s.trades), ...(store.activeSession?.trades || [])]
       .sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
@@ -856,12 +849,13 @@ export default function Dashboard() {
   }, [store.activeSession]);
 
   const dailySummaries = useMemo(() => {
-    const groups: Record<string, { turnover: number, netChange: number, count: number }> = {};
+    const groups: Record<string, { turnover: number, netChange: number, walletAmount: number, count: number }> = {};
     globalHistoryStats.allTrades.forEach(trade => {
       const day = trade.timestamp.toLocaleDateString('en-CA');
-      if (!groups[day]) groups[day] = { turnover: 0, netChange: 0, count: 0 };
+      if (!groups[day]) groups[day] = { turnover: 0, netChange: 0, walletAmount: 0, count: 0 };
       groups[day].turnover += trade.originalAmount;
       groups[day].netChange += (trade.type === 'win' ? trade.amount : -trade.amount);
+      groups[day].walletAmount += trade.deduction;
       groups[day].count += 1;
     });
     return Object.entries(groups).map(([date, stats]) => ({ date, ...stats })).reverse();
@@ -1493,7 +1487,7 @@ export default function Dashboard() {
                         {dailySummaries.map((day) => (
                           <Card key={day.date} className="bg-card border-border">
                             <CardContent className="p-4 space-y-3">
-                              <div className="grid grid-cols-3 gap-2">
+                              <div className="grid grid-cols-4 gap-2">
                                 <div className="space-y-1">
                                   <span className="text-[10px] text-muted-foreground uppercase font-bold">DATE</span>
                                   <p className="text-xs font-mono font-bold whitespace-nowrap">{day.date}</p>
@@ -1501,6 +1495,10 @@ export default function Dashboard() {
                                 <div className="space-y-1 text-center">
                                   <span className="text-[10px] text-muted-foreground uppercase font-bold">TURNOVER</span>
                                   <p className="text-xs font-mono font-bold">{currencySymbol}{day.turnover.toLocaleString()}</p>
+                                </div>
+                                <div className="space-y-1 text-center">
+                                  <span className="text-[10px] text-primary uppercase font-bold">WALLET</span>
+                                  <p className="text-xs font-mono font-bold text-primary">{currencySymbol}{day.walletAmount.toFixed(2)}</p>
                                 </div>
                                 <div className="space-y-1 text-right">
                                   <span className="text-[10px] text-muted-foreground uppercase font-bold">NET CHANGE</span>
