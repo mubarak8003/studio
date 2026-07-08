@@ -40,13 +40,12 @@ import {
   RotateCcw,
   MessageSquare,
   Clock,
-  ExternalLink,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Slider } from '@/components/ui/slider';
 import { Switch } from '@/components/ui/switch';
@@ -78,6 +77,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogClose,
 } from "@/components/ui/dialog";
 import {
   DropdownMenu,
@@ -120,7 +120,8 @@ const QuickPercentTool = () => {
   const result = useMemo(() => {
     const b = parseFloat(baseNum);
     const p = parseFloat(percent);
-    if (isNaN(b) || isNaN(p)) return null;
+    if (isNaN(b) || iNaN(p)) return null;
+    function iNaN(n: any) { return isNaN(n); }
     return (b * p) / 100;
   }, [baseNum, percent]);
 
@@ -954,7 +955,7 @@ export default function Dashboard() {
               <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-widest">Entry Time</span>
               <div className="flex items-center justify-end gap-1.5 text-foreground font-medium">
                 <Clock className="h-3 w-3 text-muted-foreground" />
-                {trade.timestamp.toLocaleTimeString()}
+                {trade.timestamp.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', second: '2-digit', hour12: true })}
               </div>
             </div>
           </div>
@@ -989,12 +990,11 @@ export default function Dashboard() {
           )}
         </div>
         <DialogFooter>
-          <Button variant="secondary" className="w-full h-11" onClick={(e) => {
-            const btn = e.target as HTMLElement;
-            btn.closest('[role="dialog"]')?.querySelector<HTMLButtonElement>('button[aria-label="Close"]')?.click();
-          }}>
-            Close Details
-          </Button>
+          <DialogClose asChild>
+            <Button variant="secondary" className="w-full h-11">
+              Close Details
+            </Button>
+          </DialogClose>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -1455,7 +1455,7 @@ export default function Dashboard() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pb-12">
+                <div className="grid grid-cols-1 lg:grid-2 gap-6 pb-12">
                   <div className="space-y-6">
                     <Card className="bg-card/50 border-border">
                       <CardHeader className="flex flex-row items-center justify-between">
