@@ -879,6 +879,7 @@ export default function Dashboard() {
 
   const currencySymbol = CURRENCY_SYMBOLS[store.currency as CurrencyCode];
   const activeSettings = store.activeSession || store;
+  const latestDailySummary = dailySummaries[0];
 
   const TradeLogItem = ({ trade }: { trade: any }) => (
     <div className={cn(
@@ -1322,6 +1323,30 @@ export default function Dashboard() {
                             <span className="font-mono">{currencySymbol}{activeSessionStats.avgLoss.toFixed(2)}</span>
                           </div>
                         </div>
+
+                        {latestDailySummary && (
+                          <div className="p-3 rounded-xl bg-primary/5 border border-primary/20 space-y-2">
+                            <div className="flex items-center gap-2 text-[9px] font-bold uppercase text-muted-foreground mb-1">
+                              <CalendarDays className="h-3 w-3 text-primary" /> Today's Performance Snapshot
+                            </div>
+                            <div className="grid grid-cols-3 gap-2 text-[10px] font-mono">
+                              <div className="flex flex-col">
+                                <span className="text-muted-foreground uppercase text-[8px] font-sans">Turnover</span>
+                                <span className="font-bold">{currencySymbol}{latestDailySummary.turnover.toLocaleString()}</span>
+                              </div>
+                              <div className="flex flex-col text-center">
+                                <span className="text-primary uppercase text-[8px] font-sans">Wallet</span>
+                                <span className="font-bold text-primary">{currencySymbol}{latestDailySummary.walletAmount.toFixed(2)}</span>
+                              </div>
+                              <div className="flex flex-col text-right">
+                                <span className="text-muted-foreground uppercase text-[8px] font-sans">Net Chg</span>
+                                <span className={cn("font-bold", latestDailySummary.netChange >= 0 ? "text-green-500" : "text-red-500")}>
+                                  {latestDailySummary.netChange >= 0 ? '+' : ''}{latestDailySummary.netChange.toFixed(2)}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        )}
 
                         <div className="grid grid-cols-2 gap-4 pt-2">
                           <div className="space-y-1">
