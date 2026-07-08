@@ -226,22 +226,17 @@ export function useRecoupStore() {
 
       const tradesAfterAdd = [...currentSession.trades, newTrade];
       
-      let runningPnL = 0;
-      let peakPnL = 0;
-      tradesAfterAdd.forEach(t => {
-        runningPnL += (t.type === 'win' ? t.amount : -t.amount);
-        if (runningPnL > peakPnL) peakPnL = runningPnL;
-      });
-
-      const isActuallyInDrawdown = currentSession.useManualDrawdown 
-        ? currentSession.manualDrawdown > 0 
-        : (peakPnL - runningPnL > 0);
-
       let nextRecoveryTarget = currentSession.recoveryTargetWins;
       let nextManualDrawdown = currentSession.manualDrawdown;
 
-      if (type === 'win' && isActuallyInDrawdown && currentSession.recoveryTargetWins > 0) {
-        nextRecoveryTarget = currentSession.recoveryTargetWins - 1;
+      // New dynamic targeting logic:
+      // Win decreases target trades, Loss increases them
+      if (type === 'win') {
+        if (nextRecoveryTarget > 0) {
+          nextRecoveryTarget = nextRecoveryTarget - 1;
+        }
+      } else {
+        nextRecoveryTarget = nextRecoveryTarget + 1;
       }
 
       if (currentSession.useManualDrawdown) {
@@ -265,7 +260,7 @@ export function useRecoupStore() {
     });
   };
 
-  // Setters now update active session if it exists, otherwise they update the template
+  // Setters update active session if it exists
   const setRecoveryTargetWins = (n: number) => {
     setState(prev => {
       if (prev.activeSession) {
