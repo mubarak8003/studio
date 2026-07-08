@@ -2,7 +2,7 @@
 "use client"
 
 import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { useRecoupStore, CURRENCY_SYMBOLS, CurrencyCode } from './lib/store';
+import { useRecoupStore, CURRENCY_SYMBOLS, CurrencyCode, Trade } from './lib/store';
 import { 
   TrendingUp, 
   TrendingDown, 
@@ -38,6 +38,9 @@ import {
   Tags,
   ArrowLeftRight,
   RotateCcw,
+  MessageSquare,
+  Clock,
+  ExternalLink,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -721,6 +724,7 @@ const PositionSizer = ({ store, setView }: { store: any, setView: (v: View) => v
 export default function Dashboard() {
   const store = useRecoupStore();
   const [tradeAmount, setTradeAmount] = useState<string>('');
+  const [tradeDescription, setTradeDescription] = useState<string>('');
   const [sessionNameInput, setSessionNameInput] = useState<string>('');
   const [isStartSessionDialogOpen, setIsStartSessionDialogOpen] = useState(false);
   const [view, setView] = useState<View>('dashboard');
@@ -864,8 +868,9 @@ export default function Dashboard() {
   const handleAddTrade = (type: 'win' | 'loss') => {
     const amount = parseFloat(tradeAmount);
     if (isNaN(amount) || amount <= 0) return;
-    store.addTrade(type, amount);
+    store.addTrade(type, amount, tradeDescription.trim() || undefined);
     setTradeAmount('');
+    setTradeDescription('');
   };
 
   const handleStartSession = () => {
@@ -881,38 +886,118 @@ export default function Dashboard() {
   const activeSettings = store.activeSession || store;
   const latestDailySummary = dailySummaries[0];
 
-  const TradeLogItem = ({ trade }: { trade: any }) => (
-    <div className={cn(
-      "flex items-center justify-between p-3.5 rounded-2xl bg-background border border-border/20 shadow-sm transition-colors",
-      trade.type === 'win' ? "hover:bg-green-500/[0.02]" : "hover:bg-red-500/[0.02]"
-    )}>
-      <div className="flex items-center gap-4">
+  const TradeLogItem = ({ trade }: { trade: Trade }) => (
+    <Dialog>
+      <DialogTrigger asChild>
         <div className={cn(
-          "h-12 w-12 rounded-2xl flex items-center justify-center",
-          trade.type === 'win' ? "bg-green-500/10 text-green-500" : "bg-red-500/10 text-red-500"
+          "flex items-center justify-between p-3.5 rounded-2xl bg-background border border-border/20 shadow-sm transition-all hover:shadow-md cursor-pointer group active:scale-[0.98]",
+          trade.type === 'win' ? "hover:bg-green-500/[0.02]" : "hover:bg-red-500/[0.02]"
         )}>
-          {trade.type === 'win' ? <TrendingUp className="h-5 w-5" /> : <TrendingDown className="h-5 w-5" />}
-        </div>
-        <div className="space-y-0.5">
-          <p className="text-base font-bold text-foreground">{currencySymbol}{trade.originalAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
-          <div className="flex items-center text-[11px] text-muted-foreground font-medium">
-            <span>{trade.timestamp.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', second: '2-digit', hour12: true })}</span>
-            {trade.deduction > 0 && (
-              <span className="text-primary font-bold flex items-center">
-                <span className="mx-1.5 opacity-50">•</span>
-                Wallet: {currencySymbol}{trade.deduction.toFixed(2)}
-              </span>
-            )}
+          <div className="flex items-center gap-4">
+            <div className={cn(
+              "h-12 w-12 rounded-2xl flex items-center justify-center transition-transform group-hover:scale-105",
+              trade.type === 'win' ? "bg-green-500/10 text-green-500" : "bg-red-500/10 text-red-500"
+            )}>
+              {trade.type === 'win' ? <TrendingUp className="h-5 w-5" /> : <TrendingDown className="h-5 w-5" />}
+            </div>
+            <div className="space-y-0.5">
+              <p className="text-base font-bold text-foreground">{currencySymbol}{trade.originalAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+              <div className="flex items-center text-[11px] text-muted-foreground font-medium">
+                <span>{trade.timestamp.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', second: '2-digit', hour12: true })}</span>
+                {trade.deduction > 0 && (
+                  <span className="text-primary font-bold flex items-center">
+                    <span className="mx-1.5 opacity-50">•</span>
+                    Wallet: {currencySymbol}{trade.deduction.toFixed(2)}
+                  </span>
+                )}
+                {trade.description && (
+                  <span className="text-accent font-bold flex items-center">
+                    <span className="mx-1.5 opacity-50">•</span>
+                    <MessageSquare className="h-2.5 w-2.5 mr-1" /> Note
+                  </span>
+                )}
+              </div>
+            </div>
           </div>
+          <Badge variant="outline" className={cn(
+            "text-[10px] font-bold h-6 px-3 rounded-full border-none uppercase tracking-wider",
+            trade.type === 'win' ? "text-green-600 bg-green-500/10" : "text-red-600 bg-red-500/10"
+          )}>
+            {trade.type}
+          </Badge>
         </div>
-      </div>
-      <Badge variant="outline" className={cn(
-        "text-[10px] font-bold h-6 px-3 rounded-full border-none uppercase tracking-wider",
-        trade.type === 'win' ? "text-green-600 bg-green-500/10" : "text-red-600 bg-red-500/10"
-      )}>
-        {trade.type}
-      </Badge>
-    </div>
+      </DialogTrigger>
+      <DialogContent className="bg-card border-border sm:max-w-[425px] rounded-2xl">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <div className={cn(
+              "h-8 w-8 rounded-lg flex items-center justify-center",
+              trade.type === 'win' ? "bg-green-500/10 text-green-500" : "bg-red-500/10 text-red-500"
+            )}>
+              {trade.type === 'win' ? <TrendingUp className="h-4 w-4" /> : <TrendingDown className="h-4 w-4" />}
+            </div>
+            Trade Details
+          </DialogTitle>
+          <DialogDescription>
+            Transaction summary for the entry.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-6 py-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1">
+              <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-widest">Type</span>
+              <p className={cn("font-bold text-lg", trade.type === 'win' ? "text-green-500" : "text-red-500")}>
+                {trade.type.toUpperCase()}
+              </p>
+            </div>
+            <div className="space-y-1 text-right">
+              <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-widest">Entry Time</span>
+              <div className="flex items-center justify-end gap-1.5 text-foreground font-medium">
+                <Clock className="h-3 w-3 text-muted-foreground" />
+                {trade.timestamp.toLocaleTimeString()}
+              </div>
+            </div>
+          </div>
+          
+          <div className="p-4 rounded-xl bg-muted/30 border border-border/50 space-y-4">
+             <div className="flex justify-between items-center">
+                <span className="text-xs text-muted-foreground">Original Stake:</span>
+                <span className="font-bold">{currencySymbol}{trade.originalAmount.toFixed(2)}</span>
+             </div>
+             <div className="flex justify-between items-center text-primary">
+                <span className="text-xs">Wallet Savings (Deduction):</span>
+                <span className="font-bold">-{currencySymbol}{trade.deduction.toFixed(2)}</span>
+             </div>
+             <Separator className="bg-border/30" />
+             <div className="flex justify-between items-center text-lg">
+                <span className="text-sm font-medium">Net P/L Result:</span>
+                <span className={cn("font-headline font-bold", trade.type === 'win' ? "text-green-500" : "text-red-500")}>
+                  {trade.type === 'win' ? '+' : '-'}{currencySymbol}{trade.amount.toFixed(2)}
+                </span>
+             </div>
+          </div>
+
+          {trade.description && (
+            <div className="space-y-2">
+              <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-widest flex items-center gap-1.5">
+                <Notebook className="h-3 w-3" /> Trade Description / Note
+              </span>
+              <div className="p-3 rounded-xl bg-primary/5 border border-primary/10 text-sm leading-relaxed text-foreground italic">
+                "{trade.description}"
+              </div>
+            </div>
+          )}
+        </div>
+        <DialogFooter>
+          <Button variant="secondary" className="w-full h-11" onClick={(e) => {
+            const btn = e.target as HTMLElement;
+            btn.closest('[role="dialog"]')?.querySelector<HTMLButtonElement>('button[aria-label="Close"]')?.click();
+          }}>
+            Close Details
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 
   return (
@@ -1196,24 +1281,29 @@ export default function Dashboard() {
                       </div>
 
                       {store.activeSession && (
-                        <div className="mt-8 pt-6 border-t border-border/50">
-                          <div className="flex flex-col md:flex-row gap-3">
-                            <div className="flex-1">
-                              <Input 
-                                placeholder={`Trade P/L Amount (${currencySymbol})`}
-                                type="text" 
-                                inputMode="decimal"
-                                value={tradeAmount} 
-                                onChange={(e) => setTradeAmount(e.target.value)}
-                                onFocus={(e) => e.target.select()}
-                                className="text-lg py-6 bg-background focus:ring-primary border-border"
-                              />
-                            </div>
+                        <div className="mt-8 pt-6 border-t border-border/50 space-y-4">
+                          <div className="flex flex-col gap-3">
+                            <Input 
+                              placeholder={`Trade P/L Amount (${currencySymbol})`}
+                              type="text" 
+                              inputMode="decimal"
+                              value={tradeAmount} 
+                              onChange={(e) => setTradeAmount(e.target.value)}
+                              onFocus={(e) => e.target.select()}
+                              className="text-lg py-6 bg-background focus:ring-primary border-border"
+                            />
+                            <Input 
+                              placeholder="Optional description / note..."
+                              type="text" 
+                              value={tradeDescription} 
+                              onChange={(e) => setTradeDescription(e.target.value)}
+                              className="text-xs h-8 bg-muted/20 border-border/50 italic"
+                            />
                             <div className="flex gap-3">
                               <Button 
                                 variant="outline"
                                 size="lg" 
-                                className="flex-1 bg-green-500/5 border-green-500/20 hover:bg-green-500/10 h-auto px-6 py-4 md:py-2"
+                                className="flex-1 bg-green-500/5 border-green-500/20 hover:bg-green-500/10 h-auto px-6 py-4 md:py-3 transition-transform active:scale-95"
                                 onClick={() => handleAddTrade('win')}
                               >
                                 <TrendingUp className="h-6 w-6 text-green-500" />
@@ -1221,7 +1311,7 @@ export default function Dashboard() {
                               <Button 
                                 variant="outline"
                                 size="lg" 
-                                className="flex-1 bg-red-500/5 border-red-500/20 hover:bg-red-500/10 h-auto px-6 py-4 md:py-2"
+                                className="flex-1 bg-red-500/5 border-red-500/20 hover:bg-red-500/10 h-auto px-6 py-4 md:py-3 transition-transform active:scale-95"
                                 onClick={() => handleAddTrade('loss')}
                               >
                                 <TrendingDown className="h-6 w-6 text-red-500" />
@@ -1371,7 +1461,7 @@ export default function Dashboard() {
                       <CardHeader className="flex flex-row items-center justify-between">
                         <div>
                           <CardTitle className="text-lg text-foreground">Trade Log</CardTitle>
-                          <CardDescription className="text-xs">Session entries</CardDescription>
+                          <CardDescription className="text-xs">Click entry for details</CardDescription>
                         </div>
                         <Button variant="outline" size="sm" onClick={() => setView('history')} className="text-xs bg-primary/10 text-primary border-primary/30 hover:bg-primary/20 rounded-xl px-4">
                           View All <ChevronRight className="h-4 w-4 ml-1" />

@@ -10,6 +10,7 @@ export type Trade = {
   originalAmount: number; // The amount the user actually entered
   deduction: number; // The amount moved to the wallet
   timestamp: Date;
+  description?: string;
 };
 
 export type Session = {
@@ -205,7 +206,7 @@ export function useRecoupStore() {
     }));
   };
 
-  const addTrade = (type: 'win' | 'loss', inputAmount: number) => {
+  const addTrade = (type: 'win' | 'loss', inputAmount: number, description?: string) => {
     if (!state.activeSession) return;
     
     setState(prev => {
@@ -222,6 +223,7 @@ export function useRecoupStore() {
         originalAmount: inputAmount,
         deduction,
         timestamp: new Date(),
+        description,
       };
 
       const tradesAfterAdd = [...currentSession.trades, newTrade];
