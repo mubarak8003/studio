@@ -1116,9 +1116,9 @@ export default function Dashboard() {
         </aside>
 
         <main className="flex-1 min-h-svh p-4 md:p-10 bg-background/40 overflow-x-hidden">
-          <div className="max-w-5xl mx-auto space-y-8">
+          <div className="max-w-5xl mx-auto space-y-5 md:space-y-8">
             {view === 'dashboard' && (
-              <div className="animate-in fade-in duration-500 space-y-8">
+              <div className="animate-in fade-in duration-500 space-y-5 md:space-y-8">
                 <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                   <div>
                     <h2 className="text-2xl md:text-3xl font-headline font-bold mb-1 text-foreground">Trading Control</h2>
@@ -1237,21 +1237,21 @@ export default function Dashboard() {
                     <div className="absolute top-0 right-0 p-4 opacity-5 hidden md:block text-foreground">
                       <Calculator className="h-24 w-24" />
                     </div>
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2 text-primary text-lg md:text-xl">
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-primary text-lg md:text-xl flex items-center gap-2">
                         <Calculator className="h-5 w-5" /> Recommended Entry
                       </CardTitle>
                       <CardDescription className="text-xs md:text-sm">
                         Based on target of <b>{currencySymbol}{activeSessionStats.currentDrawdown.toFixed(2)}</b> in <b>{activeSettings.recoveryTargetWins}</b> trades
                       </CardDescription>
                     </CardHeader>
-                    <CardContent>
-                      <div className="flex flex-col items-center justify-center py-6 md:py-8 border-b border-border/30 mb-8">
+                    <CardContent className="p-4 md:p-6 pt-0">
+                      <div className="flex flex-col items-center justify-center py-4 md:py-6 border-b border-border/30 mb-4">
                         <div className="text-6xl md:text-8xl font-headline font-bold text-foreground transition-all duration-300">
                           {currencySymbol}{activeSessionStats.nextStake.toFixed(2)}
                         </div>
-                        <p className="text-xs text-muted-foreground mt-2 uppercase tracking-widest font-semibold">Total Trade Amount</p>
-                        <div className="mt-4 flex flex-col items-center gap-2">
+                        <p className="text-xs text-muted-foreground mt-1 uppercase tracking-widest font-semibold">Total Trade Amount</p>
+                        <div className="mt-2 flex flex-col items-center gap-2">
                           {activeSessionStats.currentDrawdown > 0 && (
                             <div className="bg-red-500 text-white px-4 py-1.5 rounded-full text-xs font-bold shadow-md animate-in fade-in zoom-in">
                               {activeSettings.useManualDrawdown ? 'Manual Target: ' : 'Recovery Target: '}{currencySymbol}{activeSessionStats.currentDrawdown.toFixed(2)}
@@ -1260,9 +1260,9 @@ export default function Dashboard() {
                         </div>
                       </div>
 
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                         {/* Styled Profit Breakdown */}
-                        <div className="p-5 rounded-2xl bg-card border border-border/50 shadow-sm space-y-4">
+                        <div className="p-3.5 rounded-2xl bg-card border border-border/50 shadow-sm space-y-3">
                            <h4 className="font-bold text-sm flex items-center gap-2 text-muted-foreground uppercase tracking-tight">
                              <Target className="h-4 w-4" /> Profit Breakdown
                            </h4>
@@ -1284,7 +1284,7 @@ export default function Dashboard() {
                         </div>
 
                         {/* Styled Investment Logic */}
-                        <div className="p-5 rounded-2xl bg-primary/[0.03] border border-primary/10 shadow-sm space-y-4">
+                        <div className="p-3.5 rounded-2xl bg-primary/[0.03] border border-primary/10 shadow-sm space-y-3">
                            <h4 className="font-bold text-sm flex items-center gap-2 text-primary uppercase tracking-tight">
                              <ArrowUpRight className="h-4 w-4" /> Investment Logic
                            </h4>
@@ -1305,8 +1305,8 @@ export default function Dashboard() {
                       </div>
 
                       {store.activeSession && (
-                        <div className="mt-8 pt-6 border-t border-border/50 space-y-4">
-                          <div className="flex flex-col gap-3">
+                        <div className="mt-4 pt-4 border-t border-border/50 space-y-3">
+                          <div className="flex flex-col gap-2">
                             <Input 
                               placeholder={`Trade P/L Amount (${currencySymbol})`}
                               type="text" 
@@ -1314,7 +1314,7 @@ export default function Dashboard() {
                               value={tradeAmount} 
                               onChange={(e) => setTradeAmount(e.target.value)}
                               onFocus={(e) => e.target.select()}
-                              className="text-lg py-6 bg-background focus:ring-primary border-border"
+                              className="text-lg py-5 bg-background focus:ring-primary border-border"
                             />
                             <Input 
                               placeholder="Optional description / note..."
@@ -1327,7 +1327,7 @@ export default function Dashboard() {
                               <Button 
                                 variant="outline"
                                 size="lg" 
-                                className="flex-1 bg-green-500/5 border-green-500/20 hover:bg-green-500/10 h-auto px-6 py-4 md:py-3 transition-transform active:scale-95"
+                                className="flex-1 bg-green-500/5 border-green-500/20 hover:bg-green-500/10 h-auto px-6 py-3 transition-transform active:scale-95"
                                 onClick={() => handleAddTrade('win')}
                               >
                                 <TrendingUp className="h-6 w-6 text-green-500" />
@@ -1335,7 +1335,7 @@ export default function Dashboard() {
                               <Button 
                                 variant="outline"
                                 size="lg" 
-                                className="flex-1 bg-red-500/5 border-red-500/20 hover:bg-red-500/10 h-auto px-6 py-4 md:py-3 transition-transform active:scale-95"
+                                className="flex-1 bg-red-500/5 border-red-500/20 hover:bg-red-500/10 h-auto px-6 py-3 transition-transform active:scale-95"
                                 onClick={() => handleAddTrade('loss')}
                               >
                                 <TrendingDown className="h-6 w-6 text-red-500" />
