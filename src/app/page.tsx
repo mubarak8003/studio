@@ -736,10 +736,10 @@ export default function Dashboard() {
     setMounted(true);
   }, []);
 
-  // Auto-scroll to top when view changes
+  // Auto-scroll to top when view changes - Immediate Jump
   useEffect(() => {
     if (mounted) {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      window.scrollTo(0, 0);
     }
   }, [view, mounted]);
 
@@ -928,7 +928,7 @@ export default function Dashboard() {
               <div className="flex items-center text-[11px] text-muted-foreground font-medium">
                 <span>{trade.timestamp.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', second: '2-digit', hour12: true })}</span>
                 {trade.deduction > 0 && (
-                  <span className="text-primary font-bold flex items-center">
+                  <span className="text-[#14b8a6] font-bold flex items-center">
                     <span className="mx-1.5 opacity-50">•</span>
                     Wallet: {currencySymbol}{trade.deduction.toFixed(2)}
                   </span>
@@ -987,7 +987,7 @@ export default function Dashboard() {
                 <span className="text-xs text-muted-foreground">Original Stake:</span>
                 <span className="font-bold">{currencySymbol}{trade.originalAmount.toFixed(2)}</span>
              </div>
-             <div className="flex justify-between items-center text-primary">
+             <div className="flex justify-between items-center text-[#14b8a6]">
                 <span className="text-xs">Wallet Savings (Deduction):</span>
                 <span className="font-bold">-{currencySymbol}{trade.deduction.toFixed(2)}</span>
              </div>
@@ -1447,8 +1447,8 @@ export default function Dashboard() {
                                 <span className="font-bold">{currencySymbol}{latestDailySummary.turnover.toLocaleString()}</span>
                               </div>
                               <div className="flex flex-col text-center">
-                                <span className="text-primary uppercase text-[8px] font-sans">Wallet</span>
-                                <span className="font-bold text-primary">{currencySymbol}{latestDailySummary.walletAmount.toFixed(2)}</span>
+                                <span className="text-[#14b8a6] uppercase text-[8px] font-sans">Wallet</span>
+                                <span className="font-bold text-[#14b8a6]">{currencySymbol}{latestDailySummary.walletAmount.toFixed(2)}</span>
                               </div>
                               <div className="flex flex-col text-right">
                                 <span className="text-muted-foreground uppercase text-[8px] font-sans">Net Chg</span>
@@ -1603,8 +1603,8 @@ export default function Dashboard() {
                       <Wallet className="h-10 w-10 text-primary" />
                     </div>
                     <CardContent className="p-4 pt-6">
-                      <p className="text-[10px] font-bold uppercase tracking-widest text-primary mb-1">Wallet Savings</p>
-                      <div className="text-2xl font-headline font-bold text-primary">
+                      <p className="text-[10px] font-bold uppercase tracking-widest text-[#14b8a6] mb-1">Wallet Savings</p>
+                      <div className="text-2xl font-headline font-bold text-[#14b8a6]">
                         {currencySymbol}{lifetimeStats.totalWallet.toLocaleString(undefined, { maximumFractionDigits: 2 })}
                       </div>
                     </CardContent>
@@ -1651,8 +1651,8 @@ export default function Dashboard() {
                                   <p className="text-xs font-mono font-bold">{currencySymbol}{day.turnover.toLocaleString()}</p>
                                 </div>
                                 <div className="space-y-1 text-center">
-                                  <span className="text-[10px] text-primary uppercase font-bold">WALLET</span>
-                                  <p className="text-xs font-mono font-bold text-primary">{currencySymbol}{day.walletAmount.toFixed(2)}</p>
+                                  <span className="text-[10px] text-[#14b8a6] uppercase font-bold">WALLET</span>
+                                  <p className="text-xs font-mono font-bold text-[#14b8a6]">{currencySymbol}{day.walletAmount.toFixed(2)}</p>
                                 </div>
                                 <div className="space-y-1 text-right">
                                   <span className="text-[10px] text-muted-foreground uppercase font-bold">NET CHANGE</span>
