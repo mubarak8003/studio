@@ -1246,7 +1246,7 @@ export default function Dashboard() {
                       </CardDescription>
                     </CardHeader>
                     <CardContent>
-                      <div className="flex flex-col items-center justify-center py-6 md:py-8 border-b border-border/30 mb-6">
+                      <div className="flex flex-col items-center justify-center py-6 md:py-8 border-b border-border/30 mb-8">
                         <div className="text-6xl md:text-8xl font-headline font-bold text-foreground transition-all duration-300">
                           {currencySymbol}{activeSessionStats.nextStake.toFixed(2)}
                         </div>
@@ -1260,43 +1260,45 @@ export default function Dashboard() {
                         </div>
                       </div>
 
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
-                        <div className="p-4 rounded-xl bg-muted/30 border border-border/50">
-                           <h4 className="font-bold mb-3 flex items-center gap-2 text-muted-foreground">
-                             <Target className="h-3 w-3" /> Profit Breakdown
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {/* Styled Profit Breakdown */}
+                        <div className="p-5 rounded-2xl bg-card border border-border/50 shadow-sm space-y-4">
+                           <h4 className="font-bold text-sm flex items-center gap-2 text-muted-foreground uppercase tracking-tight">
+                             <Target className="h-4 w-4" /> Profit Breakdown
                            </h4>
-                           <div className="space-y-2">
-                             <div className="flex justify-between items-center text-foreground">
-                               <span>Base Profit Target:</span>
-                               <span className="font-mono font-bold">{currencySymbol}{activeSessionStats.grossBaseProfit.toFixed(2)}</span>
+                           <div className="space-y-3">
+                             <div className="flex justify-between items-center text-sm font-medium">
+                               <span className="text-foreground">Base Profit Target:</span>
+                               <span className="font-bold">{currencySymbol}{activeSessionStats.grossBaseProfit.toFixed(2)}</span>
                              </div>
-                             <div className="flex justify-between items-center text-red-500">
+                             <div className="flex justify-between items-center text-sm font-medium text-destructive">
                                <span>Recovery Component:</span>
-                               <span className="font-mono font-bold">+ {currencySymbol}{activeSessionStats.grossRecoveryProfit.toFixed(2)}</span>
+                               <span className="font-bold">+ {currencySymbol}{activeSessionStats.grossRecoveryProfit.toFixed(2)}</span>
                              </div>
-                             <Separator className="bg-border/50" />
-                             <div className="flex justify-between items-center text-primary font-bold">
+                             <Separator className="bg-border/40" />
+                             <div className="flex justify-between items-center text-base font-bold text-primary">
                                <span>Total Win Goal:</span>
-                               <span className="font-mono">{currencySymbol}{(activeSessionStats.grossBaseProfit + activeSessionStats.grossRecoveryProfit).toFixed(2)}</span>
+                               <span>{currencySymbol}{(activeSessionStats.grossBaseProfit + activeSessionStats.grossRecoveryProfit).toFixed(2)}</span>
                              </div>
                            </div>
                         </div>
 
-                        <div className="p-4 rounded-xl bg-primary/5 border border-primary/10">
-                           <h4 className="font-bold mb-3 flex items-center gap-2 text-primary">
-                             <ArrowUpRight className="h-3 w-3" /> Investment Logic
+                        {/* Styled Investment Logic */}
+                        <div className="p-5 rounded-2xl bg-primary/[0.03] border border-primary/10 shadow-sm space-y-4">
+                           <h4 className="font-bold text-sm flex items-center gap-2 text-primary uppercase tracking-tight">
+                             <ArrowUpRight className="h-4 w-4" /> Investment Logic
                            </h4>
-                           <div className="space-y-2">
-                             <div className="flex justify-between items-center text-foreground">
-                               <span>Base Investment:</span>
-                               <span className="font-mono">{currencySymbol}{activeSettings.baseStake.toFixed(2)}</span>
+                           <div className="space-y-3">
+                             <div className="flex justify-between items-center text-sm font-medium">
+                               <span className="text-foreground">Base Investment:</span>
+                               <span className="font-bold">{currencySymbol}{activeSettings.baseStake.toFixed(2)}</span>
                              </div>
-                             <div className="flex justify-between items-center text-accent font-bold">
+                             <div className="flex justify-between items-center text-sm font-bold text-primary">
                                <span>Recovery Adjustment:</span>
-                               <span className="font-mono">+ {currencySymbol}{activeSessionStats.recoveryStakeAdjustment.toFixed(2)}</span>
+                               <span className="font-bold">+ {currencySymbol}{activeSessionStats.recoveryStakeAdjustment.toFixed(2)}</span>
                              </div>
-                             <div className="text-[10px] text-muted-foreground italic mt-2">
-                               Calculation: (Target / {activeSettings.riskRewardRatio} RR)
+                             <div className="text-[10px] text-muted-foreground/60 italic mt-3 font-medium">
+                               Calculation: (Target / {activeSettings.riskRewardRatio.toFixed(2)} RR)
                              </div>
                            </div>
                         </div>
