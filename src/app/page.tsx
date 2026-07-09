@@ -736,6 +736,13 @@ export default function Dashboard() {
     setMounted(true);
   }, []);
 
+  // Auto-scroll to top when view changes
+  useEffect(() => {
+    if (mounted) {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }, [view, mounted]);
+
   const activeSessionStats = useMemo(() => {
     const s = store.activeSession;
     const trades = s?.trades || [];
@@ -1478,7 +1485,12 @@ export default function Dashboard() {
                           <CardTitle className="text-lg text-foreground">Trade Log</CardTitle>
                           <CardDescription className="text-xs">Click entry for details</CardDescription>
                         </div>
-                        <Button variant="outline" size="sm" onClick={() => setView('history')} className="text-xs bg-primary/10 text-primary border-primary/30 hover:bg-primary/20 rounded-xl px-4">
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          onClick={() => setView('history')} 
+                          className="text-xs bg-primary/10 text-primary border-primary/30 hover:bg-primary/20 rounded-xl px-4"
+                        >
                           View All <ChevronRight className="h-4 w-4 ml-1" />
                         </Button>
                       </CardHeader>
