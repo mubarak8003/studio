@@ -40,6 +40,7 @@ import {
   RotateCcw,
   MessageSquare,
   Clock,
+  Info,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -914,7 +915,7 @@ export default function Dashboard() {
                 {trade.description && (
                   <span className="text-accent font-bold flex items-center">
                     <span className="mx-1.5 opacity-50">•</span>
-                    <MessageSquare className="h-2.5 w-2.5 mr-1" /> Note
+                    <Info className="h-3 w-3" />
                   </span>
                 )}
               </div>
