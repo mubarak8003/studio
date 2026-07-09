@@ -121,8 +121,7 @@ const QuickPercentTool = () => {
   const result = useMemo(() => {
     const b = parseFloat(baseNum);
     const p = parseFloat(percent);
-    if (isNaN(b) || iNaN(p)) return null;
-    function iNaN(n: any) { return isNaN(n); }
+    if (isNaN(b) || isNaN(p)) return null;
     return (b * p) / 100;
   }, [baseNum, percent]);
 
@@ -831,6 +830,21 @@ export default function Dashboard() {
       equityData,
     };
   }, [store]);
+
+  const lifetimeStats = useMemo(() => {
+    const trades = globalHistoryStats.allTrades;
+    const wins = trades.filter(t => t.type === 'win');
+    const netPnL = trades.reduce((acc, t) => acc + (t.type === 'win' ? t.amount : -t.amount), 0);
+    const totalWallet = trades.reduce((acc, t) => acc + t.deduction, 0);
+    
+    return {
+      totalTrades: trades.length,
+      winRate: trades.length > 0 ? (wins.length / trades.length) * 100 : 0,
+      netPnL,
+      totalWallet,
+      turnover: globalHistoryStats.totalTurnover
+    };
+  }, [globalHistoryStats]);
 
   const activeSessionEquityData = useMemo(() => {
     let balance = 0;
@@ -1547,15 +1561,54 @@ export default function Dashboard() {
                       <p className="text-muted-foreground text-xs md:text-sm">Consolidated analytics for all your trading activity.</p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <Badge variant="outline" className="h-9 px-4 border-border bg-card">
-                      {globalHistoryStats.allTrades.length} Trades
-                    </Badge>
-                    <Badge variant="outline" className="h-9 px-4 border-border bg-card">
-                      Turnover: {currencySymbol}{globalHistoryStats.totalTurnover.toLocaleString()}
-                    </Badge>
-                  </div>
                 </header>
+
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+                  <Card className="bg-card border-border/40 overflow-hidden relative">
+                    <div className="absolute top-0 right-0 p-3 opacity-10">
+                      <Activity className="h-10 w-10 text-primary" />
+                    </div>
+                    <CardContent className="p-4 pt-6">
+                      <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-1">Net P/L</p>
+                      <div className={cn("text-2xl font-headline font-bold", lifetimeStats.netPnL >= 0 ? "text-green-500" : "text-red-500")}>
+                        {lifetimeStats.netPnL >= 0 ? '+' : ''}{currencySymbol}{lifetimeStats.netPnL.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                      </div>
+                    </CardContent>
+                  </Card>
+                  <Card className="bg-card border-border/40 overflow-hidden relative">
+                    <div className="absolute top-0 right-0 p-3 opacity-10">
+                      <Target className="h-10 w-10 text-primary" />
+                    </div>
+                    <CardContent className="p-4 pt-6">
+                      <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-1">Win Rate</p>
+                      <div className="text-2xl font-headline font-bold text-foreground">
+                        {lifetimeStats.winRate.toFixed(1)}%
+                      </div>
+                    </CardContent>
+                  </Card>
+                  <Card className="bg-card border-border/40 overflow-hidden relative">
+                    <div className="absolute top-0 right-0 p-3 opacity-10">
+                      <Wallet className="h-10 w-10 text-primary" />
+                    </div>
+                    <CardContent className="p-4 pt-6">
+                      <p className="text-[10px] font-bold uppercase tracking-widest text-primary mb-1">Wallet Savings</p>
+                      <div className="text-2xl font-headline font-bold text-primary">
+                        {currencySymbol}{lifetimeStats.totalWallet.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                      </div>
+                    </CardContent>
+                  </Card>
+                  <Card className="bg-card border-border/40 overflow-hidden relative">
+                    <div className="absolute top-0 right-0 p-3 opacity-10">
+                      <Briefcase className="h-10 w-10 text-primary" />
+                    </div>
+                    <CardContent className="p-4 pt-6">
+                      <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-1">Total Turnover</p>
+                      <div className="text-2xl font-headline font-bold text-foreground">
+                        {currencySymbol}{lifetimeStats.turnover.toLocaleString()}
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
 
                 <Tabs defaultValue="trades" className="w-full">
                   <TabsList className="bg-muted/50 p-1 mb-6">
@@ -1568,36 +1621,9 @@ export default function Dashboard() {
                   </TabsList>
 
                   <TabsContent value="trades" className="space-y-8 m-0">
-                    <Card className="bg-card border-border overflow-hidden">
-                      <CardHeader className="pb-2 flex flex-row items-center justify-between">
-                        <div className="space-y-1">
-                          <CardTitle className="text-sm font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
-                            <ChartIcon className="h-4 w-4 text-primary" /> STRATEGY ANALYTICS
-                          </CardTitle>
-                        </div>
-                        <Tabs value={chartType} onValueChange={(v) => setChartType(v as any)} className="w-auto">
-                          <TabsList className="h-8 bg-muted/50 p-1">
-                            <TabsTrigger value="line" className="h-6 text-[10px] gap-1 px-2">
-                              <Activity className="h-3 w-3" /> Equity
-                            </TabsTrigger>
-                            <TabsTrigger value="candle" className="h-6 text-[10px] gap-1 px-2">
-                              <BarChart3 className="h-3 w-3" /> Candles
-                            </TabsTrigger>
-                          </TabsList>
-                        </Tabs>
-                      </CardHeader>
-                      <CardContent className="p-4 md:p-6">
-                        {chartType === 'line' ? (
-                          <EquityCurveChart data={globalHistoryStats.equityData} currencySymbol={currencySymbol} />
-                        ) : (
-                          <CandlestickChart data={globalHistoryStats.equityData} currencySymbol={currencySymbol} />
-                        )}
-                      </CardContent>
-                    </Card>
-
                     <div className="space-y-4">
                       <h3 className="text-sm font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
-                         <CalendarDays className="h-4 w-4" /> DAILY EQUITY SUMMARY
+                         <CalendarDays className="h-4 w-4 text-primary" /> DAILY EQUITY SUMMARY
                       </h3>
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                         {dailySummaries.map((day) => (
@@ -1628,6 +1654,33 @@ export default function Dashboard() {
                         ))}
                       </div>
                     </div>
+
+                    <Card className="bg-card border-border overflow-hidden">
+                      <CardHeader className="pb-2 flex flex-row items-center justify-between">
+                        <div className="space-y-1">
+                          <CardTitle className="text-sm font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+                            <ChartIcon className="h-4 w-4 text-primary" /> STRATEGY ANALYTICS
+                          </CardTitle>
+                        </div>
+                        <Tabs value={chartType} onValueChange={(v) => setChartType(v as any)} className="w-auto">
+                          <TabsList className="h-8 bg-muted/50 p-1">
+                            <TabsTrigger value="line" className="h-6 text-[10px] gap-1 px-2">
+                              <Activity className="h-3 w-3" /> Equity
+                            </TabsTrigger>
+                            <TabsTrigger value="candle" className="h-6 text-[10px] gap-1 px-2">
+                              <BarChart3 className="h-3 w-3" /> Candles
+                            </TabsTrigger>
+                          </TabsList>
+                        </Tabs>
+                      </CardHeader>
+                      <CardContent className="p-4 md:p-6">
+                        {chartType === 'line' ? (
+                          <EquityCurveChart data={globalHistoryStats.equityData} currencySymbol={currencySymbol} />
+                        ) : (
+                          <CandlestickChart data={globalHistoryStats.equityData} currencySymbol={currencySymbol} />
+                        )}
+                      </CardContent>
+                    </Card>
 
                     <div className="space-y-4">
                       <h3 className="text-sm font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
