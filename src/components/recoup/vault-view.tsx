@@ -209,7 +209,7 @@ export function VaultView({ store, setView }: { store: any, setView: (v: any) =>
                   <DialogTitle>Add Bank Account</DialogTitle>
                   <DialogDescription>Track balance across your multiple accounts.</DialogDescription>
                 </DialogHeader>
-                <div className="flex-1 p-6 space-y-4 overflow-y-auto pb-40 md:pb-6">
+                <div className="flex-1 p-6 space-y-4 overflow-y-auto pb-32">
                   <div className="space-y-2">
                     <label className="text-[10px] font-bold text-muted-foreground uppercase">Bank Name</label>
                     <Input placeholder="e.g. HDFC Bank" value={bankName} onChange={(e) => setBankName(e.target.value)} />
@@ -240,7 +240,7 @@ export function VaultView({ store, setView }: { store: any, setView: (v: any) =>
                 <DialogTitle>Update Balance</DialogTitle>
                 <DialogDescription>Enter the latest balance for this account.</DialogDescription>
               </DialogHeader>
-              <div className="p-6 space-y-4 pb-40 md:pb-6">
+              <div className="p-6 space-y-4 pb-32">
                 <div className="space-y-2">
                   <label className="text-[10px] font-bold text-muted-foreground uppercase">New Balance ({currencySymbol})</label>
                   <Input 
@@ -328,7 +328,7 @@ export function VaultView({ store, setView }: { store: any, setView: (v: any) =>
                   <DialogTitle>New Fixed/Recurring Deposit</DialogTitle>
                   <DialogDescription>Plan your long-term wealth growth.</DialogDescription>
                 </DialogHeader>
-                <div className="flex-1 p-6 space-y-4 overflow-y-auto pb-40 md:pb-6">
+                <div className="flex-1 p-6 space-y-4 overflow-y-auto pb-32">
                   <div className="space-y-2">
                     <label className="text-[10px] font-bold text-muted-foreground uppercase">Type</label>
                     <Select value={invType} onValueChange={(v: any) => setInvType(v)}>
@@ -405,6 +405,14 @@ export function VaultView({ store, setView }: { store: any, setView: (v: any) =>
                         <CalendarDays className="h-2.5 w-2.5" /> Mature: {inv.maturityDate.toLocaleDateString()}
                       </p>
                     </div>
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="h-8 w-8 text-muted-foreground hover:text-destructive opacity-40 group-hover:opacity-100 transition-opacity" 
+                      onClick={() => store.deleteInvestment(inv.id)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
                   </div>
                   
                   <div className="grid grid-cols-2 gap-2 pt-2 border-t border-border/30">
@@ -414,29 +422,18 @@ export function VaultView({ store, setView }: { store: any, setView: (v: any) =>
                     </div>
                     <div className="text-center">
                       <p className="text-[8px] text-muted-foreground uppercase font-bold mb-0.5">Rate</p>
-                      <p className="font-bold text-sm text-primary flex items-center justify-center gap-1">
+                      <p className="font-bold text-sm text-primary">
                         {inv.interestRate}%
                       </p>
                     </div>
                   </div>
 
                   {inv.monthlyInstallment && (
-                    <div className="text-center pt-1">
+                    <div className="text-center pt-1 border-t border-border/10">
                       <p className="text-[8px] text-muted-foreground uppercase font-bold mb-0.5">Installment</p>
                       <p className="font-bold text-sm text-accent">{currencySymbol}{inv.monthlyInstallment}/mo</p>
                     </div>
                   )}
-
-                  <div className="flex justify-center pt-1">
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      className="h-7 w-7 text-muted-foreground hover:text-destructive opacity-40 group-hover:opacity-100 transition-opacity" 
-                      onClick={() => store.deleteInvestment(inv.id)}
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </Button>
-                  </div>
                 </CardContent>
               </Card>
             ))}
