@@ -204,12 +204,12 @@ export function VaultView({ store, setView }: { store: any, setView: (v: any) =>
                   <PlusCircle className="h-4 w-4" /> Add Bank
                 </Button>
               </DialogTrigger>
-              <DialogContent className="bg-card border-border rounded-2xl max-h-[95dvh] overflow-y-auto">
-                <DialogHeader className="sticky top-0 bg-card z-10 pb-4">
+              <DialogContent className="bg-card border-border rounded-2xl max-h-[90dvh] overflow-y-auto flex flex-col p-0">
+                <DialogHeader className="sticky top-0 bg-card z-10 p-6 pb-4 border-b">
                   <DialogTitle>Add Bank Account</DialogTitle>
                   <DialogDescription>Track balance across your multiple accounts.</DialogDescription>
                 </DialogHeader>
-                <div className="space-y-4 py-2">
+                <div className="flex-1 p-6 space-y-4 overflow-y-auto pb-40 md:pb-6">
                   <div className="space-y-2">
                     <label className="text-[10px] font-bold text-muted-foreground uppercase">Bank Name</label>
                     <Input placeholder="e.g. HDFC Bank" value={bankName} onChange={(e) => setBankName(e.target.value)} />
@@ -227,7 +227,7 @@ export function VaultView({ store, setView }: { store: any, setView: (v: any) =>
                     <Input type="number" placeholder="0.00" value={balance} onChange={(e) => setBalance(e.target.value)} />
                   </div>
                 </div>
-                <DialogFooter className="sticky bottom-0 bg-card z-10 pt-4">
+                <DialogFooter className="sticky bottom-0 bg-card z-10 p-6 pt-4 border-t">
                   <Button className="w-full h-12" onClick={handleAddBank}>Save Account</Button>
                 </DialogFooter>
               </DialogContent>
@@ -235,12 +235,12 @@ export function VaultView({ store, setView }: { store: any, setView: (v: any) =>
           </div>
 
           <Dialog open={isUpdateBalanceDialogOpen} onOpenChange={setIsUpdateBalanceDialogOpen}>
-            <DialogContent className="bg-card border-border rounded-2xl">
-              <DialogHeader>
+            <DialogContent className="bg-card border-border rounded-2xl p-0 overflow-hidden">
+              <DialogHeader className="p-6 pb-4 border-b">
                 <DialogTitle>Update Balance</DialogTitle>
                 <DialogDescription>Enter the latest balance for this account.</DialogDescription>
               </DialogHeader>
-              <div className="py-6">
+              <div className="p-6 space-y-4 pb-40 md:pb-6">
                 <div className="space-y-2">
                   <label className="text-[10px] font-bold text-muted-foreground uppercase">New Balance ({currencySymbol})</label>
                   <Input 
@@ -253,7 +253,7 @@ export function VaultView({ store, setView }: { store: any, setView: (v: any) =>
                   />
                 </div>
               </div>
-              <DialogFooter>
+              <DialogFooter className="p-6 pt-4 border-t">
                 <Button className="w-full h-11" onClick={handleUpdateBalance}>Update Balance</Button>
               </DialogFooter>
             </DialogContent>
@@ -323,12 +323,12 @@ export function VaultView({ store, setView }: { store: any, setView: (v: any) =>
                   <PlusCircle className="h-4 w-4" /> New Investment
                 </Button>
               </DialogTrigger>
-              <DialogContent className="bg-card border-border rounded-2xl max-h-[95dvh] overflow-y-auto">
-                <DialogHeader className="sticky top-0 bg-card z-10 pb-4">
+              <DialogContent className="bg-card border-border rounded-2xl max-h-[90dvh] overflow-y-auto flex flex-col p-0">
+                <DialogHeader className="sticky top-0 bg-card z-10 p-6 pb-4 border-b">
                   <DialogTitle>New Fixed/Recurring Deposit</DialogTitle>
                   <DialogDescription>Plan your long-term wealth growth.</DialogDescription>
                 </DialogHeader>
-                <div className="space-y-4 py-2">
+                <div className="flex-1 p-6 space-y-4 overflow-y-auto pb-40 md:pb-6">
                   <div className="space-y-2">
                     <label className="text-[10px] font-bold text-muted-foreground uppercase">Type</label>
                     <Select value={invType} onValueChange={(v: any) => setInvType(v)}>
@@ -368,7 +368,7 @@ export function VaultView({ store, setView }: { store: any, setView: (v: any) =>
                     </div>
                   )}
                 </div>
-                <DialogFooter className="sticky bottom-0 bg-card z-10 pt-4">
+                <DialogFooter className="sticky bottom-0 bg-card z-10 p-6 pt-4 border-t">
                   <Button className="w-full h-12" onClick={handleAddInv}>Create Investment</Button>
                 </DialogFooter>
               </DialogContent>
