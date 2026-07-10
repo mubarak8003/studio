@@ -790,8 +790,12 @@ export default function Dashboard() {
     const wins = chronTrades.filter(t => t.type === 'win');
     const losses = chronTrades.filter(t => t.type === 'loss');
 
+    // Calculate drawdown percentage relative to account balance
+    const drawdownPercent = store.accountBalance > 0 ? (currentDrawdown / store.accountBalance) * 100 : 0;
+
     return {
       currentDrawdown,
+      drawdownPercent,
       grossRecoveryProfit,
       grossBaseProfit,
       nextStake,
@@ -1403,8 +1407,15 @@ export default function Dashboard() {
                           </div>
                           <div className="space-y-1 text-right">
                             <span className="text-[10px] text-muted-foreground uppercase tracking-tight font-bold">Current Drawdown</span>
-                            <div className="text-lg md:text-xl font-headline font-bold text-red-500">
-                              {currencySymbol}{activeSessionStats.currentDrawdown.toFixed(2)}
+                            <div className="flex flex-col items-end">
+                              <div className="text-lg md:text-xl font-headline font-bold text-red-500">
+                                {currencySymbol}{activeSessionStats.currentDrawdown.toFixed(2)}
+                              </div>
+                              {activeSessionStats.currentDrawdown > 0 && (
+                                <div className="text-[10px] font-bold text-red-500 bg-red-500/5 px-1.5 py-0.5 rounded border border-red-500/10 mt-0.5">
+                                  {activeSessionStats.drawdownPercent.toFixed(2)}%
+                                </div>
+                              )}
                             </div>
                           </div>
                         </div>
