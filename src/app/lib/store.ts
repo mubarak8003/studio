@@ -29,6 +29,28 @@ export type Session = {
   walletDeductionPercent: number;
 };
 
+export type BankAccount = {
+  id: string;
+  bankName: string;
+  accountLabel: string;
+  balance: number;
+  lastUpdated: Date;
+};
+
+export type InvestmentType = 'FD' | 'RD';
+
+export type Investment = {
+  id: string;
+  type: InvestmentType;
+  bankName: string;
+  principalAmount: number;
+  interestRate: number;
+  startDate: Date;
+  maturityDate: Date;
+  monthlyInstallment?: number;
+  status: 'active' | 'matured';
+};
+
 export type CurrencyCode = 'USD' | 'INR' | 'EUR' | 'GBP' | 'AED' | 'SAR' | 'PKR' | 'BDT';
 
 export type AppState = {
@@ -50,6 +72,9 @@ export type AppState = {
   // Wallet System
   walletBalance: number;
   walletDeductionPercent: number;
+  // Banking & Vault
+  bankAccounts: BankAccount[];
+  investments: Investment[];
 };
 
 const DEFAULT_STATE: AppState = {
@@ -68,6 +93,8 @@ const DEFAULT_STATE: AppState = {
   notes: '',
   walletBalance: 0,
   walletDeductionPercent: 0,
+  bankAccounts: [],
+  investments: [],
 };
 
 export const CURRENCY_SYMBOLS: Record<CurrencyCode, string> = {
@@ -87,12 +114,12 @@ export function useRecoupStore() {
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('recouppro_state_v12');
+      const saved = localStorage.getItem('recouppro_state_v13');
       if (saved) {
         try {
           const parsed = JSON.parse(saved);
           
-          // Cleanup: Filter out any sessions that don't have trades to prevent clutter
+          // Cleanup empty sessions
           const cleanHistory = (parsed.sessions || []).filter((s: any) => s.trades && s.trades.length > 0);
           
           setState({
@@ -119,6 +146,15 @@ export function useRecoupStore() {
                  deduction: t.deduction ?? 0
                }))
             } : null,
+            bankAccounts: (parsed.bankAccounts || []).map((b: any) => ({
+              ...b,
+              lastUpdated: new Date(b.lastUpdated)
+            })),
+            investments: (parsed.investments || []).map((i: any) => ({
+              ...i,
+              startDate: new Date(i.startDate),
+              maturityDate: new Date(i.maturityDate)
+            })),
           });
         } catch (e) {
           console.error("Failed to parse recouppro_state", e);
@@ -130,7 +166,7 @@ export function useRecoupStore() {
 
   useEffect(() => {
     if (isHydrated) {
-      localStorage.setItem('recouppro_state_v12', JSON.stringify(state));
+      localStorage.setItem('recouppro_state_v13', JSON.stringify(state));
     }
   }, [state, isHydrated]);
 
@@ -142,7 +178,6 @@ export function useRecoupStore() {
         startTime: new Date(),
         trades: [],
         isActive: true,
-        // Copy current global defaults into the session
         recoveryTargetWins: prev.recoveryTargetWins,
         baseStake: prev.baseStake,
         riskRewardRatio: prev.riskRewardRatio,
@@ -231,12 +266,8 @@ export function useRecoupStore() {
       let nextRecoveryTarget = currentSession.recoveryTargetWins;
       let nextManualDrawdown = currentSession.manualDrawdown;
 
-      // New dynamic targeting logic:
-      // Win decreases target trades, Loss increases them
       if (type === 'win') {
-        if (nextRecoveryTarget > 0) {
-          nextRecoveryTarget = nextRecoveryTarget - 1;
-        }
+        if (nextRecoveryTarget > 0) nextRecoveryTarget = nextRecoveryTarget - 1;
       } else {
         nextRecoveryTarget = nextRecoveryTarget + 1;
       }
@@ -262,102 +293,99 @@ export function useRecoupStore() {
     });
   };
 
-  // Setters update active session if it exists
+  // Banking Actions
+  const addBankAccount = (bank: Omit<BankAccount, 'id' | 'lastUpdated'>) => {
+    setState(prev => ({
+      ...prev,
+      bankAccounts: [...prev.bankAccounts, { ...bank, id: crypto.randomUUID(), lastUpdated: new Date() }]
+    }));
+  };
+
+  const updateBankAccount = (id: string, updates: Partial<BankAccount>) => {
+    setState(prev => ({
+      ...prev,
+      bankAccounts: prev.bankAccounts.map(b => b.id === id ? { ...b, ...updates, lastUpdated: new Date() } : b)
+    }));
+  };
+
+  const deleteBankAccount = (id: string) => {
+    setState(prev => ({
+      ...prev,
+      bankAccounts: prev.bankAccounts.filter(b => b.id !== id)
+    }));
+  };
+
+  const addInvestment = (inv: Omit<Investment, 'id'>) => {
+    setState(prev => ({
+      ...prev,
+      investments: [...prev.investments, { ...inv, id: crypto.randomUUID() }]
+    }));
+  };
+
+  const deleteInvestment = (id: string) => {
+    setState(prev => ({
+      ...prev,
+      investments: prev.investments.filter(i => i.id !== id)
+    }));
+  };
+
+  // Setters
   const setRecoveryTargetWins = (n: number) => {
     setState(prev => {
-      if (prev.activeSession) {
-        return { ...prev, activeSession: { ...prev.activeSession, recoveryTargetWins: n } };
-      }
+      if (prev.activeSession) return { ...prev, activeSession: { ...prev.activeSession, recoveryTargetWins: n } };
       return { ...prev, recoveryTargetWins: n };
     });
   };
 
   const setBaseStake = (n: number) => {
     setState(prev => {
-      if (prev.activeSession) {
-        return { ...prev, activeSession: { ...prev.activeSession, baseStake: n } };
-      }
+      if (prev.activeSession) return { ...prev, activeSession: { ...prev.activeSession, baseStake: n } };
       return { ...prev, baseStake: n };
     });
   };
 
   const setRiskRewardRatio = (n: number) => {
     setState(prev => {
-      if (prev.activeSession) {
-        return { ...prev, activeSession: { ...prev.activeSession, riskRewardRatio: n } };
-      }
+      if (prev.activeSession) return { ...prev, activeSession: { ...prev.activeSession, riskRewardRatio: n } };
       return { ...prev, riskRewardRatio: n };
     });
   };
 
   const setManualDrawdown = (n: number) => {
     setState(prev => {
-      if (prev.activeSession) {
-        return { ...prev, activeSession: { ...prev.activeSession, manualDrawdown: n } };
-      }
+      if (prev.activeSession) return { ...prev, activeSession: { ...prev.activeSession, manualDrawdown: n } };
       return { ...prev, manualDrawdown: n };
     });
   };
 
   const setUseManualDrawdown = (b: boolean) => {
     setState(prev => {
-      if (prev.activeSession) {
-        return { ...prev, activeSession: { ...prev.activeSession, useManualDrawdown: b } };
-      }
+      if (prev.activeSession) return { ...prev, activeSession: { ...prev.activeSession, useManualDrawdown: b } };
       return { ...prev, useManualDrawdown: b };
     });
   };
 
   const setWalletDeductionPercent = (n: number) => {
     setState(prev => {
-      if (prev.activeSession) {
-        return { ...prev, activeSession: { ...prev.activeSession, walletDeductionPercent: n } };
-      }
+      if (prev.activeSession) return { ...prev, activeSession: { ...prev.activeSession, walletDeductionPercent: n } };
       return { ...prev, walletDeductionPercent: n };
     });
   };
 
-  const setCurrency = (c: CurrencyCode) => {
-    setState(prev => ({ ...prev, currency: c }));
-  };
-
-  const setAccountBalance = (n: number) => {
-    setState(prev => ({ ...prev, accountBalance: n }));
-  };
-
-  const setRiskPerTradePercent = (n: number) => {
-    setState(prev => ({ ...prev, riskPerTradePercent: n }));
-  };
-
-  const setRiskAmountFixed = (n: number) => {
-    setState(prev => ({ ...prev, riskAmountFixed: n }));
-  };
-
-  const setRiskType = (t: 'percentage' | 'amount') => {
-    setState(prev => ({ ...prev, riskType: t }));
-  };
-
-  const setNotes = (n: string) => {
-    setState(prev => ({ ...prev, notes: n }));
-  };
+  const setCurrency = (c: CurrencyCode) => setState(prev => ({ ...prev, currency: c }));
+  const setAccountBalance = (n: number) => setState(prev => ({ ...prev, accountBalance: n }));
+  const setRiskPerTradePercent = (n: number) => setState(prev => ({ ...prev, riskPerTradePercent: n }));
+  const setRiskAmountFixed = (n: number) => setState(prev => ({ ...prev, riskAmountFixed: n }));
+  const setRiskType = (t: 'percentage' | 'amount') => setState(prev => ({ ...prev, riskType: t }));
+  const setNotes = (n: string) => setState(prev => ({ ...prev, notes: n }));
 
   const resetAllData = () => {
     setState(prev => ({
       ...DEFAULT_STATE,
-      baseStake: prev.baseStake,
-      currency: prev.currency,
-      riskRewardRatio: prev.riskRewardRatio,
-      recoveryTargetWins: prev.recoveryTargetWins,
-      useManualDrawdown: prev.useManualDrawdown,
-      accountBalance: prev.accountBalance,
-      riskPerTradePercent: prev.riskPerTradePercent,
-      riskAmountFixed: prev.riskAmountFixed,
-      riskType: prev.riskType,
-      notes: prev.notes, 
-      walletDeductionPercent: prev.walletDeductionPercent,
+      bankAccounts: [],
+      investments: [],
       sessions: [],
       activeSession: null,
-      manualDrawdown: 0,
       walletBalance: 0,
     }));
   };
@@ -370,6 +398,11 @@ export function useRecoupStore() {
     resumeSession,
     deleteSession,
     addTrade,
+    addBankAccount,
+    updateBankAccount,
+    deleteBankAccount,
+    addInvestment,
+    deleteInvestment,
     setRecoveryTargetWins,
     setBaseStake,
     setRiskRewardRatio,

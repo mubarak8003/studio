@@ -41,6 +41,7 @@ import {
   MessageSquare,
   Clock,
   Info,
+  Landmark,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -103,8 +104,9 @@ import {
   Bar,
   Cell,
 } from 'recharts';
+import { VaultView } from '@/components/recoup/vault-view';
 
-type View = 'dashboard' | 'history' | 'sizer';
+type View = 'dashboard' | 'history' | 'sizer' | 'vault';
 
 const AppLogo = ({ className }: { className?: string }) => {
   return (
@@ -736,7 +738,6 @@ export default function Dashboard() {
     setMounted(true);
   }, []);
 
-  // Auto-scroll to top when view changes - Immediate Jump
   useEffect(() => {
     if (mounted) {
       window.scrollTo(0, 0);
@@ -1052,6 +1053,9 @@ export default function Dashboard() {
                     <Button variant={view === 'dashboard' ? "secondary" : "ghost"} className="w-full justify-start gap-3" onClick={() => setView('dashboard')}>
                       <Activity className="h-4 w-4" /> Dashboard
                     </Button>
+                    <Button variant={view === 'vault' ? "secondary" : "ghost"} className="w-full justify-start gap-3" onClick={() => setView('vault')}>
+                      <Landmark className="h-4 w-4" /> The Vault
+                    </Button>
                     <Button variant={view === 'sizer' ? "secondary" : "ghost"} className="w-full justify-start gap-3" onClick={() => setView('sizer')}>
                       <Briefcase className="h-4 w-4" /> Position Sizer
                     </Button>
@@ -1060,7 +1064,7 @@ export default function Dashboard() {
                     </Button>
                   </nav>
                   <Separator className="bg-border/30" />
-                  {view !== 'sizer' && (
+                  {(view !== 'sizer' && view !== 'vault') && (
                     <div className="space-y-6">
                       <div className="flex items-center gap-2">
                         <Settings2 className="h-4 w-4 text-muted-foreground" />
@@ -1093,6 +1097,9 @@ export default function Dashboard() {
             <Button variant={view === 'dashboard' ? "secondary" : "ghost"} className="w-full justify-start gap-3 text-foreground" onClick={() => setView('dashboard')}>
               <Activity className="h-4 w-4" /> Dashboard
             </Button>
+            <Button variant={view === 'vault' ? "secondary" : "ghost"} className="w-full justify-start gap-3 text-foreground" onClick={() => setView('vault')}>
+              <Landmark className="h-4 w-4" /> The Vault
+            </Button>
             <Button variant={view === 'sizer' ? "secondary" : "ghost"} className="w-full justify-start gap-3 text-foreground" onClick={() => setView('sizer')}>
               <Briefcase className="h-4 w-4" /> Position Sizer
             </Button>
@@ -1101,7 +1108,7 @@ export default function Dashboard() {
             </Button>
           </nav>
 
-          {view !== 'sizer' && (
+          {(view !== 'sizer' && view !== 'vault') && (
             <>
               <Separator className="mb-8 bg-border/30" />
               <div className="space-y-6">
@@ -1261,7 +1268,6 @@ export default function Dashboard() {
                       </div>
 
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        {/* Styled Profit Breakdown */}
                         <div className="p-3.5 rounded-2xl bg-card border border-border/50 shadow-sm space-y-3">
                            <h4 className="font-bold text-sm flex items-center gap-2 text-muted-foreground uppercase tracking-tight">
                              <Target className="h-4 w-4" /> Profit Breakdown
@@ -1283,7 +1289,6 @@ export default function Dashboard() {
                            </div>
                         </div>
 
-                        {/* Styled Investment Logic */}
                         <div className="p-3.5 rounded-2xl bg-primary/[0.03] border border-primary/10 shadow-sm space-y-3">
                            <h4 className="font-bold text-sm flex items-center gap-2 text-primary uppercase tracking-tight">
                              <ArrowUpRight className="h-4 w-4" /> Investment Logic
@@ -1813,6 +1818,10 @@ export default function Dashboard() {
 
             {view === 'sizer' && (
               <PositionSizer store={store} setView={setView} />
+            )}
+
+            {view === 'vault' && (
+              <VaultView store={store} setView={setView} />
             )}
           </div>
         </main>
