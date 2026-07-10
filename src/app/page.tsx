@@ -803,12 +803,14 @@ export default function Dashboard() {
     const wins = chronTrades.filter(t => t.type === 'win');
     const losses = chronTrades.filter(t => t.type === 'loss');
 
-    // Calculate drawdown percentage relative to account balance (Main Balance set in Strategy Engine)
+    // Calculate percentages relative to account balance (Main Balance set in Strategy Engine)
     const drawdownPercent = store.accountBalance > 0 ? (currentDrawdown / store.accountBalance) * 100 : 0;
+    const netPnLPercent = store.accountBalance > 0 ? (netPnL / store.accountBalance) * 100 : 0;
 
     return {
       currentDrawdown,
       drawdownPercent,
+      netPnLPercent,
       grossRecoveryProfit,
       grossBaseProfit,
       nextStake,
@@ -1414,8 +1416,18 @@ export default function Dashboard() {
                         <div className="grid grid-cols-2 gap-4">
                           <div className="space-y-1">
                             <span className="text-[10px] text-muted-foreground uppercase tracking-tight font-bold">Net Balance</span>
-                            <div className={cn("text-lg md:text-xl font-headline font-bold", activeSessionStats.netPnL >= 0 ? "text-green-500" : "text-red-500")}>
-                              {activeSessionStats.netPnL >= 0 ? '+' : '-'}{currencySymbol}{Math.abs(activeSessionStats.netPnL).toFixed(2)}
+                            <div className="flex flex-col">
+                              <div className={cn("text-lg md:text-xl font-headline font-bold", activeSessionStats.netPnL >= 0 ? "text-green-500" : "text-red-500")}>
+                                {activeSessionStats.netPnL >= 0 ? '+' : '-'}{currencySymbol}{Math.abs(activeSessionStats.netPnL).toFixed(2)}
+                              </div>
+                              <div className={cn(
+                                "text-[10px] font-bold w-fit px-1.5 py-0.5 rounded border mt-0.5",
+                                activeSessionStats.netPnL >= 0 
+                                  ? "text-green-500 bg-green-500/5 border-green-500/10" 
+                                  : "text-red-500 bg-red-500/5 border-red-500/10"
+                              )}>
+                                {activeSessionStats.netPnL >= 0 ? '+' : ''}{activeSessionStats.netPnLPercent.toFixed(2)}%
+                              </div>
                             </div>
                           </div>
                           <div className="space-y-1 text-right">
