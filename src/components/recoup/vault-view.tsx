@@ -375,9 +375,9 @@ export function VaultView({ store, setView }: { store: any, setView: (v: any) =>
             </Dialog>
           </div>
 
-          <div className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {store.investments.length === 0 && (
-              <div className="py-20 flex flex-col items-center justify-center text-muted-foreground border-2 border-dashed rounded-2xl border-border/50">
+              <div className="col-span-full py-20 flex flex-col items-center justify-center text-muted-foreground border-2 border-dashed rounded-2xl border-border/50">
                 <PiggyBank className="h-10 w-10 mb-2 opacity-20" />
                 <p>No investments recorded.</p>
               </div>
@@ -385,50 +385,57 @@ export function VaultView({ store, setView }: { store: any, setView: (v: any) =>
             {store.investments.map((inv: any) => (
               <Card key={inv.id} className="bg-card border-border shadow-sm group overflow-hidden">
                 <div className={cn("h-1 w-full", inv.type === 'FD' ? "bg-accent" : "bg-primary")} />
-                <CardContent className="p-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
-                  <div className="flex items-center gap-4">
+                <CardContent className="p-4 flex flex-col gap-3">
+                  <div className="flex items-start gap-3">
                     <div className={cn(
-                      "h-12 w-12 rounded-xl flex items-center justify-center",
+                      "h-10 w-10 rounded-xl flex items-center justify-center shrink-0",
                       inv.type === 'FD' ? "bg-accent/10 text-accent" : "bg-primary/10 text-primary"
                     )}>
-                      <Landmark className="h-6 w-6" />
+                      <Landmark className="h-5 w-5" />
                     </div>
-                    <div>
+                    <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
-                        <h4 className="font-bold text-foreground">{inv.bankName}</h4>
-                        <Badge variant="outline" className="text-[9px] uppercase font-bold border-border/50 h-5 px-1.5">{inv.type}</Badge>
+                        <h4 className="font-bold text-foreground truncate">{inv.bankName}</h4>
+                        <Badge variant="outline" className="text-[9px] uppercase font-bold border-border/50 h-4 px-1">{inv.type}</Badge>
                       </div>
                       {inv.accountNumber && (
-                        <p className="text-[10px] text-muted-foreground font-mono mt-0.5">#{inv.accountNumber}</p>
+                        <p className="text-[10px] text-muted-foreground font-mono leading-tight">#{inv.accountNumber}</p>
                       )}
-                      <p className="text-[10px] text-muted-foreground mt-0.5 font-bold uppercase tracking-tight flex items-center gap-1.5">
-                        <CalendarDays className="h-3 w-3" /> Mature: {inv.maturityDate.toLocaleDateString()}
+                      <p className="text-[9px] text-muted-foreground font-bold uppercase tracking-tight flex items-center gap-1.5 mt-0.5">
+                        <CalendarDays className="h-2.5 w-2.5" /> Mature: {inv.maturityDate.toLocaleDateString()}
                       </p>
                     </div>
                   </div>
                   
-                  <div className="grid grid-cols-2 md:flex md:items-center gap-8 text-right">
-                    <div>
-                      <p className="text-[9px] text-muted-foreground uppercase font-bold mb-0.5">Principal</p>
-                      <p className="font-bold text-foreground font-mono">{currencySymbol}{inv.principalAmount.toLocaleString()}</p>
+                  <div className="grid grid-cols-2 gap-2 pt-2 border-t border-border/30">
+                    <div className="text-center">
+                      <p className="text-[8px] text-muted-foreground uppercase font-bold mb-0.5">Principal</p>
+                      <p className="font-bold text-sm text-foreground">{currencySymbol}{inv.principalAmount.toLocaleString()}</p>
                     </div>
-                    <div>
-                      <p className="text-[9px] text-muted-foreground uppercase font-bold mb-0.5">Rate</p>
-                      <p className="font-bold text-primary flex items-center justify-end gap-1">
-                        {inv.interestRate}% <Percent className="h-3 w-3" />
+                    <div className="text-center">
+                      <p className="text-[8px] text-muted-foreground uppercase font-bold mb-0.5">Rate</p>
+                      <p className="font-bold text-sm text-primary flex items-center justify-center gap-1">
+                        {inv.interestRate}%
                       </p>
                     </div>
-                    {inv.monthlyInstallment && (
-                      <div>
-                        <p className="text-[9px] text-muted-foreground uppercase font-bold mb-0.5">Installment</p>
-                        <p className="font-bold text-accent">{currencySymbol}{inv.monthlyInstallment}/mo</p>
-                      </div>
-                    )}
-                    <div className="flex items-center justify-end">
-                      <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => store.deleteInvestment(inv.id)}>
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                  </div>
+
+                  {inv.monthlyInstallment && (
+                    <div className="text-center pt-1">
+                      <p className="text-[8px] text-muted-foreground uppercase font-bold mb-0.5">Installment</p>
+                      <p className="font-bold text-sm text-accent">{currencySymbol}{inv.monthlyInstallment}/mo</p>
                     </div>
+                  )}
+
+                  <div className="flex justify-center pt-1">
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="h-7 w-7 text-muted-foreground hover:text-destructive opacity-40 group-hover:opacity-100 transition-opacity" 
+                      onClick={() => store.deleteInvestment(inv.id)}
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
                   </div>
                 </CardContent>
               </Card>
