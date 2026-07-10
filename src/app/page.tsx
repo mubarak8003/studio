@@ -392,7 +392,7 @@ const StrategySettings = ({ store, stats }: { store: any, stats: any }) => {
             <AlertDialogHeader>
               <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
               <AlertDialogDescription>
-                This will permanently delete all your sessions, trade history, and wallet savings. Your strategy notes 📝 will NOT be deleted.
+                This will permanently delete all your sessions, trade history, and wallet savings. Your Banking data 🏦 and strategy notes 📝 will NOT be deleted.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>

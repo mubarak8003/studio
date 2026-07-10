@@ -382,11 +382,12 @@ export function useRecoupStore() {
   const resetAllData = () => {
     setState(prev => ({
       ...DEFAULT_STATE,
-      bankAccounts: [],
-      investments: [],
+      bankAccounts: prev.bankAccounts,
+      investments: prev.investments,
       sessions: [],
       activeSession: null,
       walletBalance: 0,
+      notes: prev.notes
     }));
   };
 
