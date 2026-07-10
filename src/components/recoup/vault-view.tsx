@@ -15,6 +15,8 @@ import {
   ArrowLeft,
   CircleDollarSign,
   PiggyBank,
+  Edit2,
+  Hash,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -39,21 +41,28 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { CURRENCY_SYMBOLS, CurrencyCode } from '@/app/lib/store';
+import { CURRENCY_SYMBOLS, CurrencyCode, BankAccount } from '@/app/lib/store';
 import { cn } from '@/lib/utils';
 
 export function VaultView({ store, setView }: { store: any, setView: (v: any) => void }) {
   const [isBankDialogOpen, setIsBankDialogOpen] = useState(false);
+  const [isUpdateBalanceDialogOpen, setIsUpdateBalanceDialogOpen] = useState(false);
   const [isInvDialogOpen, setIsInvDialogOpen] = useState(false);
   
   // Bank Form State
   const [bankName, setBankName] = useState('');
   const [accountLabel, setAccountLabel] = useState('');
+  const [accountNumber, setAccountNumber] = useState('');
   const [balance, setBalance] = useState('');
+
+  // Update Balance State
+  const [selectedBankId, setSelectedBankId] = useState<string | null>(null);
+  const [newBalance, setNewBalance] = useState('');
 
   // Investment Form State
   const [invType, setInvType] = useState<'FD' | 'RD'>('FD');
   const [invBank, setInvBank] = useState('');
+  const [invAccountNumber, setInvAccountNumber] = useState('');
   const [invPrincipal, setInvPrincipal] = useState('');
   const [invRate, setInvRate] = useState('');
   const [invMonths, setInvMonths] = useState('');
@@ -77,12 +86,24 @@ export function VaultView({ store, setView }: { store: any, setView: (v: any) =>
     store.addBankAccount({
       bankName,
       accountLabel: accountLabel || 'Savings',
+      accountNumber: accountNumber.trim() || undefined,
       balance: bal
     });
     setBankName('');
     setAccountLabel('');
+    setAccountNumber('');
     setBalance('');
     setIsBankDialogOpen(false);
+  };
+
+  const handleUpdateBalance = () => {
+    const bal = parseFloat(newBalance);
+    if (selectedBankId && !isNaN(bal)) {
+      store.updateBankAccount(selectedBankId, { balance: bal });
+      setNewBalance('');
+      setSelectedBankId(null);
+      setIsUpdateBalanceDialogOpen(false);
+    }
   };
 
   const handleAddInv = () => {
@@ -97,6 +118,7 @@ export function VaultView({ store, setView }: { store: any, setView: (v: any) =>
     store.addInvestment({
       type: invType,
       bankName: invBank,
+      accountNumber: invAccountNumber.trim() || undefined,
       principalAmount: p,
       interestRate: r,
       startDate: new Date(),
@@ -106,6 +128,7 @@ export function VaultView({ store, setView }: { store: any, setView: (v: any) =>
     });
     
     setInvBank('');
+    setInvAccountNumber('');
     setInvPrincipal('');
     setInvRate('');
     setInvMonths('');
@@ -193,7 +216,11 @@ export function VaultView({ store, setView }: { store: any, setView: (v: any) =>
                   </div>
                   <div className="space-y-2">
                     <label className="text-[10px] font-bold text-muted-foreground uppercase">Account Label</label>
-                    <Input placeholder="e.g. Salary, Business" value={accountLabel} onChange={(e) => setAccountLabel(e.target.value)} />
+                    <Input placeholder="e.g. Savings, Salary" value={accountLabel} onChange={(e) => setAccountLabel(e.target.value)} />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold text-muted-foreground uppercase">Account Number (Optional)</label>
+                    <Input placeholder="e.g. 50100..." value={accountNumber} onChange={(e) => setAccountNumber(e.target.value)} />
                   </div>
                   <div className="space-y-2">
                     <label className="text-[10px] font-bold text-muted-foreground uppercase">Initial Balance ({currencySymbol})</label>
@@ -207,6 +234,31 @@ export function VaultView({ store, setView }: { store: any, setView: (v: any) =>
             </Dialog>
           </div>
 
+          <Dialog open={isUpdateBalanceDialogOpen} onOpenChange={setIsUpdateBalanceDialogOpen}>
+            <DialogContent className="bg-card border-border rounded-2xl">
+              <DialogHeader>
+                <DialogTitle>Update Balance</DialogTitle>
+                <DialogDescription>Enter the latest balance for this account.</DialogDescription>
+              </DialogHeader>
+              <div className="py-6">
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold text-muted-foreground uppercase">New Balance ({currencySymbol})</label>
+                  <Input 
+                    type="number" 
+                    placeholder="0.00" 
+                    value={newBalance} 
+                    onChange={(e) => setNewBalance(e.target.value)} 
+                    onFocus={(e) => e.target.select()}
+                    autoFocus
+                  />
+                </div>
+              </div>
+              <DialogFooter>
+                <Button className="w-full h-11" onClick={handleUpdateBalance}>Update Balance</Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {store.bankAccounts.length === 0 && (
               <div className="col-span-full py-12 flex flex-col items-center justify-center text-muted-foreground border-2 border-dashed rounded-2xl border-border/50">
@@ -214,22 +266,46 @@ export function VaultView({ store, setView }: { store: any, setView: (v: any) =>
                 <p>No bank accounts added yet.</p>
               </div>
             )}
-            {store.bankAccounts.map((bank: any) => (
-              <Card key={bank.id} className="bg-card border-border shadow-sm group">
-                <CardHeader className="pb-3 flex flex-row items-center justify-between">
-                  <div>
-                    <CardTitle className="text-base text-foreground font-bold">{bank.bankName}</CardTitle>
-                    <CardDescription className="text-[10px] uppercase font-bold tracking-tight text-primary/80">{bank.accountLabel}</CardDescription>
+            {store.bankAccounts.map((bank: BankAccount) => (
+              <Card 
+                key={bank.id} 
+                className="bg-card border-border shadow-sm group cursor-pointer hover:border-primary/40 transition-colors"
+                onClick={() => {
+                  setSelectedBankId(bank.id);
+                  setNewBalance(bank.balance.toString());
+                  setIsUpdateBalanceDialogOpen(true);
+                }}
+              >
+                <CardHeader className="pb-3 flex flex-row items-center justify-between space-y-0">
+                  <div className="space-y-1">
+                    <CardTitle className="text-base text-foreground font-bold leading-none">{bank.bankName}</CardTitle>
+                    {bank.accountNumber && (
+                      <p className="text-[10px] text-muted-foreground font-mono">#{bank.accountNumber}</p>
+                    )}
+                    <Badge variant="outline" className="text-[9px] uppercase font-bold border-none p-0 text-primary hover:bg-transparent">
+                      {bank.accountLabel}
+                    </Badge>
                   </div>
-                  <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => store.deleteBankAccount(bank.id)}>
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="h-8 w-8 text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity" 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      store.deleteBankAccount(bank.id);
+                    }}
+                  >
                     <Trash2 className="h-4 w-4" />
                   </Button>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-xl font-headline font-bold text-foreground">
-                    {currencySymbol}{bank.balance.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                  <div className="flex items-center justify-between">
+                    <div className="text-2xl font-headline font-bold text-foreground">
+                      {currencySymbol}{bank.balance.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                    </div>
+                    <Edit2 className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-40" />
                   </div>
-                  <p className="text-[9px] text-muted-foreground mt-2 flex items-center gap-1.5 uppercase font-bold">
+                  <p className="text-[9px] text-muted-foreground mt-3 flex items-center gap-1.5 uppercase font-bold">
                     <CalendarDays className="h-3 w-3" /> Updated: {bank.lastUpdated.toLocaleDateString()}
                   </p>
                 </CardContent>
@@ -266,6 +342,10 @@ export function VaultView({ store, setView }: { store: any, setView: (v: any) =>
                   <div className="space-y-2">
                     <label className="text-[10px] font-bold text-muted-foreground uppercase">Bank Name</label>
                     <Input placeholder="e.g. SBI, ICICI" value={invBank} onChange={(e) => setInvBank(e.target.value)} />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold text-muted-foreground uppercase">Ref / Account Number</label>
+                    <Input placeholder="e.g. FD1234..." value={invAccountNumber} onChange={(e) => setInvAccountNumber(e.target.value)} />
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
@@ -318,6 +398,9 @@ export function VaultView({ store, setView }: { store: any, setView: (v: any) =>
                         <h4 className="font-bold text-foreground">{inv.bankName}</h4>
                         <Badge variant="outline" className="text-[9px] uppercase font-bold border-border/50 h-5 px-1.5">{inv.type}</Badge>
                       </div>
+                      {inv.accountNumber && (
+                        <p className="text-[10px] text-muted-foreground font-mono mt-0.5">#{inv.accountNumber}</p>
+                      )}
                       <p className="text-[10px] text-muted-foreground mt-0.5 font-bold uppercase tracking-tight flex items-center gap-1.5">
                         <CalendarDays className="h-3 w-3" /> Mature: {inv.maturityDate.toLocaleDateString()}
                       </p>

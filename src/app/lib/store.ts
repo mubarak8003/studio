@@ -33,6 +33,7 @@ export type BankAccount = {
   id: string;
   bankName: string;
   accountLabel: string;
+  accountNumber?: string;
   balance: number;
   lastUpdated: Date;
 };
@@ -43,6 +44,7 @@ export type Investment = {
   id: string;
   type: InvestmentType;
   bankName: string;
+  accountNumber?: string;
   principalAmount: number;
   interestRate: number;
   startDate: Date;
