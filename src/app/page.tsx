@@ -264,6 +264,18 @@ const StrategySettings = ({ store, stats }: { store: any, stats: any }) => {
       </div>
 
       <div className="space-y-3">
+        <label className="text-xs font-medium text-muted-foreground flex items-center gap-2">
+          <Landmark className="h-3 w-3" /> Main Balance ({currencySymbol})
+        </label>
+        <SmartNumericInput 
+          value={store.accountBalance} 
+          onChange={store.setAccountBalance}
+          className="bg-background border-border"
+        />
+        <p className="text-[9px] text-muted-foreground italic">Percentage calculations are based on this balance.</p>
+      </div>
+
+      <div className="space-y-3">
         <label className="text-xs font-medium text-muted-foreground">Base Stake ({currencySymbol})</label>
         <SmartNumericInput 
           value={settings.baseStake} 
@@ -608,6 +620,7 @@ const PositionSizer = ({ store, setView }: { store: any, setView: (v: View) => v
                   onChange={store.setAccountBalance}
                   className="bg-background border-border"
                 />
+                <p className="text-[10px] text-muted-foreground italic">Note: Balance set here is shared with Strategy Engine.</p>
               </div>
 
               <div className="space-y-3">
@@ -790,7 +803,7 @@ export default function Dashboard() {
     const wins = chronTrades.filter(t => t.type === 'win');
     const losses = chronTrades.filter(t => t.type === 'loss');
 
-    // Calculate drawdown percentage relative to account balance
+    // Calculate drawdown percentage relative to account balance (Main Balance set in Strategy Engine)
     const drawdownPercent = store.accountBalance > 0 ? (currentDrawdown / store.accountBalance) * 100 : 0;
 
     return {
