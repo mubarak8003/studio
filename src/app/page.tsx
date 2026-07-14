@@ -806,11 +806,15 @@ export default function Dashboard() {
     // Calculate percentages relative to account balance (Main Balance set in Strategy Engine)
     const drawdownPercent = store.accountBalance > 0 ? (currentDrawdown / store.accountBalance) * 100 : 0;
     const netPnLPercent = store.accountBalance > 0 ? (netPnL / store.accountBalance) * 100 : 0;
+    const walletPercent = store.accountBalance > 0 ? (store.walletBalance / store.accountBalance) * 100 : 0;
+    const recoveryAdjustmentPercent = store.accountBalance > 0 ? (recoveryStakeAdjustment / store.accountBalance) * 100 : 0;
 
     return {
       currentDrawdown,
       drawdownPercent,
       netPnLPercent,
+      walletPercent,
+      recoveryAdjustmentPercent,
       grossRecoveryProfit,
       grossBaseProfit,
       nextStake,
@@ -1317,9 +1321,16 @@ export default function Dashboard() {
                                <span className="text-foreground">Base Investment:</span>
                                <span className="font-bold">{currencySymbol}{activeSettings.baseStake.toFixed(2)}</span>
                              </div>
-                             <div className="flex justify-between items-center text-sm font-bold text-primary">
-                               <span>Recovery Adjustment:</span>
-                               <span className="font-bold">+ {currencySymbol}{activeSessionStats.recoveryStakeAdjustment.toFixed(2)}</span>
+                             <div className="flex flex-col gap-1">
+                               <div className="flex justify-between items-center text-sm font-bold text-primary">
+                                 <span>Recovery Adjustment:</span>
+                                 <span className="font-bold">+ {currencySymbol}{activeSessionStats.recoveryStakeAdjustment.toFixed(2)}</span>
+                               </div>
+                               {activeSessionStats.recoveryAdjustmentPercent !== 0 && (
+                                 <span className="text-right text-[10px] font-bold text-primary opacity-80">
+                                   ({activeSessionStats.recoveryAdjustmentPercent.toFixed(3)}%)
+                                 </span>
+                               )}
                              </div>
                              <div className="text-[10px] text-muted-foreground/60 italic mt-3 font-medium">
                                Calculation: (Target / {activeSettings.riskRewardRatio.toFixed(2)} RR)
@@ -1382,8 +1393,15 @@ export default function Dashboard() {
                         </CardTitle>
                       </CardHeader>
                       <CardContent>
-                        <div className="text-3xl font-headline font-bold text-primary mb-1">
-                          {currencySymbol}{store.walletBalance.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                        <div className="flex flex-col">
+                          <div className="text-3xl font-headline font-bold text-primary">
+                            {currencySymbol}{store.walletBalance.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                          </div>
+                          {store.walletBalance > 0 && (
+                            <div className="text-[10px] font-bold text-primary bg-primary/5 border border-primary/10 w-fit px-1.5 py-0.5 rounded mt-0.5 mb-1">
+                              {activeSessionStats.walletPercent.toFixed(3)}%
+                            </div>
+                          )}
                         </div>
                         <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">Total Savings Secured</p>
                         <div className="mt-4 pt-4 border-t border-border/30">
