@@ -567,7 +567,7 @@ const PositionSizer = ({ store, setView }: { store: any, setView: (v: View) => v
       riskAmount = store.riskAmountFixed || 0;
     }
 
-    if (isNaN(e) || isNaN(s) || e <= 0 || s <= 0 || e === s || riskAmount <= 0) return null;
+    if (isNaN(e) || iNaN(s) || e <= 0 || s <= 0 || e === s || riskAmount <= 0) return null;
 
     const riskPerShare = Math.abs(e - s);
     const shares = Math.floor(riskAmount / riskPerShare);
@@ -1594,7 +1594,7 @@ export default function Dashboard() {
                       <CollapsibleTrigger asChild>
                         <Button 
                           variant="outline" 
-                          className="w-full justify-between gap-2 border-border/50 h-11 rounded-xl transition-all duration-200 hover:bg-muted/30 active:scale-[0.98] active:bg-muted/50 focus:ring-1 focus:ring-primary/20 text-foreground"
+                          className="w-full justify-between gap-2 border-border/50 h-11 rounded-xl transition-all duration-200 hover:bg-muted/30 active:bg-muted/50 focus:ring-1 focus:ring-primary/20 text-foreground"
                         >
                            <div className="flex items-center gap-2">
                              <Percent className="h-4 w-4 text-primary" />
