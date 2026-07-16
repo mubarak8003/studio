@@ -848,6 +848,8 @@ export default function Dashboard() {
     const netPnLPercent = store.accountBalance > 0 ? (netPnL / store.accountBalance) * 100 : 0;
     const walletPercent = store.accountBalance > 0 ? (store.walletBalance / store.accountBalance) * 100 : 0;
     const recoveryAdjustmentPercent = store.accountBalance > 0 ? (recoveryStakeAdjustment / store.accountBalance) * 100 : 0;
+    const nextStakePercent = store.accountBalance > 0 ? (nextStake / store.accountBalance) * 100 : 0;
+    const baseStakePercent = store.accountBalance > 0 ? (settings.baseStake / store.accountBalance) * 100 : 0;
 
     return {
       currentDrawdown,
@@ -855,6 +857,8 @@ export default function Dashboard() {
       netPnLPercent,
       walletPercent,
       recoveryAdjustmentPercent,
+      nextStakePercent,
+      baseStakePercent,
       grossRecoveryProfit,
       grossBaseProfit,
       nextStake,
@@ -1332,7 +1336,14 @@ export default function Dashboard() {
                         <div className="text-6xl md:text-8xl font-headline font-bold text-foreground transition-all duration-300">
                           {currencySymbol}{activeSessionStats.nextStake.toFixed(2)}
                         </div>
-                        <p className="text-xs text-muted-foreground mt-1 uppercase tracking-widest font-semibold">Total Trade Amount</p>
+                        <div className="flex flex-col items-center">
+                          <p className="text-xs text-muted-foreground mt-1 uppercase tracking-widest font-semibold">Total Trade Amount</p>
+                          {activeSessionStats.nextStakePercent !== 0 && (
+                            <div className="mt-1 text-[10px] font-bold text-primary bg-primary/10 border border-primary/20 px-1.5 py-0.5 rounded">
+                              {formatPercent(activeSessionStats.nextStakePercent)} of Main
+                            </div>
+                          )}
+                        </div>
                         <div className="mt-2 flex flex-col items-center gap-2">
                           {activeSessionStats.currentDrawdown > 0 && (
                             <div className="bg-red-500 text-white px-4 py-1.5 rounded-full text-xs font-bold shadow-md animate-in fade-in zoom-in">
@@ -1371,7 +1382,14 @@ export default function Dashboard() {
                            <div className="space-y-2">
                              <div className="flex justify-between items-center text-sm font-medium">
                                <span className="text-foreground">Base Investment:</span>
-                               <span className="font-bold">{currencySymbol}{activeSettings.baseStake.toFixed(2)}</span>
+                               <div className="flex items-center gap-1.5">
+                                 <span className="font-bold">{currencySymbol}{activeSettings.baseStake.toFixed(2)}</span>
+                                 {activeSessionStats.baseStakePercent !== 0 && (
+                                   <span className="text-[9px] font-bold bg-muted/50 px-1 rounded border border-border/50 text-muted-foreground">
+                                     {formatPercent(activeSessionStats.baseStakePercent)}
+                                   </span>
+                                 )}
+                               </div>
                              </div>
                              <div className="flex flex-col gap-0.5">
                                <div className="flex justify-between items-center text-sm font-bold text-primary">
@@ -2104,4 +2122,3 @@ export default function Dashboard() {
     </div>
   );
 }
-
