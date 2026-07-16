@@ -128,7 +128,7 @@ const QuickPercentTool = () => {
   const result = useMemo(() => {
     const b = parseFloat(baseNum);
     const p = parseFloat(percent);
-    if (isNaN(b) || iNaN(p)) return null;
+    if (isNaN(b) || isNaN(p)) return null;
     return (b * p) / 100;
   }, [baseNum, percent]);
 
@@ -1596,9 +1596,9 @@ export default function Dashboard() {
                           variant="outline" 
                           className="w-full justify-between gap-2 border-border/50 h-11 rounded-xl transition-all duration-200 hover:bg-muted/30 active:bg-muted/50 focus:ring-1 focus:ring-primary/20 text-foreground"
                         >
-                           <div className="flex items-center gap-2">
+                           <div className="flex items-center gap-2 text-foreground">
                              <Percent className="h-4 w-4 text-[#14b8a6]" />
-                             <span className="text-xs font-semibold uppercase tracking-wider text-foreground">Quick Percent Tool</span>
+                             <span className="text-xs font-semibold uppercase tracking-wider">Quick Percent Tool</span>
                            </div>
                            <ChevronDown className="h-4 w-4 text-muted-foreground/50 transition-transform duration-200 data-[state=open]:rotate-180" />
                         </Button>
@@ -1632,10 +1632,18 @@ export default function Dashboard() {
                              <div className="flex items-center gap-1.5 p-0.5 px-2 bg-background border border-primary/30 rounded-full animate-in zoom-in duration-200 shadow-sm min-w-[90px] justify-between">
                                <Input 
                                  type="number" 
-                                 min="1" 
+                                 min="0" 
                                  max="1000"
                                  value={forecastCount} 
-                                 onChange={(e) => setForecastCount(Math.max(1, parseInt(e.target.value) || 1))}
+                                 onChange={(e) => {
+                                   const val = parseInt(e.target.value);
+                                   if (!isNaN(val)) setForecastCount(Math.min(1000, Math.max(0, val)));
+                                   else setForecastCount(0);
+                                 }}
+                                 onBlur={() => {
+                                   if (forecastCount === 0) setForecastCount(1);
+                                 }}
+                                 onFocus={(e) => e.target.select()}
                                  className="h-6 w-10 text-[11px] font-bold p-0 text-center bg-transparent border-none focus-visible:ring-0 focus-visible:ring-offset-0"
                                  autoFocus
                                />
