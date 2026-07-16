@@ -1357,24 +1357,26 @@ export default function Dashboard() {
                            <h4 className="font-bold text-sm flex items-center gap-2 text-primary uppercase tracking-tight">
                              <ArrowUpRight className="h-4 w-4" /> Investment Logic
                            </h4>
-                           <div className="space-y-3">
+                           <div className="space-y-2">
                              <div className="flex justify-between items-center text-sm font-medium">
                                <span className="text-foreground">Base Investment:</span>
                                <span className="font-bold">{currencySymbol}{activeSettings.baseStake.toFixed(2)}</span>
                              </div>
-                             <div className="flex flex-col gap-1">
+                             <div className="flex flex-col gap-0.5">
                                <div className="flex justify-between items-center text-sm font-bold text-primary">
                                  <span>Recovery Adjustment:</span>
                                  <span className="font-bold">+ {currencySymbol}{activeSessionStats.recoveryStakeAdjustment.toFixed(2)}</span>
                                </div>
                                {activeSessionStats.recoveryAdjustmentPercent !== 0 && (
-                                 <span className="text-right text-[10px] font-bold text-primary opacity-80">
-                                   ({activeSessionStats.recoveryAdjustmentPercent.toFixed(3)}%)
-                                 </span>
+                                 <div className="flex justify-end">
+                                   <div className="text-[10px] font-bold text-primary bg-primary/5 px-1 rounded border border-primary/10">
+                                      {activeSessionStats.recoveryAdjustmentPercent.toFixed(3)}%
+                                   </div>
+                                 </div>
                                )}
                              </div>
-                             <div className="text-[10px] text-muted-foreground/60 italic mt-3 font-medium">
-                               Calculation: (Target / {activeSettings.riskRewardRatio.toFixed(2)} RR)
+                             <div className="text-[9px] text-muted-foreground/50 italic mt-1 font-medium text-right">
+                               (Target / {activeSettings.riskRewardRatio.toFixed(2)} RR)
                              </div>
                            </div>
                         </div>
@@ -1439,12 +1441,14 @@ export default function Dashboard() {
                             {currencySymbol}{store.walletBalance.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                           </div>
                           {store.walletBalance > 0 && (
-                            <div className="text-[10px] font-bold text-primary bg-primary/5 border border-primary/10 w-fit px-1.5 py-0.5 rounded mt-0.5 mb-1">
-                              {activeSessionStats.walletPercent.toFixed(3)}%
+                            <div className="mt-1">
+                               <div className="text-[10px] font-bold text-primary bg-primary/5 border border-primary/10 w-fit px-1.5 py-0.5 rounded">
+                                 {activeSessionStats.walletPercent.toFixed(3)}% of Main
+                               </div>
                             </div>
                           )}
                         </div>
-                        <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">Total Savings Secured</p>
+                        <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold mt-1">Total Savings Secured</p>
                         <div className="mt-4 pt-4 border-t border-border/30">
                           <div className="flex justify-between items-center text-xs">
                              <span className="text-muted-foreground">Automatic Deduction:</span>
@@ -1479,13 +1483,15 @@ export default function Dashboard() {
                               <div className={cn("text-lg md:text-xl font-headline font-bold", activeSessionStats.netPnL >= 0 ? "text-green-500" : "text-red-500")}>
                                 {activeSessionStats.netPnL >= 0 ? '+' : '-'}{currencySymbol}{Math.abs(activeSessionStats.netPnL).toFixed(2)}
                               </div>
-                              <div className={cn(
-                                "text-[10px] font-bold w-fit px-1.5 py-0.5 rounded border mt-0.5",
-                                activeSessionStats.netPnL >= 0 
-                                  ? "text-green-500 bg-green-500/5 border-green-500/10" 
-                                  : "text-red-500 bg-red-500/5 border-red-500/10"
-                              )}>
-                                {activeSessionStats.netPnL >= 0 ? '+' : ''}{activeSessionStats.netPnLPercent.toFixed(2)}%
+                              <div className="mt-1">
+                                <div className={cn(
+                                  "text-[10px] font-bold w-fit px-1.5 py-0.5 rounded border",
+                                  activeSessionStats.netPnL >= 0 
+                                    ? "text-green-500 bg-green-500/5 border-green-500/10" 
+                                    : "text-red-500 bg-red-500/5 border-red-500/10"
+                                )}>
+                                  {activeSessionStats.netPnL >= 0 ? '+' : ''}{activeSessionStats.netPnLPercent.toFixed(2)}%
+                                </div>
                               </div>
                             </div>
                           </div>
@@ -1495,11 +1501,17 @@ export default function Dashboard() {
                               <div className="text-lg md:text-xl font-headline font-bold text-red-500">
                                 {currencySymbol}{activeSessionStats.currentDrawdown.toFixed(2)}
                               </div>
-                              {activeSessionStats.currentDrawdown > 0 && (
-                                <div className="text-[10px] font-bold text-red-500 bg-red-500/5 px-1.5 py-0.5 rounded border border-red-500/10 mt-0.5">
-                                  {activeSessionStats.drawdownPercent.toFixed(2)}%
-                                </div>
-                              )}
+                              <div className="mt-1">
+                                {activeSessionStats.currentDrawdown > 0 ? (
+                                  <div className="text-[10px] font-bold text-red-500 bg-red-500/5 px-1.5 py-0.5 rounded border border-red-500/10">
+                                    {activeSessionStats.drawdownPercent.toFixed(2)}%
+                                  </div>
+                                ) : (
+                                  <div className="text-[10px] font-bold text-green-500 bg-green-500/5 px-1.5 py-0.5 rounded border border-green-500/10">
+                                    0.00%
+                                  </div>
+                                )}
+                              </div>
                             </div>
                           </div>
                         </div>
@@ -1590,16 +1602,16 @@ export default function Dashboard() {
                           <Zap className="h-4 w-4 text-primary" /> Strategy Forecast
                         </CardTitle>
                         <div className="flex items-center gap-2">
-                           <span className="text-[9px] font-bold text-muted-foreground uppercase">Next</span>
+                           <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest">NEXT</span>
                            {isCustomForecast ? (
-                             <div className="flex items-center gap-1.5 p-0.5 px-1 bg-background border border-primary/30 rounded-full animate-in zoom-in duration-200 shadow-sm">
+                             <div className="flex items-center gap-1.5 p-0.5 px-2 bg-background border border-primary/30 rounded-full animate-in zoom-in duration-200 shadow-sm">
                                <Input 
                                  type="number" 
                                  min="1" 
                                  max="1000"
                                  value={forecastCount} 
                                  onChange={(e) => setForecastCount(Math.max(1, parseInt(e.target.value) || 1))}
-                                 className="h-6 w-12 text-[11px] font-bold p-0 text-center bg-transparent border-none focus-visible:ring-0 focus-visible:ring-offset-0"
+                                 className="h-6 w-10 text-[11px] font-bold p-0 text-center bg-transparent border-none focus-visible:ring-0 focus-visible:ring-offset-0"
                                  autoFocus
                                />
                                <Button 
@@ -1625,7 +1637,7 @@ export default function Dashboard() {
                                  }
                                }}
                              >
-                               <SelectTrigger className="h-7 w-24 text-[10px] px-2 bg-background border-border rounded-full hover:border-primary/50 transition-colors">
+                               <SelectTrigger className="h-7 w-24 text-[10px] px-3 bg-background border-primary/20 rounded-full hover:border-primary/50 transition-colors">
                                  <SelectValue placeholder={`${forecastCount} Trades`} />
                                </SelectTrigger>
                                <SelectContent className="bg-card border-border">
@@ -1656,8 +1668,8 @@ export default function Dashboard() {
                                <span className="text-muted-foreground">Remaining Drawdown:</span>
                                <span className="font-bold text-foreground">{currencySymbol}{activeSessionStats.projectedWinDrawdown.toFixed(2)}</span>
                              </div>
-                             <div className="mt-2 text-[9px] text-green-600/60 italic font-medium">
-                               Cumulative result of {forecastCount} consecutive winning sessions.
+                             <div className="mt-2 text-[9px] text-green-600/40 italic font-medium">
+                               Cumulative result of {forecastCount} winning sessions.
                              </div>
                            </div>
                         </div>
@@ -1675,7 +1687,7 @@ export default function Dashboard() {
                                <span className="text-muted-foreground">Projected Drawdown:</span>
                                <span className="font-bold text-foreground">{currencySymbol}{activeSessionStats.projectedLossDrawdown.toFixed(2)}</span>
                              </div>
-                             <div className="mt-2 text-[9px] text-red-600/60 italic font-medium">
+                             <div className="mt-2 text-[9px] text-red-600/40 italic font-medium">
                                Cumulative risk if next {forecastCount} trades result in losses.
                              </div>
                            </div>
@@ -1685,10 +1697,10 @@ export default function Dashboard() {
                   </Card>
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pb-6">
-                  <div className="space-y-6">
+                <div className="grid grid-cols-1 lg:grid-2 gap-6">
+                  <div className="lg:col-span-1 space-y-6">
                     <Card className="bg-card/50 border-border">
-                      <CardHeader className="flex flex-row items-center justify-between">
+                      <CardHeader className="flex flex-row items-center justify-between pb-2">
                         <div>
                           <CardTitle className="text-lg text-foreground">Trade Log</CardTitle>
                           <CardDescription className="text-xs">Click entry for details</CardDescription>
@@ -1720,7 +1732,7 @@ export default function Dashboard() {
                     </Card>
                   </div>
 
-                  <div className="space-y-6">
+                  <div className="lg:col-span-1 space-y-6">
                     <Card className="bg-card border-border overflow-hidden">
                       <CardHeader className="pb-2 flex flex-row items-center justify-between">
                         <div className="space-y-1">
@@ -1752,7 +1764,7 @@ export default function Dashboard() {
 
                 <div className="pb-20">
                   <Card className="bg-card border-border">
-                    <CardHeader>
+                    <CardHeader className="pb-3">
                       <CardTitle className="text-lg flex items-center gap-2 text-foreground">
                         <Notebook className="h-5 w-5 text-primary" /> Trading Notes 📝
                       </CardTitle>
@@ -2032,4 +2044,3 @@ export default function Dashboard() {
     </div>
   );
 }
-
