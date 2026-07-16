@@ -1592,26 +1592,26 @@ export default function Dashboard() {
                         <div className="flex items-center gap-2">
                            <span className="text-[9px] font-bold text-muted-foreground uppercase">Next</span>
                            {isCustomForecast ? (
-                             <div className="flex items-center gap-1">
+                             <div className="flex items-center gap-1.5 p-0.5 px-1 bg-background border border-primary/30 rounded-full animate-in zoom-in duration-200 shadow-sm">
                                <Input 
                                  type="number" 
                                  min="1" 
-                                 max="100"
+                                 max="1000"
                                  value={forecastCount} 
                                  onChange={(e) => setForecastCount(Math.max(1, parseInt(e.target.value) || 1))}
-                                 className="h-6 w-12 text-[10px] px-1 bg-background border-border"
+                                 className="h-6 w-12 text-[11px] font-bold p-0 text-center bg-transparent border-none focus-visible:ring-0 focus-visible:ring-offset-0"
                                  autoFocus
                                />
                                <Button 
                                  variant="ghost" 
                                  size="icon" 
-                                 className="h-6 w-6" 
+                                 className="h-5 w-5 rounded-full hover:bg-muted" 
                                  onClick={() => {
                                    setIsCustomForecast(false);
                                    setForecastCount(1);
                                  }}
                                >
-                                 <RotateCcw className="h-3 w-3" />
+                                 <RotateCcw className="h-3 w-3 text-muted-foreground" />
                                </Button>
                              </div>
                            ) : (
@@ -1625,11 +1625,11 @@ export default function Dashboard() {
                                  }
                                }}
                              >
-                               <SelectTrigger className="h-6 w-20 text-[10px] px-2 bg-background border-border">
+                               <SelectTrigger className="h-7 w-24 text-[10px] px-2 bg-background border-border rounded-full hover:border-primary/50 transition-colors">
                                  <SelectValue placeholder={`${forecastCount} Trades`} />
                                </SelectTrigger>
                                <SelectContent className="bg-card border-border">
-                                 {[1, 2, 3, 5, 10].map(n => (
+                                 {[1, 2, 3, 5, 10, 20].map(n => (
                                    <SelectItem key={n} value={n.toString()} className="text-[10px]">{n} Trades</SelectItem>
                                  ))}
                                  <Separator className="my-1 bg-border/30" />
@@ -1683,26 +1683,9 @@ export default function Dashboard() {
                       </div>
                     </CardContent>
                   </Card>
-
-                  <Card className="bg-card border-border">
-                    <CardHeader>
-                      <CardTitle className="text-lg flex items-center gap-2 text-foreground">
-                        <Notebook className="h-5 w-5 text-primary" /> Trading Notes 📝
-                      </CardTitle>
-                      <CardDescription className="text-xs">Journal your thoughts or strategy reminders.</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <Textarea 
-                        placeholder="Start typing your notes here..."
-                        className="min-h-[140px] bg-background border-border resize-none text-xs"
-                        value={store.notes}
-                        onChange={(e) => store.setNotes(e.target.value)}
-                      />
-                    </CardContent>
-                  </Card>
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pb-12">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pb-6">
                   <div className="space-y-6">
                     <Card className="bg-card/50 border-border">
                       <CardHeader className="flex flex-row items-center justify-between">
@@ -1765,6 +1748,25 @@ export default function Dashboard() {
                       </CardContent>
                     </Card>
                   </div>
+                </div>
+
+                <div className="pb-20">
+                  <Card className="bg-card border-border">
+                    <CardHeader>
+                      <CardTitle className="text-lg flex items-center gap-2 text-foreground">
+                        <Notebook className="h-5 w-5 text-primary" /> Trading Notes 📝
+                      </CardTitle>
+                      <CardDescription className="text-xs">Journal your thoughts or strategy reminders.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <Textarea 
+                        placeholder="Start typing your notes here..."
+                        className="min-h-[160px] bg-background border-border resize-none text-xs leading-relaxed"
+                        value={store.notes}
+                        onChange={(e) => store.setNotes(e.target.value)}
+                      />
+                    </CardContent>
+                  </Card>
                 </div>
               </div>
             )}
@@ -2030,3 +2032,4 @@ export default function Dashboard() {
     </div>
   );
 }
+
