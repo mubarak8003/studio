@@ -1584,12 +1584,15 @@ export default function Dashboard() {
                     {/* Quick Percent Tool In-Place Dropdown */}
                     <Collapsible className="w-full space-y-2">
                       <CollapsibleTrigger asChild>
-                        <Button variant="outline" className="w-full justify-between gap-2 border-border/50 text-muted-foreground h-11 rounded-xl hover:bg-muted/30">
+                        <Button 
+                          variant="outline" 
+                          className="w-full justify-between gap-2 border-border/50 h-11 rounded-xl transition-all duration-200 hover:bg-muted/30 active:scale-[0.98] active:bg-muted/50 focus:ring-1 focus:ring-primary/20"
+                        >
                            <div className="flex items-center gap-2">
                              <Percent className="h-4 w-4 text-primary" />
-                             <span className="text-xs font-semibold uppercase tracking-wider">Quick Percent Tool</span>
+                             <span className="text-xs font-semibold uppercase tracking-wider text-foreground/70">Quick Percent Tool</span>
                            </div>
-                           <ChevronDown className="h-4 w-4 opacity-50 transition-transform data-[state=open]:rotate-180" />
+                           <ChevronDown className="h-4 w-4 text-muted-foreground/50 transition-transform duration-200 data-[state=open]:rotate-180" />
                         </Button>
                       </CollapsibleTrigger>
                       <CollapsibleContent className="animate-in slide-in-from-top-1 duration-200">
