@@ -128,7 +128,7 @@ const QuickPercentTool = () => {
   const result = useMemo(() => {
     const b = parseFloat(baseNum);
     const p = parseFloat(percent);
-    if (isNaN(b) || iNaN(p)) return null;
+    if (isNaN(b) || isNaN(p)) return null;
     return (b * p) / 100;
   }, [baseNum, percent]);
 
@@ -757,6 +757,14 @@ export default function Dashboard() {
     }
   }, [view, mounted]);
 
+  const formatPercent = (val: number) => {
+    if (isNaN(val) || val === 0) return "0%";
+    if (Math.abs(val) > 1000) {
+      return val.toLocaleString(undefined, { maximumFractionDigits: 0 }) + "%";
+    }
+    return val.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 }) + "%";
+  };
+
   const activeSessionStats = useMemo(() => {
     const s = store.activeSession;
     const trades = s?.trades || [];
@@ -967,11 +975,6 @@ export default function Dashboard() {
   const currencySymbol = CURRENCY_SYMBOLS[store.currency as CurrencyCode];
   const activeSettings = store.activeSession || store;
   const latestDailySummary = dailySummaries[0];
-
-  const formatPercent = (val: number) => {
-    if (isNaN(val)) return "0%";
-    return val.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 }) + "%";
-  };
 
   const TradeLogItem = ({ trade }: { trade: Trade }) => (
     <Dialog>
