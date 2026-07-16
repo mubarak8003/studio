@@ -748,6 +748,7 @@ export default function Dashboard() {
   const [view, setView] = useState<View>('dashboard');
   const [chartType, setChartType] = useState<'line' | 'candle'>('line');
   const [mounted, setMounted] = useState(false);
+  const [forecastCount, setForecastCount] = useState(1);
 
   useEffect(() => {
     setMounted(true);
@@ -805,17 +806,36 @@ export default function Dashboard() {
     const wins = chronTrades.filter(t => t.type === 'win');
     const losses = chronTrades.filter(t => t.type === 'loss');
 
-    // Projection Logic
-    const walletDeduction = nextStake * (settings.walletDeductionPercent / 100);
-    
-    // Projected Win
-    const winGrossProfit = nextStake * settings.riskRewardRatio;
-    const winNetProfit = winGrossProfit - walletDeduction;
-    const projectedWinDrawdown = Math.max(0, currentDrawdown - winNetProfit);
-    
-    // Projected Loss
-    const lossNetImpact = nextStake + walletDeduction;
-    const projectedLossDrawdown = currentDrawdown + lossNetImpact;
+    // Multi-Trade Projection Simulation
+    const simulateFuture = (initialD: number, count: number, isWinSequence: boolean) => {
+      let d = initialD;
+      let totalNetImpact = 0;
+      let recoveryTarget = settings.recoveryTargetWins;
+
+      for (let i = 0; i < count; i++) {
+        const simNetRec = d / (recoveryTarget || 1);
+        const simTotalNetNeeded = (settings.baseStake * settings.riskRewardRatio) + simNetRec;
+        const simTotalGrossNeeded = simTotalNetNeeded / safeWalletFactor;
+        const simStake = simTotalGrossNeeded / (settings.riskRewardRatio || 1);
+        const simWalletDed = simStake * (settings.walletDeductionPercent / 100);
+
+        if (isWinSequence) {
+          const simWinNet = (simStake * settings.riskRewardRatio) - simWalletDed;
+          d = Math.max(0, d - simWinNet);
+          totalNetImpact += simWinNet;
+          if (recoveryTarget > 0) recoveryTarget--;
+        } else {
+          const simLossNet = simStake + simWalletDed;
+          d += simLossNet;
+          totalNetImpact += simLossNet;
+          recoveryTarget++;
+        }
+      }
+      return { d, totalNetImpact };
+    };
+
+    const winProjection = simulateFuture(currentDrawdown, forecastCount, true);
+    const lossProjection = simulateFuture(currentDrawdown, forecastCount, false);
 
     // Calculate percentages relative to account balance
     const drawdownPercent = store.accountBalance > 0 ? (currentDrawdown / store.accountBalance) * 100 : 0;
@@ -843,13 +863,13 @@ export default function Dashboard() {
       allTrades: [...chronTrades].reverse(),
       wins,
       losses,
-      // Projection fields
-      projectedWinDrawdown,
-      projectedLossDrawdown,
-      winNetProfit,
-      lossNetImpact,
+      // Projection Simulation Results
+      projectedWinDrawdown: winProjection.d,
+      projectedLossDrawdown: lossProjection.d,
+      winNetProfit: winProjection.totalNetImpact,
+      lossNetImpact: lossProjection.totalNetImpact,
     };
-  }, [store]);
+  }, [store, forecastCount]);
 
   const globalHistoryStats = useMemo(() => {
     const chronTrades = [...store.sessions.flatMap(s => s.trades), ...(store.activeSession?.trades || [])]
@@ -1563,20 +1583,35 @@ export default function Dashboard() {
                       <Zap className="h-10 w-10 text-primary" />
                     </div>
                     <CardHeader className="pb-2">
-                      <CardTitle className="text-sm font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
-                        <Zap className="h-4 w-4 text-primary" /> Strategy Forecast
-                      </CardTitle>
-                      <CardDescription className="text-[10px]">What happens if the next trade is a...</CardDescription>
+                      <div className="flex items-center justify-between">
+                        <CardTitle className="text-sm font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+                          <Zap className="h-4 w-4 text-primary" /> Strategy Forecast
+                        </CardTitle>
+                        <div className="flex items-center gap-2">
+                           <span className="text-[9px] font-bold text-muted-foreground uppercase">Next</span>
+                           <Select value={forecastCount.toString()} onValueChange={(v) => setForecastCount(parseInt(v))}>
+                             <SelectTrigger className="h-6 w-16 text-[10px] px-2 bg-background border-border">
+                               <SelectValue />
+                             </SelectTrigger>
+                             <SelectContent className="bg-card border-border">
+                               {[1, 2, 3, 5, 10].map(n => (
+                                 <SelectItem key={n} value={n.toString()} className="text-[10px]">{n} Trades</SelectItem>
+                               ))}
+                             </SelectContent>
+                           </Select>
+                        </div>
+                      </div>
+                      <CardDescription className="text-[10px]">What happens if the next <b>{forecastCount}</b> trades are all...</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="p-3.5 rounded-2xl bg-green-500/[0.03] border border-green-500/10 space-y-3">
                            <div className="flex items-center gap-2 text-green-500 text-[10px] font-bold uppercase tracking-tight">
-                             <TrendingUp className="h-3 w-3" /> Potential Win
+                             <TrendingUp className="h-3 w-3" /> Potential Wins
                            </div>
                            <div className="space-y-2">
                              <div className="flex justify-between items-center text-xs">
-                               <span className="text-muted-foreground">Net P/L Projection:</span>
+                               <span className="text-muted-foreground">Total Net P/L:</span>
                                <span className="font-bold text-green-500">+{currencySymbol}{activeSessionStats.winNetProfit.toFixed(2)}</span>
                              </div>
                              <div className="flex justify-between items-center text-xs">
@@ -1584,26 +1619,26 @@ export default function Dashboard() {
                                <span className="font-bold text-foreground">{currencySymbol}{activeSessionStats.projectedWinDrawdown.toFixed(2)}</span>
                              </div>
                              <div className="mt-2 text-[9px] text-green-600/60 italic font-medium">
-                               Session recovery target will decrease by 1.
+                               Cumulative result of {forecastCount} consecutive winning sessions.
                              </div>
                            </div>
                         </div>
 
                         <div className="p-3.5 rounded-2xl bg-red-500/[0.03] border border-red-500/10 space-y-3">
                            <div className="flex items-center gap-2 text-red-500 text-[10px] font-bold uppercase tracking-tight">
-                             <TrendingDown className="h-3 w-3" /> Potential Loss
+                             <TrendingDown className="h-3 w-3" /> Potential Losses
                            </div>
                            <div className="space-y-2">
                              <div className="flex justify-between items-center text-xs">
-                               <span className="text-muted-foreground">Capital Impact:</span>
+                               <span className="text-muted-foreground">Total Capital Impact:</span>
                                <span className="font-bold text-red-500">-{currencySymbol}{activeSessionStats.lossNetImpact.toFixed(2)}</span>
                              </div>
                              <div className="flex justify-between items-center text-xs">
-                               <span className="text-muted-foreground">Next Drawdown:</span>
+                               <span className="text-muted-foreground">Projected Drawdown:</span>
                                <span className="font-bold text-foreground">{currencySymbol}{activeSessionStats.projectedLossDrawdown.toFixed(2)}</span>
                              </div>
                              <div className="mt-2 text-[9px] text-red-600/60 italic font-medium">
-                               Drawdown will increase and recovery wins will reset.
+                               Cumulative risk if next {forecastCount} trades result in losses.
                              </div>
                            </div>
                         </div>
