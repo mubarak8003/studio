@@ -42,6 +42,8 @@ import {
   Clock,
   Info,
   Landmark,
+  ArrowDownRight,
+  Zap,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -803,7 +805,19 @@ export default function Dashboard() {
     const wins = chronTrades.filter(t => t.type === 'win');
     const losses = chronTrades.filter(t => t.type === 'loss');
 
-    // Calculate percentages relative to account balance (Main Balance set in Strategy Engine)
+    // Projection Logic
+    const walletDeduction = nextStake * (settings.walletDeductionPercent / 100);
+    
+    // Projected Win
+    const winGrossProfit = nextStake * settings.riskRewardRatio;
+    const winNetProfit = winGrossProfit - walletDeduction;
+    const projectedWinDrawdown = Math.max(0, currentDrawdown - winNetProfit);
+    
+    // Projected Loss
+    const lossNetImpact = nextStake + walletDeduction;
+    const projectedLossDrawdown = currentDrawdown + lossNetImpact;
+
+    // Calculate percentages relative to account balance
     const drawdownPercent = store.accountBalance > 0 ? (currentDrawdown / store.accountBalance) * 100 : 0;
     const netPnLPercent = store.accountBalance > 0 ? (netPnL / store.accountBalance) * 100 : 0;
     const walletPercent = store.accountBalance > 0 ? (store.walletBalance / store.accountBalance) * 100 : 0;
@@ -829,6 +843,11 @@ export default function Dashboard() {
       allTrades: [...chronTrades].reverse(),
       wins,
       losses,
+      // Projection fields
+      projectedWinDrawdown,
+      projectedLossDrawdown,
+      winNetProfit,
+      lossNetImpact,
     };
   }, [store]);
 
@@ -1239,7 +1258,7 @@ export default function Dashboard() {
                                   placeholder="e.g., Morning Scalping" 
                                   value={sessionNameInput} 
                                   onChange={(e) => setSessionNameInput(e.target.value)}
-                                  className="h-12 bg-background border-border focus-visible:ring-primary focus-visible:border-primary text-base"
+                                  className="h-12 bg-background border-border focus-visible:ring-primary focus-visible:ring-primary text-base"
                                   onKeyDown={(e) => {
                                     if (e.key === 'Enter') handleStartSession();
                                   }}
@@ -1538,7 +1557,79 @@ export default function Dashboard() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-2 gap-6 pb-12">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                  <Card className="lg:col-span-2 bg-card border-border overflow-hidden relative">
+                    <div className="absolute top-0 right-0 p-4 opacity-10">
+                      <Zap className="h-10 w-10 text-primary" />
+                    </div>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-sm font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+                        <Zap className="h-4 w-4 text-primary" /> Strategy Forecast
+                      </CardTitle>
+                      <CardDescription className="text-[10px]">What happens if the next trade is a...</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="p-3.5 rounded-2xl bg-green-500/[0.03] border border-green-500/10 space-y-3">
+                           <div className="flex items-center gap-2 text-green-500 text-[10px] font-bold uppercase tracking-tight">
+                             <TrendingUp className="h-3 w-3" /> Potential Win
+                           </div>
+                           <div className="space-y-2">
+                             <div className="flex justify-between items-center text-xs">
+                               <span className="text-muted-foreground">Net P/L Projection:</span>
+                               <span className="font-bold text-green-500">+{currencySymbol}{activeSessionStats.winNetProfit.toFixed(2)}</span>
+                             </div>
+                             <div className="flex justify-between items-center text-xs">
+                               <span className="text-muted-foreground">Remaining Drawdown:</span>
+                               <span className="font-bold text-foreground">{currencySymbol}{activeSessionStats.projectedWinDrawdown.toFixed(2)}</span>
+                             </div>
+                             <div className="mt-2 text-[9px] text-green-600/60 italic font-medium">
+                               Session recovery target will decrease by 1.
+                             </div>
+                           </div>
+                        </div>
+
+                        <div className="p-3.5 rounded-2xl bg-red-500/[0.03] border border-red-500/10 space-y-3">
+                           <div className="flex items-center gap-2 text-red-500 text-[10px] font-bold uppercase tracking-tight">
+                             <TrendingDown className="h-3 w-3" /> Potential Loss
+                           </div>
+                           <div className="space-y-2">
+                             <div className="flex justify-between items-center text-xs">
+                               <span className="text-muted-foreground">Capital Impact:</span>
+                               <span className="font-bold text-red-500">-{currencySymbol}{activeSessionStats.lossNetImpact.toFixed(2)}</span>
+                             </div>
+                             <div className="flex justify-between items-center text-xs">
+                               <span className="text-muted-foreground">Next Drawdown:</span>
+                               <span className="font-bold text-foreground">{currencySymbol}{activeSessionStats.projectedLossDrawdown.toFixed(2)}</span>
+                             </div>
+                             <div className="mt-2 text-[9px] text-red-600/60 italic font-medium">
+                               Drawdown will increase and recovery wins will reset.
+                             </div>
+                           </div>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  <Card className="bg-card border-border">
+                    <CardHeader>
+                      <CardTitle className="text-lg flex items-center gap-2 text-foreground">
+                        <Notebook className="h-5 w-5 text-primary" /> Trading Notes 📝
+                      </CardTitle>
+                      <CardDescription className="text-xs">Journal your thoughts or strategy reminders.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <Textarea 
+                        placeholder="Start typing your notes here..."
+                        className="min-h-[140px] bg-background border-border resize-none text-xs"
+                        value={store.notes}
+                        onChange={(e) => store.setNotes(e.target.value)}
+                      />
+                    </CardContent>
+                  </Card>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pb-12">
                   <div className="space-y-6">
                     <Card className="bg-card/50 border-border">
                       <CardHeader className="flex flex-row items-center justify-between">
@@ -1571,7 +1662,9 @@ export default function Dashboard() {
                         </ScrollArea>
                       </CardContent>
                     </Card>
+                  </div>
 
+                  <div className="space-y-6">
                     <Card className="bg-card border-border overflow-hidden">
                       <CardHeader className="pb-2 flex flex-row items-center justify-between">
                         <div className="space-y-1">
@@ -1596,25 +1689,6 @@ export default function Dashboard() {
                         ) : (
                           <CandlestickChart data={activeSessionEquityData} currencySymbol={currencySymbol} />
                         )}
-                      </CardContent>
-                    </Card>
-                  </div>
-
-                  <div className="space-y-6">
-                    <Card className="bg-card border-border">
-                      <CardHeader>
-                        <CardTitle className="text-lg flex items-center gap-2 text-foreground">
-                          <Notebook className="h-5 w-5 text-primary" /> Trading Notes 📝
-                        </CardTitle>
-                        <CardDescription className="text-xs">Journal your thoughts or strategy reminders.</CardDescription>
-                      </CardHeader>
-                      <CardContent>
-                        <Textarea 
-                          placeholder="Start typing your notes here..."
-                          className="min-h-[256px] bg-background border-border resize-none"
-                          value={store.notes}
-                          onChange={(e) => store.setNotes(e.target.value)}
-                        />
                       </CardContent>
                     </Card>
                   </div>
