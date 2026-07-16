@@ -1498,8 +1498,8 @@ export default function Dashboard() {
                           <div className="space-y-1 text-right">
                             <span className="text-[10px] text-muted-foreground uppercase tracking-tight font-bold">Current Drawdown</span>
                             <div className="flex flex-col items-end">
-                              <div className="text-lg md:text-xl font-headline font-bold text-red-500">
-                                {currencySymbol}{activeSessionStats.currentDrawdown.toFixed(2)}
+                              <div className="text-lg md:text-xl font-headline font-bold text-red-500 flex items-center justify-end gap-2">
+                                <TrendingDown className="h-4 w-4" /> {currencySymbol}{activeSessionStats.currentDrawdown.toFixed(2)}
                               </div>
                               <div className="mt-1">
                                 {activeSessionStats.currentDrawdown > 0 ? (
@@ -1604,7 +1604,7 @@ export default function Dashboard() {
                         <div className="flex items-center gap-2">
                            <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest">NEXT</span>
                            {isCustomForecast ? (
-                             <div className="flex items-center gap-1.5 p-0.5 px-2 bg-background border border-primary/30 rounded-full animate-in zoom-in duration-200 shadow-sm">
+                             <div className="flex items-center gap-1.5 p-0.5 px-2 bg-background border border-primary/30 rounded-full animate-in zoom-in duration-200 shadow-sm min-w-[90px] justify-between">
                                <Input 
                                  type="number" 
                                  min="1" 
@@ -1669,7 +1669,9 @@ export default function Dashboard() {
                                <span className="font-bold text-foreground">{currencySymbol}{activeSessionStats.projectedWinDrawdown.toFixed(2)}</span>
                              </div>
                              <div className="mt-2 text-[9px] text-green-600/40 italic font-medium">
-                               Cumulative result of {forecastCount} winning sessions.
+                               {activeSessionStats.currentDrawdown > 0 
+                                 ? `Cumulative result of ${forecastCount} recovery sessions.` 
+                                 : `Cumulative growth from ${forecastCount} winning sessions.`}
                              </div>
                            </div>
                         </div>
@@ -1763,21 +1765,24 @@ export default function Dashboard() {
                 </div>
 
                 <div className="pb-20">
-                  <Card className="bg-card border-border">
-                    <CardHeader className="pb-3">
-                      <CardTitle className="text-lg flex items-center gap-2 text-foreground">
-                        <Notebook className="h-5 w-5 text-primary" /> Trading Notes 📝
+                  <Card className="bg-card border-border shadow-sm overflow-hidden">
+                    <CardHeader className="pb-3 bg-muted/20 border-b border-border/40">
+                      <CardTitle className="text-base md:text-lg flex items-center gap-2 text-foreground font-headline font-bold">
+                        <Notebook className="h-5 w-5 text-primary" /> Trading Journal & Notes 📝
                       </CardTitle>
-                      <CardDescription className="text-xs">Journal your thoughts or strategy reminders.</CardDescription>
+                      <CardDescription className="text-xs">Archive your psychology, mistakes, or strategy insights here.</CardDescription>
                     </CardHeader>
-                    <CardContent>
+                    <CardContent className="p-4 bg-background/50">
                       <Textarea 
-                        placeholder="Start typing your notes here..."
-                        className="min-h-[160px] bg-background border-border resize-none text-xs leading-relaxed"
+                        placeholder="Today's mindset: Calm. Strategy followed? Yes. Remarks..."
+                        className="min-h-[200px] bg-card border-border/60 resize-none text-sm leading-relaxed p-4 font-body shadow-inner focus:border-primary/50 transition-colors"
                         value={store.notes}
                         onChange={(e) => store.setNotes(e.target.value)}
                       />
                     </CardContent>
+                    <CardFooter className="bg-muted/10 p-2 border-t border-border/20 flex justify-end">
+                       <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-tighter">Auto-saved to local vault</span>
+                    </CardFooter>
                   </Card>
                 </div>
               </div>
