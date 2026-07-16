@@ -94,6 +94,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@/components/ui/collapsible";
 import { ModeToggle } from '@/components/mode-toggle';
 import { cn } from '@/lib/utils';
 import {
@@ -834,7 +835,6 @@ export default function Dashboard() {
     const winProjection = simulateFuture(currentDrawdown, forecastCount, true);
     const lossProjection = simulateFuture(currentDrawdown, forecastCount, false);
 
-    // Calculate percentages relative to account balance
     const drawdownPercent = store.accountBalance > 0 ? (currentDrawdown / store.accountBalance) * 100 : 0;
     const netPnLPercent = store.accountBalance > 0 ? (netPnL / store.accountBalance) * 100 : 0;
     const walletPercent = store.accountBalance > 0 ? (store.walletBalance / store.accountBalance) * 100 : 0;
@@ -860,7 +860,6 @@ export default function Dashboard() {
       allTrades: [...chronTrades].reverse(),
       wins,
       losses,
-      // Projection Simulation Results
       projectedWinDrawdown: winProjection.d,
       projectedLossDrawdown: lossProjection.d,
       winNetProfit: winProjection.totalNetImpact,
@@ -1582,24 +1581,27 @@ export default function Dashboard() {
                       </CardContent>
                     </Card>
 
-                    <Popover>
-                      <PopoverTrigger asChild>
+                    {/* Quick Percent Tool In-Place Dropdown */}
+                    <Collapsible className="w-full space-y-2">
+                      <CollapsibleTrigger asChild>
                         <Button variant="outline" className="w-full justify-between gap-2 border-border/50 text-muted-foreground h-11 rounded-xl hover:bg-muted/30">
                            <div className="flex items-center gap-2">
                              <Percent className="h-4 w-4 text-primary" />
                              <span className="text-xs font-semibold uppercase tracking-wider">Quick Percent Tool</span>
                            </div>
-                           <ChevronDown className="h-4 w-4 opacity-50" />
+                           <ChevronDown className="h-4 w-4 opacity-50 transition-transform data-[state=open]:rotate-180" />
                         </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-80 p-4 bg-card border-border shadow-2xl rounded-2xl" align="end" sideOffset={8}>
-                        <div className="mb-2 pb-2 border-b border-border/30 flex items-center justify-between">
-                          <span className="text-[10px] font-bold text-muted-foreground uppercase">Calculator</span>
-                          <Percent className="h-3 w-3 text-primary" />
-                        </div>
-                        <QuickPercentTool />
-                      </PopoverContent>
-                    </Popover>
+                      </CollapsibleTrigger>
+                      <CollapsibleContent className="animate-in slide-in-from-top-1 duration-200">
+                        <Card className="bg-muted/10 border-border/40 p-4 rounded-xl">
+                          <div className="mb-2 pb-2 border-b border-border/30 flex items-center justify-between">
+                            <span className="text-[10px] font-bold text-muted-foreground uppercase">Calculator</span>
+                            <Percent className="h-3 w-3 text-primary" />
+                          </div>
+                          <QuickPercentTool />
+                        </Card>
+                      </CollapsibleContent>
+                    </Collapsible>
                   </div>
                 </div>
 
@@ -2063,3 +2065,4 @@ export default function Dashboard() {
     </div>
   );
 }
+
