@@ -314,6 +314,7 @@ const StrategySettings = ({ store, stats }: { store: any, stats: any }) => {
           <label className="text-xs font-medium text-muted-foreground flex items-center gap-2">
             <PenLine className="h-3 w-3" /> Manual Recovery
           </label>
+          <span className="text-[9px] text-muted-foreground font-bold uppercase tracking-widest bg-muted/50 px-1 rounded">Beta</span>
           <Switch 
             checked={settings.useManualDrawdown} 
             onCheckedChange={store.setUseManualDrawdown} 
@@ -749,6 +750,7 @@ export default function Dashboard() {
   const [chartType, setChartType] = useState<'line' | 'candle'>('line');
   const [mounted, setMounted] = useState(false);
   const [forecastCount, setForecastCount] = useState(1);
+  const [isCustomForecast, setIsCustomForecast] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -1589,16 +1591,52 @@ export default function Dashboard() {
                         </CardTitle>
                         <div className="flex items-center gap-2">
                            <span className="text-[9px] font-bold text-muted-foreground uppercase">Next</span>
-                           <Select value={forecastCount.toString()} onValueChange={(v) => setForecastCount(parseInt(v))}>
-                             <SelectTrigger className="h-6 w-16 text-[10px] px-2 bg-background border-border">
-                               <SelectValue />
-                             </SelectTrigger>
-                             <SelectContent className="bg-card border-border">
-                               {[1, 2, 3, 5, 10].map(n => (
-                                 <SelectItem key={n} value={n.toString()} className="text-[10px]">{n} Trades</SelectItem>
-                               ))}
-                             </SelectContent>
-                           </Select>
+                           {isCustomForecast ? (
+                             <div className="flex items-center gap-1">
+                               <Input 
+                                 type="number" 
+                                 min="1" 
+                                 max="100"
+                                 value={forecastCount} 
+                                 onChange={(e) => setForecastCount(Math.max(1, parseInt(e.target.value) || 1))}
+                                 className="h-6 w-12 text-[10px] px-1 bg-background border-border"
+                                 autoFocus
+                               />
+                               <Button 
+                                 variant="ghost" 
+                                 size="icon" 
+                                 className="h-6 w-6" 
+                                 onClick={() => {
+                                   setIsCustomForecast(false);
+                                   setForecastCount(1);
+                                 }}
+                               >
+                                 <RotateCcw className="h-3 w-3" />
+                               </Button>
+                             </div>
+                           ) : (
+                             <Select 
+                               value={forecastCount.toString()} 
+                               onValueChange={(v) => {
+                                 if (v === 'custom') {
+                                   setIsCustomForecast(true);
+                                 } else {
+                                   setForecastCount(parseInt(v));
+                                 }
+                               }}
+                             >
+                               <SelectTrigger className="h-6 w-20 text-[10px] px-2 bg-background border-border">
+                                 <SelectValue placeholder={`${forecastCount} Trades`} />
+                               </SelectTrigger>
+                               <SelectContent className="bg-card border-border">
+                                 {[1, 2, 3, 5, 10].map(n => (
+                                   <SelectItem key={n} value={n.toString()} className="text-[10px]">{n} Trades</SelectItem>
+                                 ))}
+                                 <Separator className="my-1 bg-border/30" />
+                                 <SelectItem value="custom" className="text-[10px] italic">Custom...</SelectItem>
+                               </SelectContent>
+                             </Select>
+                           )}
                         </div>
                       </div>
                       <CardDescription className="text-[10px]">What happens if the next <b>{forecastCount}</b> trades are all...</CardDescription>
