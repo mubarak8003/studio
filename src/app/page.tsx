@@ -1688,7 +1688,6 @@ export default function Dashboard() {
                                  }}
                                  onFocus={(e) => e.target.select()}
                                  className="h-6 w-10 text-[11px] font-bold p-0 text-center bg-transparent border-none focus-visible:ring-0 focus-visible:ring-offset-0"
-                                 autoFocus
                                />
                                <Button 
                                  variant="ghost" 
