@@ -567,7 +567,7 @@ const PositionSizer = ({ store, setView }: { store: any, setView: (v: View) => v
       riskAmount = store.riskAmountFixed || 0;
     }
 
-    if (isNaN(e) || iNaN(s) || e <= 0 || s <= 0 || e === s || riskAmount <= 0) return null;
+    if (isNaN(e) || isNaN(s) || e <= 0 || s <= 0 || e === s || riskAmount <= 0) return null;
 
     const riskPerShare = Math.abs(e - s);
     const shares = Math.floor(riskAmount / riskPerShare);
@@ -746,6 +746,7 @@ export default function Dashboard() {
   const [mounted, setMounted] = useState(false);
   const [forecastCount, setForecastCount] = useState(1);
   const [isCustomForecast, setIsCustomForecast] = useState(false);
+  const [customForecastValue, setCustomForecastValue] = useState("1");
 
   useEffect(() => {
     setMounted(true);
@@ -961,6 +962,14 @@ export default function Dashboard() {
     store.addTrade(type, amount, tradeDescription.trim() || undefined);
     setTradeAmount('');
     setTradeDescription('');
+    
+    // Auto-decrement forecast count
+    if (forecastCount > 0) {
+      setForecastCount(prev => Math.max(0, prev - 1));
+      if (isCustomForecast) {
+        setCustomForecastValue(prev => Math.max(0, (parseInt(prev) || 0) - 1).toString());
+      }
+    }
   };
 
   const handleStartSession = () => {
@@ -1631,17 +1640,28 @@ export default function Dashboard() {
                            {isCustomForecast ? (
                              <div className="flex items-center gap-1.5 p-0.5 px-2 bg-background border border-primary/30 rounded-full animate-in zoom-in duration-200 shadow-sm min-w-[90px] justify-between">
                                <Input 
-                                 type="number" 
-                                 min="0" 
-                                 max="1000"
-                                 value={forecastCount} 
+                                 type="text" 
+                                 inputMode="numeric"
+                                 value={customForecastValue} 
                                  onChange={(e) => {
-                                   const val = parseInt(e.target.value);
-                                   if (!isNaN(val)) setForecastCount(Math.min(1000, Math.max(0, val)));
-                                   else setForecastCount(0);
+                                   const val = e.target.value;
+                                   if (val === '') {
+                                     setCustomForecastValue('');
+                                     setForecastCount(0);
+                                     return;
+                                   }
+                                   const parsed = parseInt(val);
+                                   if (!isNaN(parsed)) {
+                                     const capped = Math.min(1000, Math.max(0, parsed));
+                                     setCustomForecastValue(capped.toString());
+                                     setForecastCount(capped);
+                                   }
                                  }}
                                  onBlur={() => {
-                                   if (forecastCount === 0) setForecastCount(1);
+                                   if (customForecastValue === '' || parseInt(customForecastValue) === 0) {
+                                     setCustomForecastValue('1');
+                                     setForecastCount(1);
+                                   }
                                  }}
                                  onFocus={(e) => e.target.select()}
                                  className="h-6 w-10 text-[11px] font-bold p-0 text-center bg-transparent border-none focus-visible:ring-0 focus-visible:ring-offset-0"
@@ -1884,7 +1904,7 @@ export default function Dashboard() {
                   </Card>
                 </div>
 
-                <Tabs defaultValue="trades" className="w-full">
+                <Tabs defaultValue="trades" className="initial w-full">
                   <TabsList className="bg-muted/50 p-1 mb-6">
                     <TabsTrigger value="trades" className="text-xs flex items-center gap-2">
                       <History className="h-3 w-3" /> Full History
@@ -2084,3 +2104,4 @@ export default function Dashboard() {
     </div>
   );
 }
+
