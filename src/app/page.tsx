@@ -128,7 +128,7 @@ const QuickPercentTool = () => {
   const result = useMemo(() => {
     const b = parseFloat(baseNum);
     const p = parseFloat(percent);
-    if (isNaN(b) || isNaN(p)) return null;
+    if (isNaN(b) || iNaN(p)) return null;
     return (b * p) / 100;
   }, [baseNum, percent]);
 
@@ -1597,8 +1597,8 @@ export default function Dashboard() {
                           className="w-full justify-between gap-2 border-border/50 h-11 rounded-xl transition-all duration-200 hover:bg-muted/30 active:bg-muted/50 focus:ring-1 focus:ring-primary/20 text-foreground"
                         >
                            <div className="flex items-center gap-2">
-                             <Percent className="h-4 w-4 text-primary" />
-                             <span className="text-xs font-semibold uppercase tracking-wider">Quick Percent Tool</span>
+                             <Percent className="h-4 w-4 text-[#14b8a6]" />
+                             <span className="text-xs font-semibold uppercase tracking-wider text-foreground">Quick Percent Tool</span>
                            </div>
                            <ChevronDown className="h-4 w-4 text-muted-foreground/50 transition-transform duration-200 data-[state=open]:rotate-180" />
                         </Button>
