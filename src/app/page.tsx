@@ -128,7 +128,7 @@ const QuickPercentTool = () => {
   const result = useMemo(() => {
     const b = parseFloat(baseNum);
     const p = parseFloat(percent);
-    if (isNaN(b) || isNaN(p)) return null;
+    if (isNaN(b) || iNaN(p)) return null;
     return (b * p) / 100;
   }, [baseNum, percent]);
 
@@ -165,7 +165,7 @@ const QuickPercentTool = () => {
         <div className="p-3 rounded-xl bg-primary/5 border border-primary/20 flex flex-col items-center justify-center animate-in zoom-in duration-200">
           <span className="text-[10px] font-bold text-muted-foreground uppercase mb-1">Result</span>
           <div className="text-2xl font-headline font-bold text-primary">
-            {result.toLocaleString(undefined, { maximumFractionDigits: 4 })}
+            {result.toLocaleString(undefined, { maximumFractionDigits: 2 })}
           </div>
           <p className="text-[10px] text-muted-foreground mt-1 text-center font-medium">
             {percent}% of {baseNum}
@@ -968,6 +968,11 @@ export default function Dashboard() {
   const activeSettings = store.activeSession || store;
   const latestDailySummary = dailySummaries[0];
 
+  const formatPercent = (val: number) => {
+    if (isNaN(val)) return "0%";
+    return val.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 }) + "%";
+  };
+
   const TradeLogItem = ({ trade }: { trade: Trade }) => (
     <Dialog>
       <DialogTrigger asChild>
@@ -1363,7 +1368,7 @@ export default function Dashboard() {
                                     <span className="font-bold">+ {currencySymbol}{activeSessionStats.recoveryStakeAdjustment.toFixed(2)}</span>
                                     {activeSessionStats.recoveryAdjustmentPercent !== 0 && (
                                        <span className="text-[9px] font-bold bg-primary/10 px-1 rounded border border-primary/20">
-                                         {activeSessionStats.recoveryAdjustmentPercent.toFixed(3)}%
+                                         {formatPercent(activeSessionStats.recoveryAdjustmentPercent)}
                                        </span>
                                     )}
                                  </div>
@@ -1437,7 +1442,7 @@ export default function Dashboard() {
                           {store.walletBalance > 0 && (
                             <div className="mt-1">
                                <div className="text-[10px] font-bold text-primary bg-primary/5 border border-primary/10 w-fit px-1.5 py-0.5 rounded">
-                                 {activeSessionStats.walletPercent.toFixed(3)}% of Main
+                                 {formatPercent(activeSessionStats.walletPercent)} of Main
                                </div>
                             </div>
                           )}
@@ -1484,7 +1489,7 @@ export default function Dashboard() {
                                     ? "text-green-500 bg-green-500/5 border-green-500/10" 
                                     : "text-red-500 bg-red-500/5 border-red-500/10"
                                 )}>
-                                  {activeSessionStats.netPnL >= 0 ? '+' : ''}{activeSessionStats.netPnLPercent.toFixed(2)}%
+                                  {activeSessionStats.netPnL >= 0 ? '+' : ''}{formatPercent(activeSessionStats.netPnLPercent)}
                                 </div>
                               </div>
                             </div>
@@ -1498,11 +1503,11 @@ export default function Dashboard() {
                               <div className="mt-1">
                                 {activeSessionStats.currentDrawdown > 0 ? (
                                   <div className="text-[10px] font-bold text-red-500 bg-red-500/5 px-1.5 py-0.5 rounded border border-red-500/10">
-                                    {activeSessionStats.drawdownPercent.toFixed(2)}%
+                                    {formatPercent(activeSessionStats.drawdownPercent)}
                                   </div>
                                 ) : (
                                   <div className="text-[10px] font-bold text-green-500 bg-green-500/5 px-1.5 py-0.5 rounded border border-green-500/10">
-                                    0.00%
+                                    0%
                                   </div>
                                 )}
                               </div>
@@ -1581,16 +1586,16 @@ export default function Dashboard() {
                       </CardContent>
                     </Card>
 
-                    {/* Quick Percent Tool In-Place Dropdown */}
+                    {/* Quick Percent Tool In-Place Collapsible */}
                     <Collapsible className="w-full space-y-2">
                       <CollapsibleTrigger asChild>
                         <Button 
                           variant="outline" 
-                          className="w-full justify-between gap-2 border-border/50 h-11 rounded-xl transition-all duration-200 hover:bg-muted/30 active:scale-[0.98] active:bg-muted/50 focus:ring-1 focus:ring-primary/20"
+                          className="w-full justify-between gap-2 border-border/50 h-11 rounded-xl transition-all duration-200 hover:bg-muted/30 active:scale-[0.98] active:bg-muted/50 focus:ring-1 focus:ring-primary/20 text-foreground"
                         >
                            <div className="flex items-center gap-2">
                              <Percent className="h-4 w-4 text-primary" />
-                             <span className="text-xs font-semibold uppercase tracking-wider text-foreground/70">Quick Percent Tool</span>
+                             <span className="text-xs font-semibold uppercase tracking-wider">Quick Percent Tool</span>
                            </div>
                            <ChevronDown className="h-4 w-4 text-muted-foreground/50 transition-transform duration-200 data-[state=open]:rotate-180" />
                         </Button>
@@ -2068,4 +2073,3 @@ export default function Dashboard() {
     </div>
   );
 }
-
