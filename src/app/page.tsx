@@ -1104,7 +1104,7 @@ export default function Dashboard() {
 
   return (
     <div className="flex flex-col min-h-svh overflow-x-hidden">
-      <header className="md:hidden sticky top-0 flex items-center justify-between p-4 border-b border-border bg-card/80 backdrop-blur-md z-40">
+      <header className="md:hidden sticky top-0 flex items-center justify-between p-2 border-b border-border bg-card/80 backdrop-blur-md z-40">
         <div className="flex items-center gap-3">
           <AppLogo className="h-10 w-10" />
           <h1 className="text-xl font-headline font-bold text-primary tracking-tight">RecoupPro</h1>
@@ -1201,7 +1201,7 @@ export default function Dashboard() {
           )}
         </aside>
 
-        <main className="flex-1 min-h-svh p-4 md:p-10 bg-background/40 overflow-x-hidden">
+        <main className="flex-1 min-h-svh p-2 md:p-10 bg-background/40 overflow-x-hidden">
           <div className="max-w-5xl mx-auto space-y-5 md:space-y-8">
             {view === 'dashboard' && (
               <div className="animate-in fade-in duration-500 space-y-5 md:space-y-8">
@@ -1592,10 +1592,7 @@ export default function Dashboard() {
                               <div className="flex flex-col text-center">
                                 <span className="text-[#14b8a6] uppercase text-[8px] font-sans">Wallet</span>
                                 <div className="flex items-center justify-center gap-1">
-                                  <span className="font-bold text-[#14b8a6]">{currencySymbol}{latestDailySummary.walletAmount.toFixed(2)}</span>
-                                  <span className="text-[8px] text-[#14b8a6] opacity-80 font-bold">
-                                    ({formatPercent(store.accountBalance > 0 ? (latestDailySummary.walletAmount / store.accountBalance) * 100 : 0)})
-                                  </span>
+                                  <span className="font-bold text-[#14b8a6]">{currencySymbol}{latestDailySummary.walletAmount.toFixed(2)} ({formatPercent(store.accountBalance > 0 ? (latestDailySummary.walletAmount / store.accountBalance) * 100 : 0)})</span>
                                 </div>
                               </div>
                               <div className="flex flex-col text-right">
@@ -1621,7 +1618,6 @@ export default function Dashboard() {
                       </CardContent>
                     </Card>
 
-                    {/* Quick Percent Tool In-Place Collapsible */}
                     <Collapsible className="w-full space-y-2">
                       <CollapsibleTrigger asChild>
                         <Button 
