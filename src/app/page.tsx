@@ -815,6 +815,7 @@ export default function Dashboard() {
       let recoveryTarget = settings.recoveryTargetWins;
 
       for (let i = 0; i < count; i++) {
+        // Recovery logic
         const simNetRec = d / (recoveryTarget || 1);
         const simTotalNetNeeded = (settings.baseStake * settings.riskRewardRatio) + simNetRec;
         const simTotalGrossNeeded = simTotalNetNeeded / safeWalletFactor;
@@ -1365,15 +1366,15 @@ export default function Dashboard() {
                              <div className="flex flex-col gap-0.5">
                                <div className="flex justify-between items-center text-sm font-bold text-primary">
                                  <span>Recovery Adjustment:</span>
-                                 <span className="font-bold">+ {currencySymbol}{activeSessionStats.recoveryStakeAdjustment.toFixed(2)}</span>
-                               </div>
-                               {activeSessionStats.recoveryAdjustmentPercent !== 0 && (
-                                 <div className="flex justify-end">
-                                   <div className="text-[10px] font-bold text-primary bg-primary/5 px-1 rounded border border-primary/10">
-                                      {activeSessionStats.recoveryAdjustmentPercent.toFixed(3)}%
-                                   </div>
+                                 <div className="flex items-center gap-1.5">
+                                    <span className="font-bold">+ {currencySymbol}{activeSessionStats.recoveryStakeAdjustment.toFixed(2)}</span>
+                                    {activeSessionStats.recoveryAdjustmentPercent !== 0 && (
+                                       <span className="text-[9px] font-bold bg-primary/10 px-1 rounded border border-primary/20">
+                                         {activeSessionStats.recoveryAdjustmentPercent.toFixed(3)}%
+                                       </span>
+                                    )}
                                  </div>
-                               )}
+                               </div>
                              </div>
                              <div className="text-[9px] text-muted-foreground/50 italic mt-1 font-medium text-right">
                                (Target / {activeSettings.riskRewardRatio.toFixed(2)} RR)
@@ -1661,7 +1662,7 @@ export default function Dashboard() {
                            </div>
                            <div className="space-y-2">
                              <div className="flex justify-between items-center text-xs">
-                               <span className="text-muted-foreground">Total Net P/L:</span>
+                               <span className="text-muted-foreground">{activeSessionStats.currentDrawdown > 0 ? 'Recovery Profit:' : 'Growth Profit:'}</span>
                                <span className="font-bold text-green-500">+{currencySymbol}{activeSessionStats.winNetProfit.toFixed(2)}</span>
                              </div>
                              <div className="flex justify-between items-center text-xs">
@@ -1670,8 +1671,8 @@ export default function Dashboard() {
                              </div>
                              <div className="mt-2 text-[9px] text-green-600/40 italic font-medium">
                                {activeSessionStats.currentDrawdown > 0 
-                                 ? `Cumulative result of ${forecastCount} recovery sessions.` 
-                                 : `Cumulative growth from ${forecastCount} winning sessions.`}
+                                 ? `Simulated cumulative impact over ${forecastCount} consecutive winning sessions.` 
+                                 : `Projected growth from ${forecastCount} consecutive winning sessions.`}
                              </div>
                            </div>
                         </div>
@@ -1690,7 +1691,7 @@ export default function Dashboard() {
                                <span className="font-bold text-foreground">{currencySymbol}{activeSessionStats.projectedLossDrawdown.toFixed(2)}</span>
                              </div>
                              <div className="mt-2 text-[9px] text-red-600/40 italic font-medium">
-                               Cumulative risk if next {forecastCount} trades result in losses.
+                               Projected risk accumulation if next {forecastCount} trades result in losses.
                              </div>
                            </div>
                         </div>
@@ -1699,7 +1700,7 @@ export default function Dashboard() {
                   </Card>
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-2 gap-6">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   <div className="lg:col-span-1 space-y-6">
                     <Card className="bg-card/50 border-border">
                       <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -1765,23 +1766,25 @@ export default function Dashboard() {
                 </div>
 
                 <div className="pb-20">
-                  <Card className="bg-card border-border shadow-sm overflow-hidden">
+                  <Card className="bg-card border-border shadow-lg overflow-hidden border-t-4 border-t-primary">
                     <CardHeader className="pb-3 bg-muted/20 border-b border-border/40">
                       <CardTitle className="text-base md:text-lg flex items-center gap-2 text-foreground font-headline font-bold">
-                        <Notebook className="h-5 w-5 text-primary" /> Trading Journal & Notes 📝
+                        <Notebook className="h-5 w-5 text-primary" /> Trading Journal & Strategy Notes 📝
                       </CardTitle>
-                      <CardDescription className="text-xs">Archive your psychology, mistakes, or strategy insights here.</CardDescription>
+                      <CardDescription className="text-xs">Archive your psychology, mistakes, or strategy insights here for continuous learning.</CardDescription>
                     </CardHeader>
-                    <CardContent className="p-4 bg-background/50">
+                    <CardContent className="p-6 bg-background/50">
                       <Textarea 
-                        placeholder="Today's mindset: Calm. Strategy followed? Yes. Remarks..."
-                        className="min-h-[200px] bg-card border-border/60 resize-none text-sm leading-relaxed p-4 font-body shadow-inner focus:border-primary/50 transition-colors"
+                        placeholder="Today's mindset: Calm. Strategy followed? Yes. Remarks about discipline or market conditions..."
+                        className="min-h-[250px] bg-card border-border/60 resize-none text-sm leading-relaxed p-5 font-body shadow-inner focus:border-primary/50 transition-colors rounded-xl border-2"
                         value={store.notes}
                         onChange={(e) => store.setNotes(e.target.value)}
                       />
                     </CardContent>
-                    <CardFooter className="bg-muted/10 p-2 border-t border-border/20 flex justify-end">
-                       <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-tighter">Auto-saved to local vault</span>
+                    <CardFooter className="bg-muted/10 p-3 border-t border-border/20 flex justify-end">
+                       <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest flex items-center gap-2">
+                         <ShieldCheck className="h-3 w-3" /> Auto-saved to Local Secure Vault
+                       </span>
                     </CardFooter>
                   </Card>
                 </div>
@@ -2049,3 +2052,4 @@ export default function Dashboard() {
     </div>
   );
 }
+
