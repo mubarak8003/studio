@@ -1592,6 +1592,9 @@ export default function Dashboard() {
                               <div className="flex flex-col text-center">
                                 <span className="text-[#14b8a6] uppercase text-[8px] font-sans">Wallet</span>
                                 <span className="font-bold text-[#14b8a6]">{currencySymbol}{latestDailySummary.walletAmount.toFixed(2)}</span>
+                                <span className="text-[9px] text-[#14b8a6] opacity-80">
+                                  {formatPercent(store.accountBalance > 0 ? (latestDailySummary.walletAmount / store.accountBalance) * 100 : 0)}
+                                </span>
                               </div>
                               <div className="flex flex-col text-right">
                                 <span className="text-muted-foreground uppercase text-[8px] font-sans">Net Chg</span>
