@@ -44,6 +44,7 @@ import {
   Landmark,
   ArrowDownRight,
   Zap,
+  ChevronDown,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -92,6 +93,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ModeToggle } from '@/components/mode-toggle';
 import { cn } from '@/lib/utils';
 import {
@@ -130,58 +132,50 @@ const QuickPercentTool = () => {
   }, [baseNum, percent]);
 
   return (
-    <Card className="bg-card border-border">
-      <CardHeader className="pb-3">
-        <CardTitle className="text-sm font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
-          <Percent className="h-4 w-4 text-primary" /> Quick Percent Tool
-        </CardTitle>
-        <CardDescription className="text-[10px]">Calculate percentage of any number</CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="grid grid-cols-2 gap-3">
-          <div className="space-y-1.5">
-            <label className="text-[10px] text-muted-foreground uppercase">Number</label>
-            <Input 
-              type="text" 
-              inputMode="decimal"
-              placeholder="e.g. 100" 
-              value={baseNum} 
-              onChange={(e) => setBaseNum(e.target.value)}
-              onFocus={(e) => e.target.select()}
-              className="h-8 text-xs bg-background"
-            />
-          </div>
-          <div className="space-y-1.5">
-            <label className="text-[10px] text-muted-foreground uppercase">Percent (%)</label>
-            <Input 
-              type="text" 
-              inputMode="decimal"
-              placeholder="e.g. 40" 
-              value={percent} 
-              onChange={(e) => setPercent(e.target.value)}
-              onFocus={(e) => e.target.select()}
-              className="h-8 text-xs bg-background"
-            />
-          </div>
+    <div className="space-y-4 p-1">
+      <div className="grid grid-cols-2 gap-3">
+        <div className="space-y-1.5">
+          <label className="text-[10px] text-muted-foreground uppercase font-bold">Number</label>
+          <Input 
+            type="text" 
+            inputMode="decimal"
+            placeholder="e.g. 100" 
+            value={baseNum} 
+            onChange={(e) => setBaseNum(e.target.value)}
+            onFocus={(e) => e.target.select()}
+            className="h-8 text-xs bg-background border-border/50"
+          />
         </div>
+        <div className="space-y-1.5">
+          <label className="text-[10px] text-muted-foreground uppercase font-bold">Percent (%)</label>
+          <Input 
+            type="text" 
+            inputMode="decimal"
+            placeholder="e.g. 40" 
+            value={percent} 
+            onChange={(e) => setPercent(e.target.value)}
+            onFocus={(e) => e.target.select()}
+            className="h-8 text-xs bg-background border-border/50"
+          />
+        </div>
+      </div>
 
-        {result !== null ? (
-          <div className="p-3 rounded-lg bg-primary/5 border border-primary/20 flex flex-col items-center justify-center">
-            <span className="text-[10px] font-bold text-muted-foreground uppercase mb-1">Result</span>
-            <div className="text-2xl font-headline font-bold text-primary">
-              {result.toLocaleString(undefined, { maximumFractionDigits: 4 })}
-            </div>
-            <p className="text-[10px] text-muted-foreground mt-1 text-center">
-              {percent}% of {baseNum}
-            </p>
+      {result !== null ? (
+        <div className="p-3 rounded-xl bg-primary/5 border border-primary/20 flex flex-col items-center justify-center animate-in zoom-in duration-200">
+          <span className="text-[10px] font-bold text-muted-foreground uppercase mb-1">Result</span>
+          <div className="text-2xl font-headline font-bold text-primary">
+            {result.toLocaleString(undefined, { maximumFractionDigits: 4 })}
           </div>
-        ) : (
-          <div className="h-16 flex items-center justify-center border border-dashed rounded-lg border-border/50 text-muted-foreground text-[10px]">
-            Enter values to calculate
-          </div>
-        )}
-      </CardContent>
-    </Card>
+          <p className="text-[10px] text-muted-foreground mt-1 text-center font-medium">
+            {percent}% of {baseNum}
+          </p>
+        </div>
+      ) : (
+        <div className="h-16 flex items-center justify-center border border-dashed rounded-xl border-border/50 text-muted-foreground text-[10px] font-medium">
+          Enter values to calculate
+        </div>
+      )}
+    </div>
   );
 };
 
@@ -1588,7 +1582,24 @@ export default function Dashboard() {
                       </CardContent>
                     </Card>
 
-                    <QuickPercentTool />
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button variant="outline" className="w-full justify-between gap-2 border-border/50 text-muted-foreground h-11 rounded-xl hover:bg-muted/30">
+                           <div className="flex items-center gap-2">
+                             <Percent className="h-4 w-4 text-primary" />
+                             <span className="text-xs font-semibold uppercase tracking-wider">Quick Percent Tool</span>
+                           </div>
+                           <ChevronDown className="h-4 w-4 opacity-50" />
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-80 p-4 bg-card border-border shadow-2xl rounded-2xl" align="end" sideOffset={8}>
+                        <div className="mb-2 pb-2 border-b border-border/30 flex items-center justify-between">
+                          <span className="text-[10px] font-bold text-muted-foreground uppercase">Calculator</span>
+                          <Percent className="h-3 w-3 text-primary" />
+                        </div>
+                        <QuickPercentTool />
+                      </PopoverContent>
+                    </Popover>
                   </div>
                 </div>
 
@@ -1624,7 +1635,7 @@ export default function Dashboard() {
                                    setForecastCount(1);
                                  }}
                                >
-                                 <RotateCcw className="h-3 w-3 text-muted-foreground" />
+                                 <ChevronDown className="h-3 w-3 text-muted-foreground" />
                                </Button>
                              </div>
                            ) : (
@@ -1766,24 +1777,24 @@ export default function Dashboard() {
                 </div>
 
                 <div className="pb-20">
-                  <Card className="bg-card border-border shadow-lg overflow-hidden border-t-4 border-t-primary">
+                  <Card className="bg-card border-border shadow-xl overflow-hidden border-t-4 border-t-[#14b8a6] rounded-3xl">
                     <CardHeader className="pb-3 bg-muted/20 border-b border-border/40">
-                      <CardTitle className="text-base md:text-lg flex items-center gap-2 text-foreground font-headline font-bold">
-                        <Notebook className="h-5 w-5 text-primary" /> Trading Journal & Strategy Notes 📝
+                      <CardTitle className="text-base md:text-xl flex items-center gap-3 text-foreground font-headline font-bold">
+                        <Notebook className="h-6 w-6 text-primary" /> Trading Journal & Strategy Notes 📝
                       </CardTitle>
-                      <CardDescription className="text-xs">Archive your psychology, mistakes, or strategy insights here for continuous learning.</CardDescription>
+                      <CardDescription className="text-xs font-medium">Archive your psychology, mistakes, or strategy insights here for continuous learning.</CardDescription>
                     </CardHeader>
                     <CardContent className="p-6 bg-background/50">
                       <Textarea 
                         placeholder="Today's mindset: Calm. Strategy followed? Yes. Remarks about discipline or market conditions..."
-                        className="min-h-[250px] bg-card border-border/60 resize-none text-sm leading-relaxed p-5 font-body shadow-inner focus:border-primary/50 transition-colors rounded-xl border-2"
+                        className="min-h-[280px] bg-card border-border/40 resize-none text-base leading-relaxed p-6 font-body shadow-inner focus:border-primary/40 focus:ring-1 focus:ring-primary/20 transition-all rounded-2xl border-2"
                         value={store.notes}
                         onChange={(e) => store.setNotes(e.target.value)}
                       />
                     </CardContent>
-                    <CardFooter className="bg-muted/10 p-3 border-t border-border/20 flex justify-end">
+                    <CardFooter className="bg-muted/10 px-6 py-4 border-t border-border/20 flex justify-end">
                        <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest flex items-center gap-2">
-                         <ShieldCheck className="h-3 w-3" /> Auto-saved to Local Secure Vault
+                         <ShieldCheck className="h-3 w-3 text-primary" /> Auto-saved to Local Secure Vault
                        </span>
                     </CardFooter>
                   </Card>
@@ -2052,4 +2063,3 @@ export default function Dashboard() {
     </div>
   );
 }
-
