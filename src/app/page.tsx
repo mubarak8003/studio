@@ -752,6 +752,30 @@ export default function Dashboard() {
     setMounted(true);
   }, []);
 
+  // Persistence for Forecast Count
+  useEffect(() => {
+    if (mounted) {
+      const saved = localStorage.getItem('recouppro_forecast_count');
+      if (saved) {
+        const n = parseInt(saved);
+        if (!isNaN(n)) {
+          setForecastCount(n);
+          const standardValues = [1, 2, 3, 5, 10, 20];
+          if (!standardValues.includes(n)) {
+            setIsCustomForecast(true);
+            setCustomForecastValue(n.toString());
+          }
+        }
+      }
+    }
+  }, [mounted]);
+
+  useEffect(() => {
+    if (mounted) {
+      localStorage.setItem('recouppro_forecast_count', forecastCount.toString());
+    }
+  }, [forecastCount, mounted]);
+
   useEffect(() => {
     if (mounted) {
       window.scrollTo(0, 0);
