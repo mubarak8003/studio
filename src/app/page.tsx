@@ -55,7 +55,7 @@ import { Separator } from '@/components/ui/separator';
 import { Slider } from '@/components/ui/slider';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
-import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle, SheetClose } from '@/components/ui/sheet';
 import { 
   AlertDialog, 
   AlertDialogAction, 
@@ -1153,18 +1153,26 @@ export default function Dashboard() {
               <div className="flex-1 overflow-y-auto p-6 scroll-smooth">
                 <div className="space-y-8">
                   <nav className="space-y-2">
-                    <Button variant={view === 'dashboard' ? "secondary" : "ghost"} className="w-full justify-start gap-3" onClick={() => setView('dashboard')}>
-                      <Activity className="h-4 w-4" /> Dashboard
-                    </Button>
-                    <Button variant={view === 'vault' ? "secondary" : "ghost"} className="w-full justify-start gap-3" onClick={() => setView('vault')}>
-                      <Landmark className="h-4 w-4" /> The Vault
-                    </Button>
-                    <Button variant={view === 'sizer' ? "secondary" : "ghost"} className="w-full justify-start gap-3" onClick={() => setView('sizer')}>
-                      <Briefcase className="h-4 w-4" /> Position Sizer
-                    </Button>
-                    <Button variant={view === 'history' ? "secondary" : "ghost"} className="w-full justify-start gap-3" onClick={() => setView('history')}>
-                      <History className="h-4 w-4" /> History
-                    </Button>
+                    <SheetClose asChild>
+                      <Button variant={view === 'dashboard' ? "secondary" : "ghost"} className="w-full justify-start gap-3" onClick={() => setView('dashboard')}>
+                        <Activity className="h-4 w-4" /> Dashboard
+                      </Button>
+                    </SheetClose>
+                    <SheetClose asChild>
+                      <Button variant={view === 'vault' ? "secondary" : "ghost"} className="w-full justify-start gap-3" onClick={() => setView('vault')}>
+                        <Landmark className="h-4 w-4" /> The Vault
+                      </Button>
+                    </SheetClose>
+                    <SheetClose asChild>
+                      <Button variant={view === 'sizer' ? "secondary" : "ghost"} className="w-full justify-start gap-3" onClick={() => setView('sizer')}>
+                        <Briefcase className="h-4 w-4" /> Position Sizer
+                      </Button>
+                    </SheetClose>
+                    <SheetClose asChild>
+                      <Button variant={view === 'history' ? "secondary" : "ghost"} className="w-full justify-start gap-3" onClick={() => setView('history')}>
+                        <History className="h-4 w-4" /> History
+                      </Button>
+                    </SheetClose>
                   </nav>
                   <Separator className="bg-border/30" />
                   {(view !== 'sizer' && view !== 'vault') && (
