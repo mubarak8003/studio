@@ -1128,7 +1128,7 @@ export default function Dashboard() {
 
   return (
     <div className="flex flex-col min-h-svh overflow-x-hidden">
-      <header className="md:hidden sticky top-0 flex items-center justify-between p-2 border-b border-border bg-card/80 backdrop-blur-md z-40">
+      <header className="md:hidden sticky top-0 flex items-center justify-between p-1 border-b border-border bg-card/80 backdrop-blur-md z-40">
         <div className="flex items-center gap-3">
           <AppLogo className="h-10 w-10" />
           <h1 className="text-xl font-headline font-bold text-primary tracking-tight">RecoupPro</h1>
@@ -1227,7 +1227,7 @@ export default function Dashboard() {
           </div>
         </aside>
 
-        <main className="flex-1 min-h-svh p-2 md:p-10 bg-background/40 overflow-x-hidden">
+        <main className="flex-1 min-h-svh p-1 md:p-10 bg-background/40 overflow-x-hidden">
           <div className="max-w-5xl mx-auto space-y-5 md:space-y-8">
             {view === 'dashboard' && (
               <div className="animate-in fade-in duration-500 space-y-5 md:space-y-8">
