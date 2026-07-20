@@ -1175,15 +1175,13 @@ export default function Dashboard() {
                     </SheetClose>
                   </nav>
                   <Separator className="bg-border/30" />
-                  {(view !== 'sizer' && view !== 'vault') && (
-                    <div className="space-y-6">
-                      <div className="flex items-center gap-2">
-                        <Settings2 className="h-4 w-4 text-muted-foreground" />
-                        <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Strategy Engine</h3>
-                      </div>
-                      <StrategySettings store={store} stats={activeSessionStats} />
+                  <div className="space-y-6">
+                    <div className="flex items-center gap-2">
+                      <Settings2 className="h-4 w-4 text-muted-foreground" />
+                      <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Strategy Engine</h3>
                     </div>
-                  )}
+                    <StrategySettings store={store} stats={activeSessionStats} />
+                  </div>
                 </div>
               </div>
             </SheetContent>
@@ -1219,18 +1217,14 @@ export default function Dashboard() {
             </Button>
           </nav>
 
-          {(view !== 'sizer' && view !== 'vault') && (
-            <>
-              <Separator className="mb-8 bg-border/30" />
-              <div className="space-y-6">
-                <div className="flex items-center gap-2">
-                  <Settings2 className="h-4 w-4 text-muted-foreground" />
-                  <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Strategy Engine</h3>
-                </div>
-                <StrategySettings store={store} stats={activeSessionStats} />
-              </div>
-            </>
-          )}
+          <Separator className="mb-8 bg-border/30" />
+          <div className="space-y-6">
+            <div className="flex items-center gap-2">
+              <Settings2 className="h-4 w-4 text-muted-foreground" />
+              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Strategy Engine</h3>
+            </div>
+            <StrategySettings store={store} stats={activeSessionStats} />
+          </div>
         </aside>
 
         <main className="flex-1 min-h-svh p-2 md:p-10 bg-background/40 overflow-x-hidden">
