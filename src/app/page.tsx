@@ -1228,9 +1228,9 @@ export default function Dashboard() {
         </aside>
 
         <main className="flex-1 min-h-svh p-1 md:p-10 bg-background/40 overflow-x-hidden">
-          <div className="max-w-5xl mx-auto space-y-5 md:space-y-8">
+          <div className="max-w-5xl mx-auto space-y-2 md:space-y-4">
             {view === 'dashboard' && (
-              <div className="animate-in fade-in duration-500 space-y-5 md:space-y-8">
+              <div className="animate-in fade-in duration-500 space-y-2 md:space-y-4">
                 <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                   <div>
                     <h2 className="text-2xl md:text-3xl font-headline font-bold mb-1 text-foreground">Trading Control</h2>
@@ -1344,7 +1344,7 @@ export default function Dashboard() {
                   </div>
                 </header>
 
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-2">
                   <Card className="lg:col-span-2 bg-card border-border backdrop-blur-md relative overflow-hidden">
                     <div className="absolute top-0 right-0 p-4 opacity-5 hidden md:block text-foreground">
                       <Calculator className="h-24 w-24" />
@@ -1480,7 +1480,7 @@ export default function Dashboard() {
                     </CardContent>
                   </Card>
 
-                  <div className="space-y-6">
+                  <div className="space-y-2">
                     <Card className="bg-card border-border overflow-hidden relative">
                       <div className="absolute top-0 right-0 p-4 opacity-10">
                         <Wallet className="h-12 w-12 text-primary" />
@@ -1670,7 +1670,7 @@ export default function Dashboard() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-2">
                   <Card className="lg:col-span-2 bg-card border-border overflow-hidden relative">
                     <div className="absolute top-0 right-0 p-4 opacity-10">
                       <Zap className="h-10 w-10 text-primary" />
@@ -1796,8 +1796,8 @@ export default function Dashboard() {
                   </Card>
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  <div className="lg:col-span-1 space-y-6">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-2">
+                  <div className="lg:col-span-1 space-y-2">
                     <Card className="bg-card/50 border-border">
                       <CardHeader className="flex flex-row items-center justify-between pb-2">
                         <div>
@@ -1831,7 +1831,7 @@ export default function Dashboard() {
                     </Card>
                   </div>
 
-                  <div className="lg:col-span-1 space-y-6">
+                  <div className="lg:col-span-1 space-y-2">
                     <Card className="bg-card border-border overflow-hidden">
                       <CardHeader className="pb-2 flex flex-row items-center justify-between">
                         <div className="space-y-1">
